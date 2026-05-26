@@ -8,6 +8,7 @@ import {
 
 import InputField from "../components/InputField";
 import styles from "../styles/authStyles";
+import { Colors } from "../styles/globalDesignSystem";
 
 export default function LoginScreen({ onSwitch }) {
   const [email, setEmail] = useState("");
@@ -57,7 +58,7 @@ export default function LoginScreen({ onSwitch }) {
           <Text
             style={{
               textAlign: "center",
-              color: "#8B8B94",
+              color: Colors.subText,
             }}
           >
             Forgot password?

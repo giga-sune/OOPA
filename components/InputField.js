@@ -8,6 +8,13 @@ import {
 
 import Colors from "../styles/colors";
 
+import {
+  Colors,
+  Typography,
+  Radius,
+  Spacing,
+} from "../styles/globalDesignSystem";
+
 export default function InputField({
   placeholder,
   value,
@@ -27,7 +34,7 @@ export default function InputField({
 
       <TextInput
         placeholder={placeholder}
-        placeholderTextColor="#9A9AA2"
+        placeholderTextColor= {Colors.placeholder}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -39,14 +46,14 @@ export default function InputField({
 
 const styles = StyleSheet.create({
   container: {
-    height: 58,
-    borderRadius: 30,
+    minHeight: 58,
+    borderRadius: Radius.pill,
     backgroundColor: Colors.inputBg,
     borderWidth: 1,
-    borderColor: Colors.inputBorder,
+    borderColor: Colors.border,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: Spacing.md,
   },
 
   activeContainer: {
@@ -56,12 +63,12 @@ const styles = StyleSheet.create({
 
   icon: {
     fontSize: 18,
-    marginRight: 12,
+    marginRight: Spacing.sm,
   },
 
   input: {
     flex: 1,
-    fontSize: 17,
+    fontSize: Typography.body,
     color: Colors.text,
   },
 });

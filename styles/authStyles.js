@@ -1,49 +1,55 @@
 import { StyleSheet } from "react-native";
-import Colors from "./colors";
+import {
+  Colors,
+  Typography,
+  Radius,
+  Spacing,
+  Shadows,
+} from "./globalDesignSystem";
 
 export default StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: Colors.background,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 32,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
 
   backButton: {
-    marginBottom: 30,
+    marginBottom: Spacing.xl,
     width: 32,
   },
 
   backIcon: {
-    fontSize: 32,
+    fontSize: Typography.h2,
     color: Colors.text,
     fontWeight: "300",
   },
 
   header: {
-    marginBottom: 40,
+    marginBottom: Spacing.xl,
   },
 
   title: {
-    fontSize: 36,
+    fontSize: Typography.h1,
     fontWeight: "800",
     color: Colors.text,
-    marginBottom: 12,
+    marginBottom: Spacing.sm,
   },
 
   subtitle: {
-    fontSize: 16,
+    fontSize: Typography.body,
     lineHeight: 24,
     color: Colors.subText,
   },
 
   form: {
-    gap: 18,
+    gap: Spacing.lg,
   },
 
   label: {
-    fontSize: 16,
+    fontSize: Typography.label,
     color: Colors.text,
     fontWeight: "500",
     marginBottom: -8,
@@ -52,41 +58,34 @@ export default StyleSheet.create({
   primaryButton: {
     height: 58,
     backgroundColor: Colors.primary,
-    borderRadius: 30,
+    borderRadius: Radius.pill,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: Spacing.sm,
 
-    shadowColor: Colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-
-    elevation: 4,
+    ...Shadows.primary,
   },
 
   primaryButtonText: {
     color: Colors.white,
-    fontSize: 18,
+    fontSize: Typography.button,
     fontWeight: "700",
   },
 
   secondaryButton: {
     height: 58,
-    borderRadius: 30,
+    borderRadius: Radius.pill,
     borderWidth: 1,
     borderColor: "#DADDE4",
     backgroundColor: Colors.white,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 40,
+    marginTop: Spacing.xl,
   },
 
   secondaryButtonText: {
-    fontSize: 18,
+    fontSize: Typography.body,
+    fontFamily: "SFProDisplay-Semibold",
     fontWeight: "600",
     color: "#475569",
   },
