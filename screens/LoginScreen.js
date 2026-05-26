@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,10 +8,18 @@ import {
 
 import InputField from "../components/InputField";
 import styles from "../styles/authStyles";
+import useLoginViewModel from "../viewModels/auth/useLoginViewModel";
 
 export default function LoginScreen({ onSwitch }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    onSubmit,
+    loading,
+    error,
+  } = useLoginViewModel();
 
   return (
     <ScrollView
@@ -47,9 +55,22 @@ export default function LoginScreen({ onSwitch }) {
           secureTextEntry
         />
 
-        <TouchableOpacity style={styles.primaryButton}>
+        {!!error && (
+          <Text style={{ color: "#DC2626", textAlign: "center" }}>
+            {error}
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.primaryButton,
+            loading && { opacity: 0.7 },
+          ]}
+          onPress={onSubmit}
+          disabled={loading}
+        >
           <Text style={styles.primaryButtonText}>
-            Log in
+            {loading ? "Logging in..." : "Log in"}
           </Text>
         </TouchableOpacity>
 
