@@ -6,8 +6,7 @@ import {
   StyleSheet,
 } from "react-native";
 
-import Colors from "../styles/colors";
-
+// Import your custom design system objects
 import {
   Colors,
   Typography,
@@ -30,11 +29,12 @@ export default function InputField({
         active && styles.activeContainer,
       ]}
     >
-      <Text style={styles.icon}>{icon}</Text>
+      {/* Safe check for the icon */}
+      {icon ? <Text style={styles.icon}>{icon}</Text> : null}
 
       <TextInput
         placeholder={placeholder}
-        placeholderTextColor= {Colors.placeholder}
+        placeholderTextColor={Colors.placeholder}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -68,7 +68,9 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-    fontSize: Typography.body,
+    // FIX: Extract the font properties properly from the style object
+    fontFamily: Typography.body.fontFamily,
+    fontSize: Typography.body.fontSize,
     color: Colors.text,
   },
 });

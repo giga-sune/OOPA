@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,11 +8,18 @@ import {
 
 import InputField from "../components/InputField";
 import styles from "../styles/authStyles";
-import { Colors } from "../styles/globalDesignSystem";
+import useLoginViewModel from "../viewModels/auth/useLoginViewModel";
 
 export default function LoginScreen({ onSwitch }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    onSubmit,
+    loading,
+    error,
+  } = useLoginViewModel();
 
   return (
     <ScrollView
@@ -23,10 +30,13 @@ export default function LoginScreen({ onSwitch }) {
       <View style={styles.header}>
         <Text style={styles.title}>Bonjour!</Text>
 
-        <Text style={[styles.subtitle, { width: "80%" }]}>
-          Log In to your OOPA account to get the best gadgets
-          and items at the cheapest rental rates
-        </Text>
+        {/* FIX: Moved the width style to a View wrapper so the Text element stays clean */}
+        <View style={{ width: "80%" }}>
+          <Text style={styles.subtitle}>
+            Log In to your OOPA account to get the best gadgets
+            and items at the cheapest rental rates
+          </Text>
+        </View>
       </View>
 
       <View style={styles.form}>
@@ -48,9 +58,22 @@ export default function LoginScreen({ onSwitch }) {
           secureTextEntry
         />
 
-        <TouchableOpacity style={styles.primaryButton}>
+        {!!error && (
+          <Text style={{ color: "#DC2626", textAlign: "center" }}>
+            {error}
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.primaryButton,
+            loading && { opacity: 0.7 },
+          ]}
+          onPress={onSubmit}
+          disabled={loading}
+        >
           <Text style={styles.primaryButtonText}>
-            Log in
+            {loading ? "Logging in..." : "Log in"}
           </Text>
         </TouchableOpacity>
 
@@ -58,7 +81,7 @@ export default function LoginScreen({ onSwitch }) {
           <Text
             style={{
               textAlign: "center",
-              color: Colors.subText,
+              color: "#8B8B94",
             }}
           >
             Forgot password?

@@ -22,7 +22,7 @@ export default StyleSheet.create({
   },
 
   backIcon: {
-    fontSize: Typography.h2,
+    ...Typography.h2, // Unpacks all h2 font details
     color: Colors.text,
     fontWeight: "300",
   },
@@ -32,15 +32,13 @@ export default StyleSheet.create({
   },
 
   title: {
-    fontSize: Typography.h1,
-    fontWeight: "800",
+    ...Typography.h1, // Unpacks all h1 font details
     color: Colors.text,
     marginBottom: Spacing.sm,
   },
 
   subtitle: {
-    fontSize: Typography.body,
-    lineHeight: 24,
+    ...Typography.body, // Unpacks all body font details
     color: Colors.subText,
   },
 
@@ -49,9 +47,8 @@ export default StyleSheet.create({
   },
 
   label: {
-    fontSize: Typography.label,
+    ...Typography.label, // Unpacks all label font details
     color: Colors.text,
-    fontWeight: "500",
     marginBottom: -8,
   },
 
@@ -62,14 +59,12 @@ export default StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: Spacing.sm,
-
-    ...Shadows.primary,
+    ...Shadows.primary, // Unpacks all shadow properties
   },
 
   primaryButtonText: {
     color: Colors.white,
-    fontSize: Typography.button,
-    fontWeight: "700",
+    ...Typography.button, // Unpacks all button font details
   },
 
   secondaryButton: {
@@ -84,9 +79,7 @@ export default StyleSheet.create({
   },
 
   secondaryButtonText: {
-    fontSize: Typography.body,
-    fontFamily: "SFProDisplay-Semibold",
-    fontWeight: "600",
+    ...Typography.body, // Unpacks all body font details
     color: "#475569",
   },
 });
