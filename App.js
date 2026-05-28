@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import "react-native-gesture-handler";
+import React from "react";
 import { useFonts } from "expo-font";
+
 import {
   ActivityIndicator,
   Text,
@@ -9,19 +11,32 @@ import {
   View,
 } from "react-native";
 
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+} from "react-native-safe-area-context";
 
-import LoginScreen from "./screens/LoginScreen";
-import SignupScreen from "./screens/SignupScreen";
-import HomeScreen from "./screens/HomeScreen";
-import { signOutUser } from "./services/auth/authService";
+import { NavigationContainer } from "@react-navigation/native";
+
+import AppNavigator from "./navigation/appNavigator";
+
 import useAuthSessionViewModel from "./viewModels/auth/useAuthSessionViewModel";
 
-export default function App() {
-  const [isLogin, setIsLogin] = useState(true);
-  const { user, initializing, isAuthenticated } = useAuthSessionViewModel();
+import { AuthProvider } from "./context/AuthContext";
 
-  // Load the fonts required by your Typography configuration
+export default function App() {
+  /**
+   * REMOVED:
+   * isLogin state is no longer needed
+   * because React Navigation handles screen routing now
+   */
+
+  const {
+    user,
+    initializing,
+    isAuthenticated,
+  } = useAuthSessionViewModel();
+
   const [fontsLoaded] = useFonts({
     "SFProDisplay-Regular": require("./assets/fonts/SF-Pro-Display-Regular.otf"),
     "SFProDisplay-Medium": require("./assets/fonts/SF-Pro-Display-Medium.otf"),
@@ -29,36 +44,61 @@ export default function App() {
     "SFProDisplay-Bold": require("./assets/fonts/SF-Pro-Display-Bold.otf"),
   });
 
-  const renderBody = () => {
-    if (initializing || !fontsLoaded) {
-      return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", gap: 10 }}>
-          <ActivityIndicator size="large" color="#FF7A21" />
-          <Text style={{ color: "#666" }}>Loading application...</Text>
-        </View>
-      );
-    }
+  /**
+   * NEW:
+   * Loading state before app initializes
+   */
+  if (initializing || !fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <ActivityIndicator
+          size="large"
+          color="#FF7A21"
+        />
 
-    if (isAuthenticated) {
-      return <HomeScreen user={user} onSignOut={signOutUser} />;
-    }
-
-    return isLogin ? (
-      <LoginScreen onSwitch={() => setIsLogin(false)} />
-    ) : (
-      <SignupScreen onSwitch={() => setIsLogin(true)} />
+        <Text style={{ color: "#666" }}>
+          Loading application...
+        </Text>
+      </View>
     );
-  };
+  }
 
+  /**
+   * Navigation controls screen rendering
+   */
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
+      <SafeAreaView
+        style={{
+          flex: 1
+        }}
+      >
+        <StatusBar
+          barStyle="dark-content"
+        />
+
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={
+            Platform.OS === "ios"
+              ? "padding"
+              : undefined
+          }
         >
-          {renderBody()}
+
+          <NavigationContainer>
+            <AuthProvider>
+              <AppNavigator />
+            </AuthProvider>
+          </NavigationContainer>
+
         </KeyboardAvoidingView>
       </SafeAreaView>
     </SafeAreaProvider>

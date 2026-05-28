@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   View,
   Text,
@@ -8,9 +9,12 @@ import {
 
 import InputField from "../components/InputField";
 import styles from "../styles/authStyles";
+
 import useLoginViewModel from "../viewModels/auth/useLoginViewModel";
 
-export default function LoginScreen({ onSwitch }) {
+export default function LoginScreen({
+  navigation,
+}) {
   const {
     email,
     setEmail,
@@ -28,19 +32,23 @@ export default function LoginScreen({ onSwitch }) {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Bonjour!</Text>
+        <Text style={styles.title}>
+          Bonjour!
+        </Text>
 
-        {/* FIX: Moved the width style to a View wrapper so the Text element stays clean */}
         <View style={{ width: "80%" }}>
           <Text style={styles.subtitle}>
-            Log In to your OOPA account to get the best gadgets
-            and items at the cheapest rental rates
+            Log In to your OOPA account to
+            get the best gadgets and items
+            at the cheapest rental rates
           </Text>
         </View>
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>
+          Email
+        </Text>
 
         <InputField
           placeholder="Enter your email"
@@ -49,7 +57,9 @@ export default function LoginScreen({ onSwitch }) {
           active={email.length > 0}
         />
 
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>
+          Password
+        </Text>
 
         <InputField
           placeholder="Insert your password here"
@@ -59,7 +69,12 @@ export default function LoginScreen({ onSwitch }) {
         />
 
         {!!error && (
-          <Text style={{ color: "#DC2626", textAlign: "center" }}>
+          <Text
+            style={{
+              color: "#DC2626",
+              textAlign: "center",
+            }}
+          >
             {error}
           </Text>
         )}
@@ -73,7 +88,9 @@ export default function LoginScreen({ onSwitch }) {
           disabled={loading}
         >
           <Text style={styles.primaryButtonText}>
-            {loading ? "Logging in..." : "Log in"}
+            {loading
+              ? "Logging in..."
+              : "Log in"}
           </Text>
         </TouchableOpacity>
 
@@ -88,9 +105,14 @@ export default function LoginScreen({ onSwitch }) {
           </Text>
         </TouchableOpacity>
 
+        {/* CHANGED:
+            Uses React Navigation now
+        */}
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={onSwitch}
+          onPress={() =>
+            navigation.navigate("Signup")
+          }
         >
           <Text style={styles.secondaryButtonText}>
             Create a new account

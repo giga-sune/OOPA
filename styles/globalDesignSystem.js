@@ -5,7 +5,6 @@ export const Colors = {
     primary: "#FF7A21",
     primarySecondary: "#FFB67A",
     primaryTertiary: "#FFF3EA",
-  
 
     //Gray Colors
     grayPrimary: "#1A1D25",
@@ -13,18 +12,15 @@ export const Colors = {
     grayTertiary: "#667080",
   
     //Neutral Colors
-
     white: "#FFFFFF",
     background: "#F5F5F5",
     border: "#E4E4E7",
   
-
     //Text Colors
     text: "#111827",
     subText: "#7C7C85",
     placeholder: "#9A9AA2",
   
-
     //Input Colors
     inputBg: "#ECECEF",
     activeInputBg: "#F8EBDD",
@@ -32,6 +28,8 @@ export const Colors = {
     //State Colors
     success: "#22C55E",
     error: "#EF4444",
+
+    menu: "#F6F6F7",
   };
   
   
