@@ -6,12 +6,11 @@ import {
 } from "firebase/auth";
 
 import { auth } from "../firebase/firebaseApp";
-
-/**
- * @typedef {import("../../types/auth/authTypes").AuthCredentials} AuthCredentials
- * @typedef {import("../../types/auth/authTypes").AuthResult} AuthResult
- * @typedef {import("../../types/auth/authTypes").ServiceError} ServiceError
- */
+import {
+  createAuthCredentials,
+  createAuthResult,
+  createServiceError,
+} from "../../types/auth/authTypes";
 
 const AUTH_ERROR_MESSAGES = {
   "auth/email-already-in-use": "This email is already in use.",
@@ -30,7 +29,7 @@ const AUTH_ERROR_MESSAGES = {
 
 /**
  * @param {unknown} error
- * @returns {ServiceError}
+ * @returns {{ code: string, message: string }}
  */
 export function mapAuthError(error) {
   const code =
@@ -41,39 +40,43 @@ export function mapAuthError(error) {
       ? error.code
       : "auth/unknown";
 
-  return {
+  return createServiceError({
     code,
     message:
       AUTH_ERROR_MESSAGES[code] ??
       "Something went wrong. Please try again.",
-  };
+  });
 }
 
 /**
- * @param {AuthCredentials} credentials
- * @returns {Promise<AuthResult>}
+ * @param {unknown} credentials
+ * @returns {Promise<{ user: import("firebase/auth").User }>}
  */
-export async function signUpWithEmail({ email, password }) {
+export async function signUpWithEmail(credentials) {
+  const { email, password } = createAuthCredentials(credentials);
+
   try {
     const userCredential =
       await createUserWithEmailAndPassword(auth, email, password);
 
-    return { user: userCredential.user };
+    return createAuthResult(userCredential.user);
   } catch (error) {
     throw mapAuthError(error);
   }
 }
 
 /**
- * @param {AuthCredentials} credentials
- * @returns {Promise<AuthResult>}
+ * @param {unknown} credentials
+ * @returns {Promise<{ user: import("firebase/auth").User }>}
  */
-export async function signInWithEmail({ email, password }) {
+export async function signInWithEmail(credentials) {
+  const { email, password } = createAuthCredentials(credentials);
+
   try {
     const userCredential =
       await signInWithEmailAndPassword(auth, email, password);
 
-    return { user: userCredential.user };
+    return createAuthResult(userCredential.user);
   } catch (error) {
     throw mapAuthError(error);
   }

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import { signUpWithEmail } from "../../services/auth/authService";
 import { createUserProfile } from "../../services/firestore/userService";
+import { createSignupInput } from "../../types/auth/authTypes";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
@@ -67,14 +68,17 @@ export default function useSignupViewModel() {
     setLoading(true);
 
     try {
-      const result = await signUpWithEmail({
-        email: email.trim(),
+      const signupInput = createSignupInput({
+        email,
         password,
+        confirmPassword,
       });
+
+      const result = await signUpWithEmail(signupInput);
 
       await createUserProfile({
         uid: result.user.uid,
-        email: result.user.email ?? email.trim(),
+        email: result.user.email ?? signupInput.email,
         displayName: result.user.displayName ?? null,
         photoURL: result.user.photoURL ?? null,
         phone: result.user.phoneNumber ?? null,

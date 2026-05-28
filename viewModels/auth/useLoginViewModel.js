@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { signInWithEmail } from "../../services/auth/authService";
+import { createAuthCredentials } from "../../types/auth/authTypes";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
@@ -31,10 +32,8 @@ export default function useLoginViewModel() {
     setLoading(true);
 
     try {
-      await signInWithEmail({
-        email: email.trim(),
-        password,
-      });
+      const credentials = createAuthCredentials({ email, password });
+      await signInWithEmail(credentials);
       return true;
     } catch (serviceError) {
       setError(

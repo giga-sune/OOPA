@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   View,
   Text,
@@ -7,10 +8,14 @@ import {
 } from "react-native";
 
 import InputField from "../components/InputField";
+
 import styles from "../styles/authStyles";
+
 import useSignupViewModel from "../viewModels/auth/useSignupViewModel";
 
-export default function SignupScreen({ onSwitch }) {
+export default function SignupScreen({
+  navigation,
+}) {
   const {
     email,
     setEmail,
@@ -30,8 +35,16 @@ export default function SignupScreen({ onSwitch }) {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <TouchableOpacity style={styles.backButton} onPress={onSwitch}>
-        <Text style={styles.backIcon}>‹</Text>
+      {/* CHANGED:
+          Back button now uses navigation.goBack()
+      */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backIcon}>
+          ‹
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.header}>
@@ -40,13 +53,16 @@ export default function SignupScreen({ onSwitch }) {
         </Text>
 
         <Text style={styles.subtitle}>
-          Create your OOPA account to explore rental
-          items and complete your everyday hobbies.
+          Create your OOPA account to
+          explore rental items and complete
+          your everyday hobbies.
         </Text>
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>
+          Email
+        </Text>
 
         <InputField
           placeholder="Enter your email"
@@ -54,13 +70,21 @@ export default function SignupScreen({ onSwitch }) {
           onChangeText={setEmail}
           active={email.length > 0}
         />
+
         {!!fieldErrors.email && (
-          <Text style={{ color: "#DC2626", marginTop: -10 }}>
+          <Text
+            style={{
+              color: "#DC2626",
+              marginTop: -10,
+            }}
+          >
             {fieldErrors.email}
           </Text>
         )}
 
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>
+          Password
+        </Text>
 
         <InputField
           placeholder="Insert your password here"
@@ -68,8 +92,14 @@ export default function SignupScreen({ onSwitch }) {
           onChangeText={setPassword}
           secureTextEntry
         />
+
         {!!fieldErrors.password && (
-          <Text style={{ color: "#DC2626", marginTop: -10 }}>
+          <Text
+            style={{
+              color: "#DC2626",
+              marginTop: -10,
+            }}
+          >
             {fieldErrors.password}
           </Text>
         )}
@@ -84,14 +114,25 @@ export default function SignupScreen({ onSwitch }) {
           onChangeText={setConfirmPassword}
           secureTextEntry
         />
+
         {!!fieldErrors.confirmPassword && (
-          <Text style={{ color: "#DC2626", marginTop: -10 }}>
+          <Text
+            style={{
+              color: "#DC2626",
+              marginTop: -10,
+            }}
+          >
             {fieldErrors.confirmPassword}
           </Text>
         )}
 
         {!!error && (
-          <Text style={{ color: "#DC2626", textAlign: "center" }}>
+          <Text
+            style={{
+              color: "#DC2626",
+              textAlign: "center",
+            }}
+          >
             {error}
           </Text>
         )}
@@ -105,7 +146,9 @@ export default function SignupScreen({ onSwitch }) {
           disabled={loading}
         >
           <Text style={styles.primaryButtonText}>
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading
+              ? "Creating Account..."
+              : "Create Account"}
           </Text>
         </TouchableOpacity>
       </View>

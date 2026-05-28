@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import "react-native-gesture-handler";
+import React from "react";
+import { useFonts } from "expo-font";
+
 import {
   ActivityIndicator,
   Text,
@@ -8,72 +11,96 @@ import {
   View,
 } from "react-native";
 
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+} from "react-native-safe-area-context";
 
-import LoginScreen from "./screens/LoginScreen";
-import SignupScreen from "./screens/SignupScreen";
-import HomeScreen from "./screens/HomeScreen";
-import { signOutUser } from "./services/auth/authService";
+import { NavigationContainer } from "@react-navigation/native";
+
+import AppNavigator from "./navigation/appNavigator";
+
 import useAuthSessionViewModel from "./viewModels/auth/useAuthSessionViewModel";
 
+import { AuthProvider } from "./context/AuthContext";
+
 export default function App() {
-  const [isLogin, setIsLogin] = useState(true);
-  const { user, initializing, isAuthenticated } =
-    useAuthSessionViewModel();
+  /**
+   * REMOVED:
+   * isLogin state is no longer needed
+   * because React Navigation handles screen routing now
+   */
 
-  const renderBody = () => {
-    if (initializing) {
-      return (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <ActivityIndicator size="large" color="#77B255" />
-          <Text style={{ color: "#666" }}>Loading session...</Text>
-        </View>
-      );
-    }
+  const {
+    user,
+    initializing,
+    isAuthenticated,
+  } = useAuthSessionViewModel();
 
-    if (isAuthenticated) {
-      return (
-        <HomeScreen
-          user={user}
-          onSignOut={signOutUser}
+  const [fontsLoaded] = useFonts({
+    "SFProDisplay-Regular": require("./assets/fonts/SF-Pro-Display-Regular.otf"),
+    "SFProDisplay-Medium": require("./assets/fonts/SF-Pro-Display-Medium.otf"),
+    "SFProDisplay-Semibold": require("./assets/fonts/SF-Pro-Display-Semibold.otf"),
+    "SFProDisplay-Bold": require("./assets/fonts/SF-Pro-Display-Bold.otf"),
+  });
+
+  /**
+   * NEW:
+   * Loading state before app initializes
+   */
+  if (initializing || !fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <ActivityIndicator
+          size="large"
+          color="#FF7A21"
         />
-      );
-    }
 
-    return isLogin ? (
-      <LoginScreen onSwitch={() => setIsLogin(false)} />
-    ) : (
-      <SignupScreen onSwitch={() => setIsLogin(true)} />
+        <Text style={{ color: "#666" }}>
+          Loading application...
+        </Text>
+      </View>
     );
-  };
+  }
 
+  /**
+   * Navigation controls screen rendering
+   */
   return (
     <SafeAreaProvider>
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: "#F5F5F5",
-      }}
-    >
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#F5F5F5"
-      />
-
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <SafeAreaView
+        style={{
+          flex: 1
+        }}
       >
-        {renderBody()}
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <StatusBar
+          barStyle="dark-content"
+        />
+
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={
+            Platform.OS === "ios"
+              ? "padding"
+              : undefined
+          }
+        >
+
+          <NavigationContainer>
+            <AuthProvider>
+              <AppNavigator />
+            </AuthProvider>
+          </NavigationContainer>
+
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </SafeAreaProvider>
   );
 }

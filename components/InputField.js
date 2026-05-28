@@ -6,7 +6,13 @@ import {
   StyleSheet,
 } from "react-native";
 
-import Colors from "../styles/colors";
+// Import your custom design system objects
+import {
+  Colors,
+  Typography,
+  Radius,
+  Spacing,
+} from "../styles/globalDesignSystem";
 
 export default function InputField({
   placeholder,
@@ -23,11 +29,12 @@ export default function InputField({
         active && styles.activeContainer,
       ]}
     >
-      <Text style={styles.icon}>{icon}</Text>
+      {/* Safe check for the icon */}
+      {icon ? <Text style={styles.icon}>{icon}</Text> : null}
 
       <TextInput
         placeholder={placeholder}
-        placeholderTextColor="#9A9AA2"
+        placeholderTextColor={Colors.placeholder}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -39,14 +46,14 @@ export default function InputField({
 
 const styles = StyleSheet.create({
   container: {
-    height: 58,
-    borderRadius: 30,
+    minHeight: 58,
+    borderRadius: Radius.pill,
     backgroundColor: Colors.inputBg,
     borderWidth: 1,
-    borderColor: Colors.inputBorder,
+    borderColor: Colors.border,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: Spacing.md,
   },
 
   activeContainer: {
@@ -56,12 +63,14 @@ const styles = StyleSheet.create({
 
   icon: {
     fontSize: 18,
-    marginRight: 12,
+    marginRight: Spacing.sm,
   },
 
   input: {
     flex: 1,
-    fontSize: 17,
+    // FIX: Extract the font properties properly from the style object
+    fontFamily: Typography.body.fontFamily,
+    fontSize: Typography.body.fontSize,
     color: Colors.text,
   },
 });
