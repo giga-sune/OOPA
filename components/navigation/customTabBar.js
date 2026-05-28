@@ -1,6 +1,5 @@
 import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Feather from '@expo/vector-icons/Feather';
 
 import { Colors } from "../../styles/globalDesignSystem";

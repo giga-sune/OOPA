@@ -17,7 +17,7 @@ export const Colors = {
     border: "#E4E4E7",
   
     //Text Colors
-    text: "#111827",
+    text: "#1A1E25",
     subText: "#7C7C85",
     placeholder: "#9A9AA2",
   

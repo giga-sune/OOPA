@@ -10,6 +10,7 @@ import {
 
 import { Colors, Spacing, Radius } from "../styles/globalDesignSystem";
 import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { signOutUser } from "../services/auth/authService";
 import { useAuth } from "../context/AuthContext";
 
@@ -44,17 +45,17 @@ export default function ProfileScreen() {
       {/* Menu */}
       <View style={styles.card}>
         {[
-          { icon: "person-outline", label: "Account setting" },
-          { icon: "list-outline", label: "My Listing" },
-          { icon: "heart-outline", label: "All Saved" },
-          { icon: "star-outline", label: "Ratings & Reviews" },
-          { icon: "pricetag-outline", label: "Subscriptions" },
-          { icon: "person-add-outline", label: "Invite Friends" },
+          { icon: "user", label: "Account setting" },
+          { icon: "list", label: "My Listing" },
+          { icon: "heart", label: "All Saved" },
+          { icon: "star", label: "Ratings & Reviews" },
+          { icon: "tag", label: "Subscriptions" },
+          { icon: "user-plus", label: "Invite Friends" },
         ].map((item, i) => (
           <TouchableOpacity key={i} style={styles.row}>
-            <Ionicons name={item.icon} size={20} color={Colors.text} />
+            <Feather name={item.icon} size={20} color={Colors.text} />
             <Text style={styles.label}>{item.label}</Text>
-            <Ionicons name="chevron-forward" size={18} color="#9A9AA2" />
+            <Feather name="chevron-right" size={18} color="#9A9AA2" />
           </TouchableOpacity>
         ))}
       </View>
@@ -62,12 +63,12 @@ export default function ProfileScreen() {
       {/* Bottom Actions */}
 
       <TouchableOpacity style={styles.secondary}>
-        <Ionicons name="help-circle-outline" size={20} />
+        <Feather name="help-circle" size={20} />
         <Text style={styles.secondaryText}>Get help</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.logout} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+        <Feather name="log-out" size={20} color="#DC2626" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.menu,
     borderRadius: Radius.lg,
     padding: Spacing.md,
-    gap: 18,
+    gap: 16,
   },
 
   row: {
@@ -127,10 +128,12 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     color: Colors.text,
+    fontWeight: "500",
+    fontSize: 14,
   },
 
   secondary: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     padding: Spacing.md,
     backgroundColor: Colors.menu,
     borderRadius: Radius.lg,
@@ -156,5 +159,7 @@ const styles = StyleSheet.create({
 
   secondaryText: {
     color: Colors.text,
+    fontWeight: "500",
+    fontSize: 14,
   },
 });
