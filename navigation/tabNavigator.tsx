@@ -1,5 +1,5 @@
 import React from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createBottomTabNavigator, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
 
 import HomeScreen from "../screens/HomeScreen";
 import SearchScreen from "../screens/searchScreen";
@@ -8,8 +8,9 @@ import OrdersScreen from "../screens/ordersScreen";
 import ProfileScreen from "../screens/profileScreen";
 
 import CustomTabBar from "../components/navigation/customTabBar";
+import type { TabParamList } from "../types/navigation/navigationTypes";
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 export default function TabNavigator() {
   return (
@@ -17,7 +18,7 @@ export default function TabNavigator() {
       screenOptions={{
         headerShown: false,
       }}
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={(props: BottomTabBarProps) => <CustomTabBar {...props} />}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Search" component={SearchScreen} />

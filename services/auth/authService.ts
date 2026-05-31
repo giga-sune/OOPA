@@ -3,6 +3,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  type User,
 } from "firebase/auth";
 
 import { auth } from "../firebase/firebaseApp";
@@ -10,9 +11,12 @@ import {
   createAuthCredentials,
   createAuthResult,
   createServiceError,
+  type AuthResult,
+  type ServiceError,
 } from "../../types/auth/authTypes";
+import { isRecord, readString } from "../../types/shared/runtimeTypeUtils";
 
-const AUTH_ERROR_MESSAGES = {
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
   "auth/email-already-in-use": "This email is already in use.",
   "auth/invalid-email": "Please enter a valid email address.",
   "auth/invalid-credential": "Email or password is incorrect.",
@@ -22,42 +26,25 @@ const AUTH_ERROR_MESSAGES = {
   "auth/too-many-requests": "Too many attempts. Please try later.",
   "auth/user-disabled": "This user account is disabled.",
   "auth/user-not-found": "No account found for this email.",
-  "auth/weak-password":
-    "Password is too weak. Use at least 6 characters.",
+  "auth/weak-password": "Password is too weak. Use at least 6 characters.",
   "auth/wrong-password": "Email or password is incorrect.",
 };
 
-/**
- * @param {unknown} error
- * @returns {{ code: string, message: string }}
- */
-export function mapAuthError(error) {
-  const code =
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof error.code === "string"
-      ? error.code
-      : "auth/unknown";
+export function mapAuthError(error: unknown): ServiceError {
+  const source = isRecord(error) ? error : {};
+  const code = readString(source.code) ?? "auth/unknown";
 
   return createServiceError({
     code,
-    message:
-      AUTH_ERROR_MESSAGES[code] ??
-      "Something went wrong. Please try again.",
+    message: AUTH_ERROR_MESSAGES[code] ?? "Something went wrong. Please try again.",
   });
 }
 
-/**
- * @param {unknown} credentials
- * @returns {Promise<{ user: import("firebase/auth").User }>}
- */
-export async function signUpWithEmail(credentials) {
+export async function signUpWithEmail(credentials: unknown): Promise<AuthResult> {
   const { email, password } = createAuthCredentials(credentials);
 
   try {
-    const userCredential =
-      await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     return createAuthResult(userCredential.user);
   } catch (error) {
@@ -65,16 +52,11 @@ export async function signUpWithEmail(credentials) {
   }
 }
 
-/**
- * @param {unknown} credentials
- * @returns {Promise<{ user: import("firebase/auth").User }>}
- */
-export async function signInWithEmail(credentials) {
+export async function signInWithEmail(credentials: unknown): Promise<AuthResult> {
   const { email, password } = createAuthCredentials(credentials);
 
   try {
-    const userCredential =
-      await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
     return createAuthResult(userCredential.user);
   } catch (error) {
@@ -82,10 +64,7 @@ export async function signInWithEmail(credentials) {
   }
 }
 
-/**
- * @returns {Promise<void>}
- */
-export async function signOutUser() {
+export async function signOutUser(): Promise<void> {
   try {
     await signOut(auth);
   } catch (error) {
@@ -93,10 +72,8 @@ export async function signOutUser() {
   }
 }
 
-/**
- * @param {(user: import("firebase/auth").User|null) => void} callback
- * @returns {() => void}
- */
-export function subscribeToAuthSession(callback) {
+export function subscribeToAuthSession(
+  callback: (user: User | null) => void
+): () => void {
   return onAuthStateChanged(auth, callback);
 }

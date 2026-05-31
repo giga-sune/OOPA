@@ -1,18 +1,16 @@
 import React from "react";
-import {
-  View,
-  TextInput,
-  Text,
-  StyleSheet,
-} from "react-native";
+import { View, TextInput, Text, StyleSheet } from "react-native";
 
-// Import your custom design system objects
-import {
-  Colors,
-  Typography,
-  Radius,
-  Spacing,
-} from "../styles/globalDesignSystem";
+import { Colors, Typography, Radius, Spacing } from "../styles/globalDesignSystem";
+
+export interface InputFieldProps {
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  secureTextEntry?: boolean;
+  icon?: string;
+  active?: boolean;
+}
 
 export default function InputField({
   placeholder,
@@ -21,15 +19,9 @@ export default function InputField({
   secureTextEntry,
   icon,
   active,
-}) {
+}: InputFieldProps) {
   return (
-    <View
-      style={[
-        styles.container,
-        active && styles.activeContainer,
-      ]}
-    >
-      {/* Safe check for the icon */}
+    <View style={[styles.container, active && styles.activeContainer]}>
       {icon ? <Text style={styles.icon}>{icon}</Text> : null}
 
       <TextInput
@@ -68,7 +60,6 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-    // FIX: Extract the font properties properly from the style object
     fontFamily: Typography.body.fontFamily,
     fontSize: Typography.body.fontSize,
     color: Colors.text,

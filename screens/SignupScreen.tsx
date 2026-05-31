@@ -1,21 +1,16 @@
 import React from "react";
 
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import InputField from "../components/InputField";
-
 import styles from "../styles/authStyles";
-
 import useSignupViewModel from "../viewModels/auth/useSignupViewModel";
+import type { RootStackParamList } from "../types/navigation/navigationTypes";
 
-export default function SignupScreen({
-  navigation,
-}) {
+type SignupScreenProps = NativeStackScreenProps<RootStackParamList, "Signup">;
+
+export default function SignupScreen({ navigation }: SignupScreenProps) {
   const {
     email,
     setEmail,
@@ -35,34 +30,20 @@ export default function SignupScreen({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      {/* CHANGED:
-          Back button now uses navigation.goBack()
-      */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.backIcon}>
-          ‹
-        </Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.backIcon}>‹</Text>
       </TouchableOpacity>
 
       <View style={styles.header}>
-        <Text style={styles.title}>
-          Let’s explore together!
-        </Text>
+        <Text style={styles.title}>Let’s explore together!</Text>
 
         <Text style={styles.subtitle}>
-          Create your OOPA account to
-          explore rental items and complete
-          your everyday hobbies.
+          Create your OOPA account to explore rental items and complete your everyday hobbies.
         </Text>
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>
-          Email
-        </Text>
+        <Text style={styles.label}>Email</Text>
 
         <InputField
           placeholder="Enter your email"
@@ -82,9 +63,7 @@ export default function SignupScreen({
           </Text>
         )}
 
-        <Text style={styles.label}>
-          Password
-        </Text>
+        <Text style={styles.label}>Password</Text>
 
         <InputField
           placeholder="Insert your password here"
@@ -104,9 +83,7 @@ export default function SignupScreen({
           </Text>
         )}
 
-        <Text style={styles.label}>
-          Confirm Password
-        </Text>
+        <Text style={styles.label}>Confirm Password</Text>
 
         <InputField
           placeholder="Re-enter your password here"
@@ -138,17 +115,12 @@ export default function SignupScreen({
         )}
 
         <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            loading && { opacity: 0.7 },
-          ]}
+          style={[styles.primaryButton, loading && { opacity: 0.7 }]}
           onPress={onSubmit}
           disabled={loading}
         >
           <Text style={styles.primaryButtonText}>
-            {loading
-              ? "Creating Account..."
-              : "Create Account"}
+            {loading ? "Creating Account..." : "Create Account"}
           </Text>
         </TouchableOpacity>
       </View>

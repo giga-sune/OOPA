@@ -1,31 +1,20 @@
-import {
-  doc,
-  getDoc,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
 import { db } from "../firebase/firebaseApp";
 import {
   createAppUserProfile,
   createAppUserProfilePatch,
+  type AppUserProfile,
+  type AppUserProfilePatch,
 } from "../../types/user/userTypes";
 
 const USERS_COLLECTION = "users";
 
-/**
- * @param {string} uid
- */
-function getUserDocRef(uid) {
+function getUserDocRef(uid: string) {
   return doc(db, USERS_COLLECTION, uid);
 }
 
-/**
- * @param {unknown} userProfile
- * @returns {Promise<ReturnType<typeof createAppUserProfile>>}
- */
-export async function createUserProfile(userProfile) {
+export async function createUserProfile(userProfile: unknown): Promise<AppUserProfile> {
   const payload = createAppUserProfile(userProfile, {
     createdAtFallback: serverTimestamp(),
     updatedAtFallback: serverTimestamp(),
@@ -35,11 +24,7 @@ export async function createUserProfile(userProfile) {
   return payload;
 }
 
-/**
- * @param {string} uid
- * @returns {Promise<ReturnType<typeof createAppUserProfile>|null>}
- */
-export async function getUserProfile(uid) {
+export async function getUserProfile(uid: string): Promise<AppUserProfile | null> {
   const snapshot = await getDoc(getUserDocRef(uid));
 
   if (!snapshot.exists()) {
@@ -49,13 +34,8 @@ export async function getUserProfile(uid) {
   return createAppUserProfile(snapshot.data());
 }
 
-/**
- * @param {string} uid
- * @param {unknown} patch
- * @returns {Promise<void>}
- */
-export async function updateUserProfile(uid, patch) {
-  const normalizedPatch = createAppUserProfilePatch(patch);
+export async function updateUserProfile(uid: string, patch: unknown): Promise<void> {
+  const normalizedPatch: AppUserProfilePatch = createAppUserProfilePatch(patch);
 
   const updatePayload = {
     ...normalizedPatch,

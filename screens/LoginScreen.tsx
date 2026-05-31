@@ -1,29 +1,18 @@
 import React from "react";
 
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import InputField from "../components/InputField";
 import styles from "../styles/authStyles";
-
 import useLoginViewModel from "../viewModels/auth/useLoginViewModel";
+import type { RootStackParamList } from "../types/navigation/navigationTypes";
 
-export default function LoginScreen({
-  navigation,
-}) {
-  const {
-    email,
-    setEmail,
-    password,
-    setPassword,
-    onSubmit,
-    loading,
-    error,
-  } = useLoginViewModel();
+type LoginScreenProps = NativeStackScreenProps<RootStackParamList, "Login">;
+
+export default function LoginScreen({ navigation }: LoginScreenProps) {
+  const { email, setEmail, password, setPassword, onSubmit, loading, error } =
+    useLoginViewModel();
 
   return (
     <ScrollView
@@ -32,23 +21,18 @@ export default function LoginScreen({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>
-          Bonjour!
-        </Text>
+        <Text style={styles.title}>Bonjour!</Text>
 
         <View style={{ width: "80%" }}>
           <Text style={styles.subtitle}>
-            Log In to your OOPA account to
-            get the best gadgets and items
-            at the cheapest rental rates
+            Log In to your OOPA account to get the best gadgets and items at the cheapest rental
+            rates
           </Text>
         </View>
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>
-          Email
-        </Text>
+        <Text style={styles.label}>Email</Text>
 
         <InputField
           placeholder="Enter your email"
@@ -57,9 +41,7 @@ export default function LoginScreen({
           active={email.length > 0}
         />
 
-        <Text style={styles.label}>
-          Password
-        </Text>
+        <Text style={styles.label}>Password</Text>
 
         <InputField
           placeholder="Insert your password here"
@@ -80,18 +62,11 @@ export default function LoginScreen({
         )}
 
         <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            loading && { opacity: 0.7 },
-          ]}
+          style={[styles.primaryButton, loading && { opacity: 0.7 }]}
           onPress={onSubmit}
           disabled={loading}
         >
-          <Text style={styles.primaryButtonText}>
-            {loading
-              ? "Logging in..."
-              : "Log in"}
-          </Text>
+          <Text style={styles.primaryButtonText}>{loading ? "Logging in..." : "Log in"}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity>
@@ -105,18 +80,8 @@ export default function LoginScreen({
           </Text>
         </TouchableOpacity>
 
-        {/* CHANGED:
-            Uses React Navigation now
-        */}
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() =>
-            navigation.navigate("Signup")
-          }
-        >
-          <Text style={styles.secondaryButtonText}>
-            Create a new account
-          </Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Signup")}>
+          <Text style={styles.secondaryButtonText}>Create a new account</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

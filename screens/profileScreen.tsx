@@ -1,29 +1,32 @@
 import React from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
 import { Colors, Spacing, Radius } from "../styles/globalDesignSystem";
-import { Ionicons } from "@expo/vector-icons";
-import { Feather } from "@expo/vector-icons";
 import { signOutUser } from "../services/auth/authService";
 import { useAuth } from "../context/AuthContext";
 
-export default function ProfileScreen() {
-    const { user } = useAuth();
+type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
-    const handleLogout = async () => {
-        try {
-          await signOutUser();
-        } catch (error) {
-          console.log(error);
-        }
-      };
+const MENU_ITEMS: Array<{ icon: FeatherIconName; label: string }> = [
+  { icon: "user", label: "Account setting" },
+  { icon: "list", label: "My Listing" },
+  { icon: "heart", label: "All Saved" },
+  { icon: "star", label: "Ratings & Reviews" },
+  { icon: "tag", label: "Subscriptions" },
+  { icon: "user-plus", label: "Invite Friends" },
+];
+
+export default function ProfileScreen() {
+  const { user } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOutUser();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <ScrollView
@@ -31,27 +34,15 @@ export default function ProfileScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
       <View style={styles.header}>
-        <Image
-          source={{ uri: "https://i.pravatar.cc/300" }}
-          style={styles.avatar}
-        />
+        <Image source={{ uri: "https://i.pravatar.cc/300" }} style={styles.avatar} />
 
         <Text style={styles.name}>Lucy Bond</Text>
         <Text style={styles.email}>{user?.email ?? "no email available"}</Text>
       </View>
 
-      {/* Menu */}
       <View style={styles.card}>
-        {[
-          { icon: "user", label: "Account setting" },
-          { icon: "list", label: "My Listing" },
-          { icon: "heart", label: "All Saved" },
-          { icon: "star", label: "Ratings & Reviews" },
-          { icon: "tag", label: "Subscriptions" },
-          { icon: "user-plus", label: "Invite Friends" },
-        ].map((item, i) => (
+        {MENU_ITEMS.map((item, i) => (
           <TouchableOpacity key={i} style={styles.row}>
             <Feather name={item.icon} size={20} color={Colors.text} />
             <Text style={styles.label}>{item.label}</Text>
@@ -59,8 +50,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         ))}
       </View>
-
-      {/* Bottom Actions */}
 
       <TouchableOpacity style={styles.secondary}>
         <Feather name="help-circle" size={20} />

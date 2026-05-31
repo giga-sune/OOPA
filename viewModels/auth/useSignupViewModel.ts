@@ -1,13 +1,42 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 
 import { signUpWithEmail } from "../../services/auth/authService";
 import { createUserProfile } from "../../services/firestore/userService";
 import { createSignupInput } from "../../types/auth/authTypes";
+import { readErrorMessage } from "../../types/shared/runtimeTypeUtils";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
-function validateSignupFields({ email, password, confirmPassword }) {
-  const fieldErrors = {
+export interface SignupFieldErrors {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface SignupViewModelResult {
+  email: string;
+  setEmail: Dispatch<SetStateAction<string>>;
+  password: string;
+  setPassword: Dispatch<SetStateAction<string>>;
+  confirmPassword: string;
+  setConfirmPassword: Dispatch<SetStateAction<string>>;
+  onSubmit: () => Promise<boolean>;
+  loading: boolean;
+  error: string;
+  fieldErrors: SignupFieldErrors;
+  hasFieldErrors: boolean;
+}
+
+function validateSignupFields({
+  email,
+  password,
+  confirmPassword,
+}: {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}): SignupFieldErrors {
+  const fieldErrors: SignupFieldErrors = {
     email: "",
     password: "",
     confirmPassword: "",
@@ -34,14 +63,13 @@ function validateSignupFields({ email, password, confirmPassword }) {
   return fieldErrors;
 }
 
-export default function useSignupViewModel() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({
+export default function useSignupViewModel(): SignupViewModelResult {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({
     email: "",
     password: "",
     confirmPassword: "",
@@ -51,7 +79,7 @@ export default function useSignupViewModel() {
     return Object.values(fieldErrors).some(Boolean);
   }, [fieldErrors]);
 
-  const onSubmit = async () => {
+  const onSubmit = async (): Promise<boolean> => {
     const nextFieldErrors = validateSignupFields({
       email,
       password,
@@ -86,10 +114,7 @@ export default function useSignupViewModel() {
 
       return true;
     } catch (serviceError) {
-      setError(
-        serviceError?.message ??
-          "Could not create your account. Please try again."
-      );
+      setError(readErrorMessage(serviceError, "Could not create your account. Please try again."));
       return false;
     } finally {
       setLoading(false);

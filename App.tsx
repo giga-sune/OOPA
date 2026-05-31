@@ -20,7 +20,9 @@ import { NavigationContainer } from "@react-navigation/native";
 
 import AppNavigator from "./navigation/appNavigator";
 
-import useAuthSessionViewModel from "./viewModels/auth/useAuthSessionViewModel";
+import useAuthSessionViewModel, {
+  type AuthSessionViewModel,
+} from "./viewModels/auth/useAuthSessionViewModel";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -35,7 +37,7 @@ export default function App() {
     user,
     initializing,
     isAuthenticated,
-  } = useAuthSessionViewModel();
+  }: AuthSessionViewModel = useAuthSessionViewModel();
 
   const [fontsLoaded] = useFonts({
     "SFProDisplay-Regular": require("./assets/fonts/SF-Pro-Display-Regular.otf"),

@@ -1,19 +1,17 @@
-import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import type { User } from "firebase/auth";
 
-export default function HomeScreen({ user, onSignOut }) {
+interface HomeScreenProps {
+  user?: User | null;
+  onSignOut?: () => void;
+}
 
+export default function HomeScreen({ user, onSignOut }: HomeScreenProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>OOPA</Text>
-      <Text style={styles.subtitle}>
-        {user?.email ?? "Welcome"}
-      </Text>
-
+      <Text style={styles.subtitle}>{user?.email ?? "Welcome"}</Text>
     </View>
   );
 }
@@ -21,8 +19,8 @@ export default function HomeScreen({ user, onSignOut }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#fff",
     padding: 24,
   },
