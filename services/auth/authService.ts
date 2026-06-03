@@ -8,13 +8,10 @@ import {
 
 import { auth } from "../firebase/firebaseApp";
 import {
-  createAuthCredentials,
-  createAuthResult,
-  createServiceError,
+  type AuthCredentials,
   type AuthResult,
   type ServiceError,
 } from "../../types/auth/authTypes";
-import { isRecord, readString } from "../../types/shared/runtimeTypeUtils";
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   "auth/email-already-in-use": "This email is already in use.",
@@ -31,34 +28,41 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 };
 
 export function mapAuthError(error: unknown): ServiceError {
-  const source = isRecord(error) ? error : {};
-  const code = readString(source.code) ?? "auth/unknown";
+  let code = "auth/unknown";
 
-  return createServiceError({
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const maybeCode = (error as { code?: unknown }).code;
+
+    if (typeof maybeCode === "string" && maybeCode) {
+      code = maybeCode;
+    }
+  }
+
+  return {
     code,
     message: AUTH_ERROR_MESSAGES[code] ?? "Something went wrong. Please try again.",
-  });
+  };
 }
 
-export async function signUpWithEmail(credentials: unknown): Promise<AuthResult> {
-  const { email, password } = createAuthCredentials(credentials);
+export async function signUpWithEmail(credentials: AuthCredentials): Promise<AuthResult> {
+  const { email, password } = credentials;
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-    return createAuthResult(userCredential.user);
+    return { user: userCredential.user };
   } catch (error) {
     throw mapAuthError(error);
   }
 }
 
-export async function signInWithEmail(credentials: unknown): Promise<AuthResult> {
-  const { email, password } = createAuthCredentials(credentials);
+export async function signInWithEmail(credentials: AuthCredentials): Promise<AuthResult> {
+  const { email, password } = credentials;
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-    return createAuthResult(userCredential.user);
+    return { user: userCredential.user };
   } catch (error) {
     throw mapAuthError(error);
   }

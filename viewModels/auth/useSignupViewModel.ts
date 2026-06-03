@@ -2,10 +2,23 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 
 import { signUpWithEmail } from "../../services/auth/authService";
 import { createUserProfile } from "../../services/firestore/userService";
-import { createSignupInput } from "../../types/auth/authTypes";
-import { readErrorMessage } from "../../types/shared/runtimeTypeUtils";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message) {
+      return message;
+    }
+  }
+
+  return fallback;
+}
 
 export interface SignupFieldErrors {
   email: string;
@@ -96,25 +109,24 @@ export default function useSignupViewModel(): SignupViewModelResult {
     setLoading(true);
 
     try {
-      const signupInput = createSignupInput({
-        email,
+      const result = await signUpWithEmail({
+        email: email.trim(),
         password,
-        confirmPassword,
       });
-
-      const result = await signUpWithEmail(signupInput);
 
       await createUserProfile({
         uid: result.user.uid,
-        email: result.user.email ?? signupInput.email,
-        displayName: result.user.displayName ?? null,
+        email: result.user.email ?? email.trim(),
+        userName: result.user.displayName ?? null,
         photoURL: result.user.photoURL ?? null,
         phone: result.user.phoneNumber ?? null,
       });
 
       return true;
     } catch (serviceError) {
-      setError(readErrorMessage(serviceError, "Could not create your account. Please try again."));
+      setError(
+        getErrorMessage(serviceError, "Could not create your account. Please try again.")
+      );
       return false;
     } finally {
       setLoading(false);
