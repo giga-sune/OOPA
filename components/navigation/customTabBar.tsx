@@ -1,9 +1,8 @@
-import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, TouchableOpacity, Text, StyleSheet, Keyboard, Animated, Platform } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { TabParamList } from "../../types/navigation/navigationTypes";
-
 import { Colors } from "../../styles/globalDesignSystem";
 
 type IconName = React.ComponentProps<typeof Feather>["name"];
@@ -17,21 +16,60 @@ const icons: Record<keyof TabParamList, IconName> = {
 };
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+  // Animated value controlling the vertical translation (Y-axis offset)
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Determine the correct platform events for natural timing
+    // iOS has specific "will" events that fire right as the animation starts
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const keyboardShowListener = Keyboard.addListener(showEvent, (e) => {
+      Animated.timing(slideAnim, {
+        toValue: 100, // Slides completely down below the viewport bounds
+        duration: e ? e.duration : 250, // Matches the keyboard's sliding duration perfectly
+        useNativeDriver: true, // Uses native OS thread for 60fps stutter-free animation
+      }).start();
+    });
+
+    const keyboardHideListener = Keyboard.addListener(hideEvent, (e) => {
+      Animated.timing(slideAnim, {
+        toValue: 0, // Slides back up to its natural resting place
+        duration: e ? e.duration : 250,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, [slideAnim]);
+
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          transform: [{ translateY: slideAnim }],
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+        },
+      ]}
+    >
       {state.routes.map((route) => {
         const isFocused = state.index === state.routes.indexOf(route);
         const label = route.name as keyof TabParamList;
-
         const isPost = label === "Post";
 
         const onPress = () => {
-          const event = navigation.emit(
-            {
-              type: "tabPress",
-              target: route.key,
-            } as never
-          ) as { defaultPrevented?: boolean };
+          const event = navigation.emit({
+            type: "tabPress",
+            target: route.key,
+          } as never) as { defaultPrevented?: boolean };
 
           if (!isFocused && !event.defaultPrevented) {
             navigation.navigate(route.name);
@@ -74,7 +112,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           </TouchableOpacity>
         );
       })}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -83,11 +121,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: Colors.white,
     paddingVertical: 12,
-    paddingBottom: 4,
     borderTopWidth: 1,
     borderColor: Colors.border,
   },
-
   tab: {
     flex: 1,
     alignItems: "center",

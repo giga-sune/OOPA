@@ -35,7 +35,11 @@ export default function ProfileScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <Image source={{ uri: "https://i.pravatar.cc/300" }} style={styles.avatar} />
+      <Image 
+          source={{ uri: "https://images.unsplash.com/photo-1544005313-94ddf0286df2" }} 
+          style={styles.avatar} 
+          resizeMode="cover"
+        />
 
         <Text style={styles.name}>Lucy Bond</Text>
         <Text style={styles.email}>{user?.email ?? "no email available"}</Text>
@@ -72,7 +76,8 @@ const styles = StyleSheet.create({
 
   content: {
     padding: Spacing.lg,
-    paddingBottom: 40,
+    paddingTop: Spacing.xl,
+    paddingBottom: 100,
   },
 
   header: {
