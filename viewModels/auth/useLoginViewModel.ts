@@ -1,10 +1,23 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 
 import { signInWithEmail } from "../../services/auth/authService";
-import { createAuthCredentials } from "../../types/auth/authTypes";
-import { readErrorMessage } from "../../types/shared/runtimeTypeUtils";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message) {
+      return message;
+    }
+  }
+
+  return fallback;
+}
 
 export interface LoginViewModelResult {
   email: string;
@@ -43,11 +56,13 @@ export default function useLoginViewModel(): LoginViewModelResult {
     setLoading(true);
 
     try {
-      const credentials = createAuthCredentials({ email, password });
-      await signInWithEmail(credentials);
+      await signInWithEmail({
+        email: email.trim(),
+        password,
+      });
       return true;
     } catch (serviceError) {
-      setError(readErrorMessage(serviceError, "Could not sign in. Please try again."));
+      setError(getErrorMessage(serviceError, "Could not sign in. Please try again."));
       return false;
     } finally {
       setLoading(false);
