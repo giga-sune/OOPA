@@ -21,12 +21,15 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 export interface SignupFieldErrors {
+  userName: string;
   email: string;
   password: string;
   confirmPassword: string;
 }
 
 export interface SignupViewModelResult {
+  userName: string;
+  setUserName: Dispatch<SetStateAction<string>>;
   email: string;
   setEmail: Dispatch<SetStateAction<string>>;
   password: string;
@@ -41,19 +44,28 @@ export interface SignupViewModelResult {
 }
 
 function validateSignupFields({
+  userName,
   email,
   password,
   confirmPassword,
 }: {
+  userName: string;
   email: string;
   password: string;
   confirmPassword: string;
 }): SignupFieldErrors {
   const fieldErrors: SignupFieldErrors = {
+    userName: "",
     email: "",
     password: "",
     confirmPassword: "",
   };
+
+  if (!userName.trim()) {
+    fieldErrors.userName = "Username is required.";
+  } else if (userName.trim().length < 3) {
+    fieldErrors.userName = "Username must be at least 3 characters.";
+  }
 
   if (!email.trim()) {
     fieldErrors.email = "Email is required.";
@@ -77,12 +89,14 @@ function validateSignupFields({
 }
 
 export default function useSignupViewModel(): SignupViewModelResult {
+  const [userName, setUserName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({
+    userName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -94,6 +108,7 @@ export default function useSignupViewModel(): SignupViewModelResult {
 
   const onSubmit = async (): Promise<boolean> => {
     const nextFieldErrors = validateSignupFields({
+      userName,
       email,
       password,
       confirmPassword,
@@ -117,7 +132,7 @@ export default function useSignupViewModel(): SignupViewModelResult {
       await createUserProfile({
         uid: result.user.uid,
         email: result.user.email ?? email.trim(),
-        userName: result.user.displayName ?? null,
+        userName: userName.trim(),
         photoURL: result.user.photoURL ?? null,
         phone: result.user.phoneNumber ?? null,
       });
@@ -134,6 +149,8 @@ export default function useSignupViewModel(): SignupViewModelResult {
   };
 
   return {
+    userName,
+    setUserName,
     email,
     setEmail,
     password,

@@ -12,6 +12,8 @@ type SignupScreenProps = NativeStackScreenProps<RootStackParamList, "Signup">;
 
 export default function SignupScreen({ navigation }: SignupScreenProps) {
   const {
+    userName,
+    setUserName,
     email,
     setEmail,
     password,
@@ -43,8 +45,21 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
 
+      <Text style={styles.label}>Username</Text>
+        <InputField
+          placeholder="Enter your username"
+          value={userName}
+          onChangeText={setUserName}
+          active={userName.length > 0}
+        />
+        {!!fieldErrors.userName && (
+          <Text style={{ color: "#DC2626", marginTop: -10 }}>
+            {fieldErrors.userName}
+          </Text>
+        )}
+
+        <Text style={styles.label}>Email</Text>
         <InputField
           placeholder="Enter your email"
           value={email}
@@ -66,7 +81,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
         <Text style={styles.label}>Password</Text>
 
         <InputField
-          placeholder="Insert your password here"
+          placeholder="Enter your password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry

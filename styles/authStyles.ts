@@ -10,19 +10,19 @@ import {
 export default StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.white,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
   },
 
   backButton: {
-    marginBottom: Spacing.xl,
-    width: 32,
+    marginBottom: Spacing.sm,
+    width: 40,
   },
 
   backIcon: {
-    ...Typography.h2, // Unpacks all h2 font details
+    ...Typography.h2,
     color: Colors.text,
     fontWeight: "300",
   },
@@ -32,13 +32,13 @@ export default StyleSheet.create({
   },
 
   title: {
-    ...Typography.h1, // Unpacks all h1 font details
+    ...Typography.h1,
     color: Colors.text,
     marginBottom: Spacing.sm,
   },
 
   subtitle: {
-    ...Typography.body, // Unpacks all body font details
+    ...Typography.body,
     color: Colors.subText,
   },
 
@@ -47,7 +47,7 @@ export default StyleSheet.create({
   },
 
   label: {
-    ...Typography.label, // Unpacks all label font details
+    ...Typography.label,
     color: Colors.text,
     marginBottom: -8,
   },
@@ -59,12 +59,12 @@ export default StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: Spacing.sm,
-    ...Shadows.primary, // Unpacks all shadow properties
+    ...Shadows.primary,
   },
 
   primaryButtonText: {
     color: Colors.white,
-    ...Typography.button, // Unpacks all button font details
+    ...Typography.button,
   },
 
   secondaryButton: {
@@ -79,7 +79,8 @@ export default StyleSheet.create({
   },
 
   secondaryButtonText: {
-    ...Typography.body, // Unpacks all body font details
+    ...Typography.body,
     color: "#475569",
   },
+
 });

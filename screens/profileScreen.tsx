@@ -1,10 +1,12 @@
-import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 import { Colors, Spacing, Radius } from "../styles/globalDesignSystem";
 import { signOutUser } from "../services/auth/authService";
+import { getUserProfile } from "../services/firestore/userService";
 import { useAuth } from "../context/AuthContext";
+import type { AppUserProfile } from "../types/user/userTypes";
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
@@ -19,14 +21,41 @@ const MENU_ITEMS: Array<{ icon: FeatherIconName; label: string }> = [
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const [profileData, setProfileData] = useState<AppUserProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const handleLogout = async () => {
-    try {
-      await signOutUser();
-    } catch (error) {
-      console.log(error);
+// Fetch custom Firestore Profile information containing the chosen userName
+useEffect(() => {
+  async function loadUserProfile() {
+    if (user?.uid) {
+      try {
+        const data = await getUserProfile(user.uid);
+        setProfileData(data);
+      } catch (error) {
+        console.log("Error loading profile layout details:", error);
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+  }
+  void loadUserProfile();
+}, [user]);
+
+const handleLogout = async () => {
+  try {
+    await signOutUser();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+if (loading) {
+  return (
+    <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <ActivityIndicator size="small" color={Colors.primary} />
+    </View>
+  );
+}
 
   return (
     <ScrollView
@@ -36,12 +65,12 @@ export default function ProfileScreen() {
     >
       <View style={styles.header}>
       <Image 
-          source={{ uri: "https://images.unsplash.com/photo-1544005313-94ddf0286df2" }} 
+          source={{ uri: profileData?.photoURL ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2" }}
           style={styles.avatar} 
           resizeMode="cover"
         />
 
-        <Text style={styles.name}>Lucy Bond</Text>
+        <Text style={styles.name}>{profileData?.userName ?? "OOPA User"}</Text>
         <Text style={styles.email}>{user?.email ?? "no email available"}</Text>
       </View>
 
