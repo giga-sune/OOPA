@@ -5,8 +5,10 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 import { useAuth } from "../context/AuthContext";
 import InputField from "../components/InputField";
@@ -16,6 +18,7 @@ import usePropertyViewModel from "../viewModels/property/usePropertyViewModel";
 type ConditionType = "Like new" | "Good" | "Used";
 
 export default function PostScreen() {
+  const navigation = useNavigation<any>();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [brand, setBrand] = useState("");
@@ -24,28 +27,64 @@ export default function PostScreen() {
   const [showConditionDropdown, setShowConditionDropdown] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [price, setPrice] = useState("");
-
   const conditionOptions: ConditionType[] = ["Like new", "Good", "Used"];
   const { user } = useAuth();
   const { publishProperty, loading, error } = usePropertyViewModel();
 
   const handlePublish = async () => {
     if (!user) {
+      Alert.alert("Authentication Required", "Please log in to publish an item.");
       return;
     }
 
-    await publishProperty({
-      ownerUid: user.uid,
-      ownerEmail: user.email,
-      ownerDisplayName: user.displayName ?? null,
-      ownerPhotoURL: user.photoURL ?? null,
-      title,
-      description,
-      brand,
-      condition,
-      priceType,
-      price: Number(price),
-    });
+    // Validation fallback before calling the API
+    if (!title || !description || !price || !condition) {
+      Alert.alert("Missing Fields", "Please populate all fields before publishing.");
+      return;
+    }
+
+    try {
+      // Execute firestore publishing service
+      await publishProperty({
+        ownerUid: user.uid,
+        ownerEmail: user.email,
+        ownerDisplayName: user.displayName ?? null,
+        ownerPhotoURL: user.photoURL ?? null,
+        title,
+        description,
+        brand,
+        condition,
+        priceType,
+        price: Number(price),
+      });
+
+      //Success Alert and Redirection
+      Alert.alert(
+        "Success!",
+        "Your item has been successfully published.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setTitle("");
+              setDescription("");
+              setBrand("");
+              setCondition(null);
+              setPrice("");
+              
+              navigation.navigate("Home");
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    } catch (err: any) {
+      //Catch block fallback error handling
+      Alert.alert(
+        "Publishing Failed",
+        err?.message || "An unexpected error occurred while saving your item. Please try again."
+      );
+    }
   };
 
   return (
@@ -198,23 +237,26 @@ export default function PostScreen() {
 
         {/* Publish Button */}
         <TouchableOpacity
-          style={styles.publishButton}
+          style={[styles.publishButton, loading && { opacity: 0.7 }]}
           activeOpacity={0.8}
           disabled={loading}
           onPress={() => {
             void handlePublish();
           }}
         >
-          <Text style={styles.publishButtonText}>Publish</Text>
+          <Text style={styles.publishButtonText}>
+            {loading ? "Publishing..." : "Publish"}
+          </Text>
         </TouchableOpacity>
 
+        {/* Displays Viewmodel errors if caught reactively */}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
 
       </View>
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

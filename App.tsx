@@ -27,11 +27,6 @@ import useAuthSessionViewModel, {
 import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
-  /**
-   * REMOVED:
-   * isLogin state is no longer needed
-   * because React Navigation handles screen routing now
-   */
 
   const {
     user,
@@ -46,10 +41,6 @@ export default function App() {
     "SFProDisplay-Bold": require("./assets/fonts/SF-Pro-Display-Bold.otf"),
   });
 
-  /**
-   * NEW:
-   * Loading state before app initializes
-   */
   if (initializing || !fontsLoaded) {
     return (
       <View
