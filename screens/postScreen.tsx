@@ -8,8 +8,10 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
+import { useAuth } from "../context/AuthContext";
 import InputField from "../components/InputField";
 import { Colors, Typography, Radius, Spacing, Shadows } from "../styles/globalDesignSystem";
+import usePropertyViewModel from "../viewModels/property/usePropertyViewModel";
 
 type ConditionType = "Like new" | "Good" | "Used";
 
@@ -17,16 +19,34 @@ export default function PostScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [brand, setBrand] = useState("");
-  const [price, setPrice] = useState("");
   const [priceType, setPriceType] = useState<"Fixed" | "Flexible">("Fixed");
-  
-  // Condition states
   const [condition, setCondition] = useState<ConditionType | null>(null);
   const [showConditionDropdown, setShowConditionDropdown] = useState(false);
-
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [price, setPrice] = useState("");
 
   const conditionOptions: ConditionType[] = ["Like new", "Good", "Used"];
+  const { user } = useAuth();
+  const { publishProperty, loading, error } = usePropertyViewModel();
+
+  const handlePublish = async () => {
+    if (!user) {
+      return;
+    }
+
+    await publishProperty({
+      ownerUid: user.uid,
+      ownerEmail: user.email,
+      ownerDisplayName: user.displayName ?? null,
+      ownerPhotoURL: user.photoURL ?? null,
+      title,
+      description,
+      brand,
+      condition,
+      priceType,
+      price: Number(price),
+    });
+  };
 
   return (
     <ScrollView
@@ -177,9 +197,18 @@ export default function PostScreen() {
         </View>
 
         {/* Publish Button */}
-        <TouchableOpacity style={styles.publishButton} activeOpacity={0.8} onPress={() => {}}>
+        <TouchableOpacity
+          style={styles.publishButton}
+          activeOpacity={0.8}
+          disabled={loading}
+          onPress={() => {
+            void handlePublish();
+          }}
+        >
           <Text style={styles.publishButtonText}>Publish</Text>
         </TouchableOpacity>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
 
       </View>
@@ -336,5 +365,11 @@ const styles = StyleSheet.create({
   publishButtonText: {
     color: Colors.white,
     ...Typography.button,
+  },
+  errorText: {
+    color: "#DC2626",
+    ...Typography.bodySmall,
+    textAlign: "center",
+    marginTop: Spacing.xs,
   },
 });
