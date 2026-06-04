@@ -1,8 +1,8 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import LoginScreen from "../screens/LoginScreen";
-import SignupScreen from "../screens/SignupScreen";
+import LoginScreen from "../screens/loginScreen";
+import SignupScreen from "../screens/signupScreen";
 import TabNavigator from "./tabNavigator";
 
 import { useAuth } from "../context/AuthContext";

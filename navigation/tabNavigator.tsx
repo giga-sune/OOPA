@@ -1,7 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
 
-import HomeScreen from "../screens/HomeScreen";
+import HomeScreen from "../screens/homeScreen";
 import SearchScreen from "../screens/searchScreen";
 import PostScreen from "../screens/postScreen";
 import OrdersScreen from "../screens/ordersScreen";
