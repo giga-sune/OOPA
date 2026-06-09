@@ -56,6 +56,9 @@ function readProperty(data: DocumentData, id: string): Property {
       ? data.priceType
       : "Fixed",
     price: typeof data.price === "number" ? data.price : Number(data.price) || 0,
+    ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" 
+      ? data.ratePeriod 
+      : "month",
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };
