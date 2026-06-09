@@ -2,6 +2,12 @@ export type PropertyCondition = "Like new" | "Good" | "Used";
 export type PropertyPriceType = "Fixed" | "Flexible";
 export type PropertyRatePeriod = "week" | "month";
 
+export interface LocationData {
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface Property {
   id: string;
   ownerUid: string;
@@ -16,6 +22,7 @@ export interface Property {
   priceType: PropertyPriceType;
   price: number;
   ratePeriod: PropertyRatePeriod;
+  location: LocationData | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +40,7 @@ export interface CreatePropertyInput {
   priceType: PropertyPriceType;
   price: number;
   ratePeriod: PropertyRatePeriod;
+  location: LocationData | null;
 }
 
 export interface UpdatePropertyInput {
@@ -44,4 +52,5 @@ export interface UpdatePropertyInput {
   priceType?: PropertyPriceType;
   price?: number;
   ratePeriod?: PropertyRatePeriod;
+  location?: LocationData;
 }

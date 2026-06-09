@@ -44,7 +44,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         <Text style={styles.label}>Password</Text>
 
         <InputField
-          placeholder="Insert your password here"
+          placeholder="Enter here"
           value={password}
           onChangeText={setPassword}
           secureTextEntry

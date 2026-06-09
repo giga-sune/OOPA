@@ -14,6 +14,7 @@ import type {
   CreatePropertyInput,
   Property,
   UpdatePropertyInput,
+  LocationData,
 } from "../../types/property/propertyTypes";
 
 const PROPERTIES_COLLECTION = "properties";
@@ -38,6 +39,25 @@ function readImages(value: unknown, fallbackImageUri: unknown): string[] {
   return [];
 }
 
+// Safely parses nested location structure data objects out from database entries
+function readLocation(locationData: unknown): LocationData | null {
+  if (locationData && typeof locationData === "object") {
+    const loc = locationData as Record<string, unknown>;
+    if (
+      typeof loc.address === "string" &&
+      typeof loc.latitude === "number" &&
+      typeof loc.longitude === "number"
+    ) {
+      return {
+        address: loc.address,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+      };
+    }
+  }
+  return null;
+}
+
 function readProperty(data: DocumentData, id: string): Property {
   return {
     id,
@@ -59,6 +79,7 @@ function readProperty(data: DocumentData, id: string): Property {
     ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" 
       ? data.ratePeriod 
       : "month",
+    location: readLocation(data.location), //Returns parsed location object or null for older data.
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };

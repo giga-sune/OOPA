@@ -16,11 +16,13 @@ import InputField from "../components/InputField";
 import { Colors, Typography, Radius, Spacing, Shadows } from "../styles/globalDesignSystem";
 import usePropertyViewModel from "../viewModels/property/usePropertyViewModel";
 
+import { MapLocationModal } from "../components/location/MapLocationModal";
+
 type ConditionType = "Like new" | "Good" | "Used";
 type RatePeriodType = "week" | "month";
 
 const { width } = Dimensions.get("window");
-// Handles responsive spacing calculations for exactly 4 columns layout grids across device windows
+
 const CONTAINER_PADDING = Spacing.lg;
 const GRID_GAP = 12;
 const TOTAL_GAPS_WIDTH = GRID_GAP * 3;
@@ -32,7 +34,9 @@ export default function PostScreen() {
   const [showConditionDropdown, setShowConditionDropdown] = useState(false);
   const [showRateDropdown, setShowRateDropdown] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  
+
+  const [showMapModal, setShowMapModal] = useState(false);
+
   const conditionOptions: ConditionType[] = ["Like new", "Good", "Used"];
   const rateOptions: RatePeriodType[] = ["week", "month"];
 
@@ -54,12 +58,19 @@ export default function PostScreen() {
     selectedImages,
     pickImage,
     removeImage,
+    location,
+    setLocation,
     submitProperty,
     loading,
     error,
   } = usePropertyViewModel();
 
   const handlePublish = async () => {
+    if (!location) {
+      Alert.alert("Missing Location", "Please pinpoint your preferred meetup location prior to publishing.");
+      return;
+    }
+
     const wasSuccessful = await submitProperty();
 
     if (wasSuccessful) {
@@ -110,7 +121,6 @@ export default function PostScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Existing file selection loop blocks mapping circular dismiss badges */}
         {selectedImages.map((uri, index) => (
           <View key={uri + index} style={[styles.tileItem, { width: SQUARE_SIZE, height: SQUARE_SIZE }]}>
             <Image source={{ uri }} style={styles.imagePreview} resizeMode="cover" />
@@ -128,7 +138,7 @@ export default function PostScreen() {
 
       {/* Form Fields */}
       <View style={styles.form}>
-        
+
         {/* Title Input */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Title</Text>
@@ -174,8 +184,8 @@ export default function PostScreen() {
         {/* Condition Picker */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Condition</Text>
-          <TouchableOpacity 
-            style={[styles.dropdownSelector, showConditionDropdown && styles.activeDropdownSelector]} 
+          <TouchableOpacity
+            style={[styles.dropdownSelector, showConditionDropdown && styles.activeDropdownSelector]}
             activeOpacity={0.8}
             onPress={() => {
               setShowConditionDropdown(!showConditionDropdown);
@@ -185,10 +195,10 @@ export default function PostScreen() {
             <Text style={[styles.dropdownPlaceholder, condition && { color: Colors.text }]}>
               {condition ?? "Choose one"}
             </Text>
-            <Feather 
-              name={showConditionDropdown ? "chevron-up" : "chevron-down"} 
-              size={20} 
-              color={Colors.placeholder} 
+            <Feather
+              name={showConditionDropdown ? "chevron-up" : "chevron-down"}
+              size={20}
+              color={Colors.placeholder}
             />
           </TouchableOpacity>
 
@@ -218,7 +228,7 @@ export default function PostScreen() {
         {/* Price Section */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Price (CAD)</Text>
-          
+
           <View style={styles.badgeRow}>
             <TouchableOpacity
               style={[styles.badge, priceType === "Fixed" && styles.badgeActive]}
@@ -226,7 +236,7 @@ export default function PostScreen() {
             >
               <Text style={[styles.badgeText, priceType === "Fixed" && styles.badgeTextActive]}>Fixed</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.badge, priceType === "Flexible" && styles.badgeActive]}
               onPress={() => setPriceType("Flexible")}
@@ -286,9 +296,19 @@ export default function PostScreen() {
         {/* Meeting Location */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Meeting location</Text>
-          <TouchableOpacity style={styles.locationSelector} activeOpacity={0.8} onPress={() => {}}>
+          <TouchableOpacity
+            style={styles.locationSelector}
+            activeOpacity={0.8}
+            onPress={() => {
+              setShowMapModal(true);
+              setShowConditionDropdown(false);
+              setShowRateDropdown(false);
+            }}
+          >
             <Feather name="map" size={20} color={Colors.primary} style={styles.locationIcon} />
-            <Text style={styles.locationText}>Select location</Text>
+            <Text style={styles.locationText} numberOfLines={1}>
+              {location && location.address ? location.address : "Select location"}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -309,6 +329,15 @@ export default function PostScreen() {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       </View>
+
+      {/* Overlay Sub-Modal Sheet implementation */}
+      <MapLocationModal
+        visible={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        onLocationSelect={(selectedLocation) => {
+          setLocation(selectedLocation);
+        }}
+      />
     </ScrollView>
   );
 }

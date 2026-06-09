@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 import { Colors, Spacing, Radius } from "../styles/globalDesignSystem";
 import { signOutUser } from "../services/auth/authService";
-import { getUserProfile } from "../services/firestore/userService";
-import { useAuth } from "../context/AuthContext";
-import type { AppUserProfile } from "../types/user/userTypes";
+import useProfileViewModel from "../viewModels/user/useProfileViewModel";
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
@@ -20,42 +18,31 @@ const MENU_ITEMS: Array<{ icon: FeatherIconName; label: string }> = [
 ];
 
 export default function ProfileScreen() {
-  const { user } = useAuth();
-  const [profileData, setProfileData] = useState<AppUserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const {
+    profileData,
+    currentUserId,
+    avatarImageUri,
+    loadingProfile,
+    uploadingProfilePicture,
+    error,
+    onPickAndUploadProfilePicture,
+  } = useProfileViewModel();
 
-// Fetch custom Firestore Profile information containing the chosen userName
-useEffect(() => {
-  async function loadUserProfile() {
-    if (user?.uid) {
-      try {
-        const data = await getUserProfile(user.uid);
-        setProfileData(data);
-      } catch (error) {
-        console.log("Error loading profile layout details:", error);
-      } finally {
-        setLoading(false);
-      }
+  const handleLogout = async () => {
+    try {
+      await signOutUser();
+    } catch (error) {
+      console.log(error);
     }
-  }
-  void loadUserProfile();
-}, [user]);
+  };
 
-const handleLogout = async () => {
-  try {
-    await signOutUser();
-  } catch (error) {
-    console.log(error);
+  if (loadingProfile) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+      </View>
+    );
   }
-};
-
-if (loading) {
-  return (
-    <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-      <ActivityIndicator size="small" color={Colors.primary} />
-    </View>
-  );
-}
 
   return (
     <ScrollView
@@ -64,14 +51,34 @@ if (loading) {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-      <Image 
-          source={{ uri: profileData?.photoURL ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2" }}
-          style={styles.avatar} 
+        <Image
+          source={{ uri: avatarImageUri }}
+          style={styles.avatar}
           resizeMode="cover"
         />
+        <TouchableOpacity
+          style={[
+            styles.editAvatarButton,
+            (uploadingProfilePicture || !currentUserId) && styles.editAvatarButtonDisabled,
+          ]}
+          onPress={() => {
+            void onPickAndUploadProfilePicture(currentUserId);
+          }}
+          disabled={uploadingProfilePicture || !currentUserId}
+        >
+          {uploadingProfilePicture ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : (
+            <Feather name="camera" size={16} color={Colors.text} />
+          )}
+          <Text style={styles.editAvatarText}>
+            {uploadingProfilePicture ? "Updating Avatar..." : "Edit Avatar"}
+          </Text>
+        </TouchableOpacity>
+        {!!error && <Text style={styles.errorText}>{error}</Text>}
 
         <Text style={styles.name}>{profileData?.userName ?? "OOPA User"}</Text>
-        <Text style={styles.email}>{user?.email ?? "no email available"}</Text>
+        <Text style={styles.email}>{profileData?.email ?? "no email available"}</Text>
       </View>
 
       <View style={styles.card}>
@@ -120,6 +127,34 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     marginBottom: Spacing.md,
+  },
+
+  editAvatarButton: {
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    backgroundColor: Colors.menu,
+    borderRadius: Radius.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  editAvatarButtonDisabled: {
+    opacity: 0.7,
+  },
+
+  editAvatarText: {
+    color: Colors.text,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+
+  errorText: {
+    color: "#DC2626",
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: Spacing.sm,
   },
 
   name: {
