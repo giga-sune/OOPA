@@ -1,5 +1,6 @@
 export type PropertyCondition = "Like new" | "Good" | "Used";
 export type PropertyPriceType = "Fixed" | "Flexible";
+export type PropertyRatePeriod = "week" | "month";
 
 export interface Property {
   id: string;
@@ -14,6 +15,7 @@ export interface Property {
   condition: PropertyCondition;
   priceType: PropertyPriceType;
   price: number;
+  ratePeriod: PropertyRatePeriod;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +32,7 @@ export interface CreatePropertyInput {
   condition: PropertyCondition;
   priceType: PropertyPriceType;
   price: number;
+  ratePeriod: PropertyRatePeriod;
 }
 
 export interface UpdatePropertyInput {
@@ -40,4 +43,5 @@ export interface UpdatePropertyInput {
   condition?: PropertyCondition;
   priceType?: PropertyPriceType;
   price?: number;
+  ratePeriod?: PropertyRatePeriod;
 }

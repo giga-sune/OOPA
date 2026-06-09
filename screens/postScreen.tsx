@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  Dimensions,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -16,12 +17,25 @@ import { Colors, Typography, Radius, Spacing, Shadows } from "../styles/globalDe
 import usePropertyViewModel from "../viewModels/property/usePropertyViewModel";
 
 type ConditionType = "Like new" | "Good" | "Used";
+type RatePeriodType = "week" | "month";
+
+const { width } = Dimensions.get("window");
+// Handles responsive spacing calculations for exactly 4 columns layout grids across device windows
+const CONTAINER_PADDING = Spacing.lg;
+const GRID_GAP = 12;
+const TOTAL_GAPS_WIDTH = GRID_GAP * 3;
+const AVAILABLE_WIDTH = width - CONTAINER_PADDING * 2 - TOTAL_GAPS_WIDTH;
+const SQUARE_SIZE = AVAILABLE_WIDTH / 4;
 
 export default function PostScreen() {
   const navigation = useNavigation<any>();
   const [showConditionDropdown, setShowConditionDropdown] = useState(false);
+  const [showRateDropdown, setShowRateDropdown] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  
   const conditionOptions: ConditionType[] = ["Like new", "Good", "Used"];
+  const rateOptions: RatePeriodType[] = ["week", "month"];
+
   const {
     title,
     setTitle,
@@ -35,9 +49,11 @@ export default function PostScreen() {
     setPriceType,
     condition,
     setCondition,
-    selectedImageUri,
+    ratePeriod,
+    setRatePeriod,
+    selectedImages,
     pickImage,
-    clearSelectedImage,
+    removeImage,
     submitProperty,
     loading,
     error,
@@ -78,31 +94,37 @@ export default function PostScreen() {
         </Text>
       </View>
 
-      <TouchableOpacity
-        style={[styles.imagePickerButton, loading && styles.disabledButton]}
-        activeOpacity={0.7}
-        onPress={() => {
-          void pickImage();
-        }}
-        disabled={loading}
-      >
-        {selectedImageUri ? (
-          <Image source={{ uri: selectedImageUri }} style={styles.imagePreview} resizeMode="cover" />
-        ) : (
-          <Feather name="camera" size={32} color={Colors.grayPrimary} />
+      {/* Wrapping Image Collection Grid (4 across width distribution limits) */}
+      <View style={styles.gridWrapper}>
+        {/* Render Trigger block first if index arrays fit under maximum bounds */}
+        {selectedImages.length < 8 && (
+          <TouchableOpacity
+            style={[styles.imagePickerButton, { width: SQUARE_SIZE, height: SQUARE_SIZE }, loading && styles.disabledButton]}
+            activeOpacity={0.7}
+            onPress={() => {
+              void pickImage();
+            }}
+            disabled={loading}
+          >
+            <Feather name="camera" size={24} color={Colors.grayPrimary || "#475569"} />
+          </TouchableOpacity>
         )}
-      </TouchableOpacity>
 
-      {selectedImageUri ? (
-        <TouchableOpacity
-          style={styles.removeImageButton}
-          onPress={clearSelectedImage}
-          activeOpacity={0.8}
-          disabled={loading}
-        >
-          <Text style={styles.removeImageText}>Remove selected image</Text>
-        </TouchableOpacity>
-      ) : null}
+        {/* Existing file selection loop blocks mapping circular dismiss badges */}
+        {selectedImages.map((uri, index) => (
+          <View key={uri + index} style={[styles.tileItem, { width: SQUARE_SIZE, height: SQUARE_SIZE }]}>
+            <Image source={{ uri }} style={styles.imagePreview} resizeMode="cover" />
+            <TouchableOpacity
+              style={styles.circleCrossBadge}
+              activeOpacity={0.8}
+              onPress={() => removeImage(index)}
+              disabled={loading}
+            >
+              <Feather name="x" size={12} color="#000000" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
 
       {/* Form Fields */}
       <View style={styles.form}>
@@ -155,7 +177,10 @@ export default function PostScreen() {
           <TouchableOpacity 
             style={[styles.dropdownSelector, showConditionDropdown && styles.activeDropdownSelector]} 
             activeOpacity={0.8}
-            onPress={() => setShowConditionDropdown(!showConditionDropdown)}
+            onPress={() => {
+              setShowConditionDropdown(!showConditionDropdown);
+              setShowRateDropdown(false);
+            }}
           >
             <Text style={[styles.dropdownPlaceholder, condition && { color: Colors.text }]}>
               {condition ?? "Choose one"}
@@ -167,7 +192,6 @@ export default function PostScreen() {
             />
           </TouchableOpacity>
 
-          {/* Expanded Dropdown Options Container */}
           {showConditionDropdown && (
             <View style={styles.dropdownMenu}>
               {conditionOptions.map((option) => (
@@ -211,15 +235,51 @@ export default function PostScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Price Input Field with Numeric Numpad */}
-          <View onFocus={() => setFocusedField("price")} onBlur={() => setFocusedField(null)}>
-            <InputField
-              placeholder="$ Price"
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="numeric"
-              active={focusedField === "price"}
-            />
+          {/* Side-by-Side Flex Combined Row Layout Block */}
+          <View style={styles.priceLayoutRow}>
+            <View style={styles.priceInputColumn} onFocus={() => setFocusedField("price")} onBlur={() => setFocusedField(null)}>
+              <InputField
+                placeholder="$ Price"
+                value={price}
+                onChangeText={setPrice}
+                keyboardType="numeric"
+                active={focusedField === "price"}
+              />
+            </View>
+
+            {/* Custom rate selection drop inline frame container */}
+            <View style={styles.rateDropdownWrapper}>
+              <TouchableOpacity
+                style={[styles.rateInlineSelector, showRateDropdown && styles.activeDropdownSelector]}
+                activeOpacity={0.8}
+                onPress={() => {
+                  setShowRateDropdown(!showRateDropdown);
+                  setShowConditionDropdown(false);
+                }}
+              >
+                <Text style={styles.rateSelectorLabel}>/ {ratePeriod}</Text>
+                <Feather name="chevron-down" size={18} color={Colors.placeholder || "#94A3B8"} />
+              </TouchableOpacity>
+
+              {showRateDropdown && (
+                <View style={styles.rateFloatingMenu}>
+                  {rateOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option}
+                      style={styles.rateFloatingItem}
+                      onPress={() => {
+                        setRatePeriod(option);
+                        setShowRateDropdown(false);
+                      }}
+                    >
+                      <Text style={[styles.dropdownItemText, ratePeriod === option && styles.dropdownItemTextActive]}>
+                        /{option}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
@@ -246,7 +306,6 @@ export default function PostScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Displays Viewmodel errors if caught reactively */}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       </View>
@@ -254,14 +313,13 @@ export default function PostScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
   },
   content: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: CONTAINER_PADDING,
     paddingTop: Spacing.xl,
     paddingBottom: 100,
   },
@@ -278,38 +336,48 @@ const styles = StyleSheet.create({
     color: Colors.subText,
     lineHeight: 20,
   },
+  gridWrapper: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: GRID_GAP,
+    marginBottom: Spacing.lg,
+  },
   imagePickerButton: {
-    width: 90,
-    height: 90,
     backgroundColor: "#ECECEF",
-    borderRadius: Radius.md,
+    borderRadius: Radius.md || 12,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.lg,
-    overflow: "hidden",
+  },
+  tileItem: {
+    position: "relative",
   },
   imagePreview: {
     width: "100%",
     height: "100%",
+    borderRadius: Radius.md || 12,
+  },
+  circleCrossBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 20,
+    ...Shadows.primary,
   },
   disabledButton: {
     opacity: 0.7,
-  },
-  removeImageButton: {
-    alignSelf: "flex-start",
-    marginTop: -Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  removeImageText: {
-    ...Typography.bodySmall,
-    color: Colors.primary,
-    fontWeight: "600",
   },
   form: {
     gap: Spacing.md,
   },
   fieldGroup: {
     gap: Spacing.sm,
+    position: "relative",
   },
   label: {
     ...Typography.label,
@@ -324,7 +392,7 @@ const styles = StyleSheet.create({
   },
   dropdownSelector: {
     height: 58,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.pill || 28,
     backgroundColor: Colors.white,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -334,8 +402,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   activeDropdownSelector: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.activeInputBg,
+    borderColor: Colors.primary || "#FF7A21",
+    backgroundColor: Colors.activeInputBg || "#FFF8F5",
   },
   dropdownPlaceholder: {
     ...Typography.body,
@@ -348,6 +416,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     marginTop: 2,
     overflow: "hidden",
+    zIndex: 60,
   },
   dropdownItem: {
     height: 50,
@@ -363,7 +432,7 @@ const styles = StyleSheet.create({
     color: Colors.graySecondary,
   },
   dropdownItemTextActive: {
-    color: Colors.primary,
+    color: Colors.primary || "#FF7A21",
     fontWeight: "600",
   },
   badgeRow: {
@@ -372,7 +441,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   badge: {
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.pill,
     backgroundColor: Colors.white,
@@ -390,6 +459,54 @@ const styles = StyleSheet.create({
   },
   badgeTextActive: {
     color: Colors.white,
+  },
+  priceLayoutRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    alignItems: "center",
+    zIndex: 50,
+  },
+  priceInputColumn: {
+    flex: 2.2,
+  },
+  rateDropdownWrapper: {
+    flex: 1,
+    position: "relative",
+  },
+  rateInlineSelector: {
+    height: 58,
+    borderRadius: Radius.pill || 28,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.md,
+  },
+  rateSelectorLabel: {
+    ...Typography.body,
+    color: Colors.graySecondary || "#334155",
+  },
+  rateFloatingMenu: {
+    position: "absolute",
+    top: 62,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md || 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: "hidden",
+    zIndex: 110,
+    ...Shadows.primary,
+  },
+  rateFloatingItem: {
+    height: 48,
+    justifyContent: "center",
+    paddingHorizontal: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
   },
   locationSelector: {
     height: 58,
