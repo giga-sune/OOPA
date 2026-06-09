@@ -7,6 +7,7 @@ export interface Property {
   ownerEmail: string | null;
   ownerDisplayName: string | null;
   ownerPhotoURL: string | null;
+  images: string[];
   title: string;
   description: string;
   brand: string;
@@ -22,6 +23,7 @@ export interface CreatePropertyInput {
   ownerEmail: string | null;
   ownerDisplayName: string | null;
   ownerPhotoURL: string | null;
+  images: string[];
   title: string;
   description: string;
   brand: string;
@@ -31,6 +33,7 @@ export interface CreatePropertyInput {
 }
 
 export interface UpdatePropertyInput {
+  images?: string[];
   title?: string;
   description?: string;
   brand?: string;

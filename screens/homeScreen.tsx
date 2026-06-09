@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, FlatList, Dimensions, ActivityIndicator, Text } from "react-native";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "../services/firebase/firebaseConfig"; 
+import { db } from "../services/firebase/firebaseApp";
 import PropertyCard from "../components/property/PropertyCard";
 import { Colors, Spacing } from "../styles/globalDesignSystem";
 
@@ -31,12 +31,16 @@ export default function HomeScreen() {
       (snapshot) => {
         const fetchedItems: RentalItem[] = snapshot.docs.map((doc) => {
           const data = doc.data();
+          const images = Array.isArray(data.images)
+            ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
+            : [];
+
           return {
             id: doc.id,
             title: data.title ?? "Untitled Item", 
             price: data.price ? Number(data.price) : 0, 
             ratePeriod: data.ratePeriod ?? "week", 
-            imageUri: data.imageUri ?? undefined, 
+            imageUri: images[0] ?? (typeof data.imageUri === "string" ? data.imageUri : undefined),
           };
         });
         

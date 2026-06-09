@@ -6,11 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
-import { useAuth } from "../context/AuthContext";
 import InputField from "../components/InputField";
 import { Colors, Typography, Radius, Spacing, Shadows } from "../styles/globalDesignSystem";
 import usePropertyViewModel from "../viewModels/property/usePropertyViewModel";
@@ -19,46 +19,34 @@ type ConditionType = "Like new" | "Good" | "Used";
 
 export default function PostScreen() {
   const navigation = useNavigation<any>();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [brand, setBrand] = useState("");
-  const [priceType, setPriceType] = useState<"Fixed" | "Flexible">("Fixed");
-  const [condition, setCondition] = useState<ConditionType | null>(null);
   const [showConditionDropdown, setShowConditionDropdown] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [price, setPrice] = useState("");
   const conditionOptions: ConditionType[] = ["Like new", "Good", "Used"];
-  const { user } = useAuth();
-  const { publishProperty, loading, error } = usePropertyViewModel();
+  const {
+    title,
+    setTitle,
+    description,
+    setDescription,
+    brand,
+    setBrand,
+    price,
+    setPrice,
+    priceType,
+    setPriceType,
+    condition,
+    setCondition,
+    selectedImageUri,
+    pickImage,
+    clearSelectedImage,
+    submitProperty,
+    loading,
+    error,
+  } = usePropertyViewModel();
 
   const handlePublish = async () => {
-    if (!user) {
-      Alert.alert("Authentication Required", "Please log in to publish an item.");
-      return;
-    }
+    const wasSuccessful = await submitProperty();
 
-    // Validation fallback before calling the API
-    if (!title || !description || !price || !condition) {
-      Alert.alert("Missing Fields", "Please populate all fields before publishing.");
-      return;
-    }
-
-    try {
-      // Execute firestore publishing service
-      await publishProperty({
-        ownerUid: user.uid,
-        ownerEmail: user.email,
-        ownerDisplayName: user.displayName ?? null,
-        ownerPhotoURL: user.photoURL ?? null,
-        title,
-        description,
-        brand,
-        condition,
-        priceType,
-        price: Number(price),
-      });
-
-      //Success Alert and Redirection
+    if (wasSuccessful) {
       Alert.alert(
         "Success!",
         "Your item has been successfully published.",
@@ -66,23 +54,11 @@ export default function PostScreen() {
           {
             text: "OK",
             onPress: () => {
-              setTitle("");
-              setDescription("");
-              setBrand("");
-              setCondition(null);
-              setPrice("");
-              
               navigation.navigate("Home");
             },
           },
         ],
         { cancelable: false }
-      );
-    } catch (err: any) {
-      //Catch block fallback error handling
-      Alert.alert(
-        "Publishing Failed",
-        err?.message || "An unexpected error occurred while saving your item. Please try again."
       );
     }
   };
@@ -102,10 +78,31 @@ export default function PostScreen() {
         </Text>
       </View>
 
-      {/* Image Upload Placeholder Button */}
-      <TouchableOpacity style={styles.imagePickerButton} activeOpacity={0.7} onPress={() => {}}>
-        <Feather name="camera" size={32} color={Colors.grayPrimary} />
+      <TouchableOpacity
+        style={[styles.imagePickerButton, loading && styles.disabledButton]}
+        activeOpacity={0.7}
+        onPress={() => {
+          void pickImage();
+        }}
+        disabled={loading}
+      >
+        {selectedImageUri ? (
+          <Image source={{ uri: selectedImageUri }} style={styles.imagePreview} resizeMode="cover" />
+        ) : (
+          <Feather name="camera" size={32} color={Colors.grayPrimary} />
+        )}
       </TouchableOpacity>
+
+      {selectedImageUri ? (
+        <TouchableOpacity
+          style={styles.removeImageButton}
+          onPress={clearSelectedImage}
+          activeOpacity={0.8}
+          disabled={loading}
+        >
+          <Text style={styles.removeImageText}>Remove selected image</Text>
+        </TouchableOpacity>
+      ) : null}
 
       {/* Form Fields */}
       <View style={styles.form}>
@@ -289,6 +286,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.lg,
+    overflow: "hidden",
+  },
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  removeImageButton: {
+    alignSelf: "flex-start",
+    marginTop: -Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  removeImageText: {
+    ...Typography.bodySmall,
+    color: Colors.primary,
+    fontWeight: "600",
   },
   form: {
     gap: Spacing.md,

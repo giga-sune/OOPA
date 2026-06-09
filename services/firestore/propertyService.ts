@@ -26,6 +26,18 @@ function toDate(value: unknown): Date {
   return new Date();
 }
 
+function readImages(value: unknown, fallbackImageUri: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string" && item.length > 0);
+  }
+
+  if (typeof fallbackImageUri === "string" && fallbackImageUri.length > 0) {
+    return [fallbackImageUri];
+  }
+
+  return [];
+}
+
 function readProperty(data: DocumentData, id: string): Property {
   return {
     id,
@@ -33,6 +45,7 @@ function readProperty(data: DocumentData, id: string): Property {
     ownerEmail: typeof data.ownerEmail === "string" ? data.ownerEmail : null,
     ownerDisplayName: typeof data.ownerDisplayName === "string" ? data.ownerDisplayName : null,
     ownerPhotoURL: typeof data.ownerPhotoURL === "string" ? data.ownerPhotoURL : null,
+    images: readImages(data.images, data.imageUri),
     title: typeof data.title === "string" ? data.title : "",
     description: typeof data.description === "string" ? data.description : "",
     brand: typeof data.brand === "string" ? data.brand : "",
