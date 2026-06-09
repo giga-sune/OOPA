@@ -13,6 +13,7 @@ type CreateUserProfileInput = {
   email: string;
   userName?: string | null;
   photoURL?: string | null;
+  profilePictureUrl?: string | null;
   phone?: string | null;
 };
 
@@ -26,6 +27,7 @@ export async function createUserProfile(userProfile: CreateUserProfileInput): Pr
     email: userProfile.email.trim(),
     userName: userProfile.userName ?? null,
     photoURL: userProfile.photoURL ?? null,
+    profilePictureUrl: userProfile.profilePictureUrl ?? null,
     phone: userProfile.phone ?? null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -52,4 +54,14 @@ export async function updateUserProfile(uid: string, patch: AppUserProfilePatch)
   };
 
   await updateDoc(getUserDocRef(uid), updatePayload);
+}
+
+export async function updateUserProfilePicture(
+  uid: string,
+  profilePictureUrl: string
+): Promise<void> {
+  await updateDoc(getUserDocRef(uid), {
+    profilePictureUrl,
+    updatedAt: serverTimestamp(),
+  });
 }
