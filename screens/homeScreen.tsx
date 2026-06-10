@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { View, StyleSheet, FlatList, Dimensions, ActivityIndicator, Text } from "react-native";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../services/firebase/firebaseApp";
@@ -19,6 +20,7 @@ interface RentalItem {
 export default function HomeScreen() {
   const [items, setItems] = useState<RentalItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
 
@@ -82,15 +84,12 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <View style={{ width: CARD_WIDTH }}>
-            <PropertyCard
-              title={item.title}
-              price={item.price}
-              ratePeriod={item.ratePeriod}
-              imageUri={item.imageUri}
-              onPress={() => console.log(`Selected item: ${item.title}`)}
-            />
-          </View>
+          <PropertyCard
+            property={item}
+            onPress={() => {
+              navigation.navigate("Details", { propertyId: item.id });
+            }}
+          />
         )}
       />
     </View>
