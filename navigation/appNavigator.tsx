@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "../screens/loginScreen";
 import SignupScreen from "../screens/signupScreen";
 import TabNavigator from "./tabNavigator";
+import MyListingsScreen from "../screens/myListingScreen";
 
 import { useAuth } from "../context/AuthContext";
 import type { RootStackParamList } from "../types/navigation/navigationTypes";
@@ -20,7 +21,10 @@ export default function AppNavigator() {
           <Stack.Screen name="Signup" component={SignupScreen} />
         </>
       ) : (
+        <>
         <Stack.Screen name="MainApp" component={TabNavigator} />
+        <Stack.Screen name="MyListings" component={MyListingsScreen} />
+        </>
       )}
     </Stack.Navigator>
   );

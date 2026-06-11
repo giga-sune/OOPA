@@ -27,11 +27,8 @@ import useAuthSessionViewModel, {
 import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
-
   const {
-    user,
     initializing,
-    isAuthenticated,
   }: AuthSessionViewModel = useAuthSessionViewModel();
 
   const [fontsLoaded] = useFonts({
@@ -49,13 +46,13 @@ export default function App() {
           justifyContent: "center",
           alignItems: "center",
           gap: 10,
+          backgroundColor: "#ffffff",
         }}
       >
         <ActivityIndicator
           size="large"
           color="#FF7A21"
         />
-
         <Text style={{ color: "#666" }}>
           Loading application...
         </Text>
@@ -63,37 +60,22 @@ export default function App() {
     );
   }
 
-  /**
-   * Navigation controls screen rendering
-   */
   return (
     <SafeAreaProvider>
-      <SafeAreaView
-        style={{
-          flex: 1
-        }}
-      >
-        <StatusBar
-          barStyle="dark-content"
-        />
+      <AuthProvider>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#fcfcfc" }}>
+          <StatusBar barStyle="dark-content" />
 
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={
-            Platform.OS === "ios"
-              ? "padding"
-              : undefined
-          }
-        >
-
-          <NavigationContainer>
-            <AuthProvider>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <NavigationContainer>
               <AppNavigator />
-            </AuthProvider>
-          </NavigationContainer>
-
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+            </NavigationContainer>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

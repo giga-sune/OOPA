@@ -9,7 +9,7 @@ interface PropertyCardProps {
     title: string;
     price: number;
     ratePeriod: string;
-    imageUri?: string;
+    images?: string[];
   };
   onPress?: () => void;
 }
@@ -22,9 +22,9 @@ const CARD_WIDTH = (width - (CONTAINER_PADDING * 2) - GRID_GAP) / 2;
 export default function PropertyCard({ property, onPress }: PropertyCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   
-  const imageSource = property.imageUri 
-    ? { uri: property.imageUri } 
-    : require("../../assets/placeholder.png");
+  const imageSource = property.images && property.images.length > 0
+  ? { uri: property.images[0] }
+  : require("../../assets/placeholder.png");
 
   const formatRatePeriod = (period: string) => {
     if (!period) return "";
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   imageWrapper: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: Radius.md || 24,
+    borderRadius: Radius.md ?? 24,
     overflow: "hidden",
     position: "relative",
     backgroundColor: "#F1F5F9",

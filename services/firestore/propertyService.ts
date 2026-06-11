@@ -16,6 +16,7 @@ import type {
   UpdatePropertyInput,
   LocationData,
 } from "../../types/property/propertyTypes";
+import { query, where } from "firebase/firestore";
 
 const PROPERTIES_COLLECTION = "properties";
 
@@ -127,4 +128,26 @@ export async function updateProperty(id: string, input: UpdatePropertyInput): Pr
 export async function deleteProperty(id: string): Promise<void> {
   const docRef = doc(db, PROPERTIES_COLLECTION, id);
   await deleteDoc(docRef);
+}
+
+export async function getUserProperties(ownerUid: string): Promise<Property[]> {
+  try {
+    const propertiesCollectionRef = collection(db, PROPERTIES_COLLECTION);
+    
+    // Create a firestore query matching the ownerUid field
+    const q = query(propertiesCollectionRef, where("ownerUid", "==", ownerUid));
+    const querySnapshot = await getDocs(q);
+    
+    const userProperties: Property[] = [];
+    
+    querySnapshot.forEach((docSnap) => {
+      // Reuses your existing mapping function to clean and parse data uniformly
+      userProperties.push(readProperty(docSnap.data(), docSnap.id));
+    });
+    
+    return userProperties;
+  } catch (error) {
+    console.error("Error inside getUserProperties service handler:", error);
+    throw error;
+  }
 }

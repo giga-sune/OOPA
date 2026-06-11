@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 import { Colors, Spacing, Radius } from "../styles/globalDesignSystem";
 import { signOutUser } from "../services/auth/authService";
@@ -18,6 +19,8 @@ const MENU_ITEMS: Array<{ icon: FeatherIconName; label: string }> = [
 ];
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<any>();
+
   const {
     profileData,
     currentUserId,
@@ -82,14 +85,25 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.card}>
-        {MENU_ITEMS.map((item, i) => (
-          <TouchableOpacity key={i} style={styles.row}>
-            <Feather name={item.icon} size={20} color={Colors.text} />
-            <Text style={styles.label}>{item.label}</Text>
-            <Feather name="chevron-right" size={18} color="#9A9AA2" />
-          </TouchableOpacity>
-        ))}
-      </View>
+  {MENU_ITEMS.map((item, i) => (
+    <TouchableOpacity 
+      key={i} 
+      style={styles.row}
+      activeOpacity={0.7}
+      onPress={() => {
+        if (item.label === "My Listing") {
+          navigation.navigate("MyListings");
+        } else {
+          console.log(`Clicked on ${item.label}`);
+        }
+      }}
+    >
+      <Feather name={item.icon} size={20} color={Colors.text} />
+      <Text style={styles.label}>{item.label}</Text>
+      <Feather name="chevron-right" size={18} color="#9A9AA2" />
+    </TouchableOpacity>
+  ))}
+</View>
 
       <TouchableOpacity style={styles.secondary}>
         <Feather name="help-circle" size={20} />
@@ -112,13 +126,13 @@ const styles = StyleSheet.create({
 
   content: {
     padding: Spacing.lg,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.sm,
     paddingBottom: 100,
   },
 
   header: {
     alignItems: "center",
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
     marginBottom: Spacing.xl,
   },
 

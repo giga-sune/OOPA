@@ -2,6 +2,8 @@ export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
   MainApp: undefined;
+  MyListings: undefined;
+  Details: { propertyId: string };
 };
 
 export type TabParamList = {

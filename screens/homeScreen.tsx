@@ -14,7 +14,7 @@ interface RentalItem {
   title: string;
   price: number;
   ratePeriod: string;
-  imageUri?: string;
+  images?: string[]; 
 }
 
 export default function HomeScreen() {
@@ -23,9 +23,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
 
   useEffect(() => {
-
     const itemsRef = collection(db, "properties");
-  
     const q = query(itemsRef, orderBy("updatedAt", "desc"));
 
     const unsubscribe = onSnapshot(
@@ -37,12 +35,16 @@ export default function HomeScreen() {
             ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
             : [];
 
+          const finalImagesArray = images.length > 0 
+            ? images 
+            : (typeof data.imageUri === "string" && data.imageUri.length > 0 ? [data.imageUri] : []);
+
           return {
             id: doc.id,
             title: data.title ?? "Untitled Item", 
             price: data.price ? Number(data.price) : 0, 
             ratePeriod: data.ratePeriod ?? "week", 
-            imageUri: images[0] ?? (typeof data.imageUri === "string" ? data.imageUri : undefined),
+            images: finalImagesArray,
           };
         });
         
