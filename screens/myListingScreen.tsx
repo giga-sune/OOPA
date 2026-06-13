@@ -28,7 +28,6 @@ export default function MyListingsScreen() {
       if (!user?.uid) return;
       try {
         setLoading(true);
-        // Query Firestore for listings where ownerUid === user.uid
         const userItems = await getUserProperties(user.uid);
         setListings(userItems);
       } catch (error) {
@@ -51,7 +50,6 @@ export default function MyListingsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Custom Header matching the screenshot navigation style */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -64,7 +62,6 @@ export default function MyListingsScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Grid List using our reused PropertyCard */}
       <FlatList
         data={listings}
         keyExtractor={(item) => item.id}

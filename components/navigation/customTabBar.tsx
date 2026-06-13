@@ -28,8 +28,8 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     const keyboardShowListener = Keyboard.addListener(showEvent, (e) => {
       Animated.timing(slideAnim, {
         toValue: 100, // Slides completely down below the viewport bounds
-        duration: e ? e.duration : 250, // Matches the keyboard's sliding duration perfectly
-        useNativeDriver: true, // Uses native OS thread for 60fps stutter-free animation
+        duration: e ? e.duration : 250, // Matches the keyboard's sliding duration
+        useNativeDriver: true,
       }).start();
     });
 
