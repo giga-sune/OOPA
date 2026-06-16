@@ -5,6 +5,8 @@ import LoginScreen from "../screens/loginScreen";
 import SignupScreen from "../screens/signupScreen";
 import TabNavigator from "./tabNavigator";
 import MyListingsScreen from "../screens/myListingScreen";
+import DetailsScreen from "../screens/detailScreen";
+import MapViewerScreen from "../screens/mapViewerScreen";
 
 import { useAuth } from "../context/AuthContext";
 import type { RootStackParamList } from "../types/navigation/navigationTypes";
@@ -13,6 +15,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   const { isAuthenticated } = useAuth();
+  
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!isAuthenticated ? (
@@ -22,8 +25,10 @@ export default function AppNavigator() {
         </>
       ) : (
         <>
-        <Stack.Screen name="MainApp" component={TabNavigator} />
-        <Stack.Screen name="MyListings" component={MyListingsScreen} />
+          <Stack.Screen name="MainApp" component={TabNavigator} />
+          <Stack.Screen name="MyListings" component={MyListingsScreen} />
+          <Stack.Screen name="Details" component={DetailsScreen} />
+          <Stack.Screen name="MapViewer" component={MapViewerScreen} />
         </>
       )}
     </Stack.Navigator>

@@ -2,6 +2,7 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import * as ImagePicker from "expo-image-picker";
 
 import { useAuth } from "../../context/AuthContext";
+import useProfileViewModel from "../user/useProfileViewModel"; // 👈 Import your profile hook here
 import { createProperty } from "../../services/firestore/propertyService";
 import { uploadImageToStorage } from "../../services/storage/storageService";
 import type {
@@ -45,7 +46,7 @@ export interface PropertyViewModelResult {
   ratePeriod: PropertyRatePeriod;
   setRatePeriod: Dispatch<SetStateAction<PropertyRatePeriod>>;
   selectedImages: string[];
-  location: LocationData | null; // Added location variable definition mappings
+  location: LocationData | null;
   setLocation: Dispatch<SetStateAction<LocationData | null>>;
   pickImage: () => Promise<boolean>;
   removeImage: (index: number) => void;
@@ -80,6 +81,10 @@ function extractImageExtension(asset: ImagePicker.ImagePickerAsset): string {
 
 export default function usePropertyViewModel(): PropertyViewModelResult {
   const { user } = useAuth();
+  
+  // 👇 Connect directly to your application profile values
+  const { profileData, avatarImageUri } = useProfileViewModel();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [brand, setBrand] = useState("");
@@ -88,7 +93,7 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
   const [condition, setCondition] = useState<PropertyCondition | null>(null);
   const [ratePeriod, setRatePeriod] = useState<PropertyRatePeriod>("month");
   const [imagesList, setImagesList] = useState<SelectedImageItem[]>([]);
-  const [location, setLocation] = useState<LocationData | null>(null); // Added state hook definition for local property updates
+  const [location, setLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -133,8 +138,11 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
     const input: PublishPropertyInput = {
       ownerUid: user?.uid ?? "",
       ownerEmail: user?.email ?? null,
-      ownerDisplayName: user?.displayName ?? null,
-      ownerPhotoURL: user?.photoURL ?? null,
+      
+      // 👇 Bind to your user profiles hooks data instead of firebase auth instances
+      ownerDisplayName: profileData?.userName || "OOPA User",
+      ownerPhotoURL: avatarImageUri || null,
+      
       title,
       description,
       brand,
@@ -179,7 +187,7 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
         priceType: input.priceType as PropertyPriceType,
         price: input.price,
         ratePeriod: input.ratePeriod as PropertyRatePeriod,
-        location: input.location, // Injected into database creation pipeline payload mapping
+        location: input.location,
       };
 
       await createProperty(sanitizedInput);
@@ -190,7 +198,7 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
       setPriceType("Fixed");
       setCondition(null);
       setRatePeriod("month");
-      setLocation(null); // Clean state on completion setup
+      setLocation(null);
       setImagesList([]);
       return true;
     } catch (serviceError) {

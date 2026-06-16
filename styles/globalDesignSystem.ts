@@ -126,4 +126,11 @@ export const Colors = {
       shadowRadius: 10,
       elevation: 4,
     },
+    lightDrop: {
+      shadowColor: '#0F172A',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+      elevation: 3,
+    },
   };

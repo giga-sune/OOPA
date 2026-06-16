@@ -4,6 +4,7 @@ export type RootStackParamList = {
   MainApp: undefined;
   MyListings: undefined;
   Details: { propertyId: string };
+  MapViewer: { latitude: number; longitude: number; address: string };
 };
 
 export type TabParamList = {

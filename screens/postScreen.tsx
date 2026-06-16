@@ -105,7 +105,7 @@ export default function PostScreen() {
             navigation.goBack();
           }
         } catch (err) {
-          console.error("Failed loading listing details:", err);
+          console.error(err);
         } finally {
           setFetchingData(false);
         }
@@ -133,6 +133,13 @@ export default function PostScreen() {
   };
 
   const handlePublish = async () => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("Error", "You must be logged in to modify listings.");
+      return;
+    }
+
     if (!location) {
       Alert.alert("Missing Location", "Please pinpoint your preferred meetup location prior to publishing.");
       return;
@@ -146,15 +153,12 @@ export default function PostScreen() {
 
       setLocalLoading(true);
       try {
-        const currentUserId = auth.currentUser?.uid ?? "unknown_user";
         const uploadedImageUrls: string[] = [...editModeImages];
 
         for (let i = 0; i < selectedImages.length; i++) {
           const localUri = selectedImages[i];
-          
           const fileExtension = localUri.split(".").pop()?.toLowerCase() || "jpg";
-          const imagePath = `properties/${currentUserId}/${Date.now()}_edit_img_${i}.${fileExtension}`;
-          
+          const imagePath = `properties/${currentUser.uid}/${Date.now()}_edit_img_${i}.${fileExtension}`;
           const downloadUrl = await uploadImageToStorage(localUri, imagePath);
           uploadedImageUrls.push(downloadUrl);
         }
@@ -171,6 +175,9 @@ export default function PostScreen() {
           ratePeriod,
           location,
           images: uploadedImageUrls,
+          ownerUid: currentUser.uid,
+          ownerDisplayName: currentUser.displayName || "Bibek Gurung",
+          ownerPhotoURL: currentUser.photoURL || null,
           updatedAt: serverTimestamp(),
         });
 
@@ -184,7 +191,7 @@ export default function PostScreen() {
           },
         ]);
       } catch (err) {
-        console.error("Update failed:", err);
+        console.error(err);
         Alert.alert("Error", "Could not save updates. Please try again.");
       } finally {
         setLocalLoading(false);
@@ -222,7 +229,6 @@ export default function PostScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      {/* Header Section */}
       <View style={styles.header}>
         <Text style={styles.title}>{isEditing ? "Edit Listing" : "Create New Post"}</Text>
         <Text style={styles.subtitle}>
@@ -232,7 +238,6 @@ export default function PostScreen() {
         </Text>
       </View>
 
-      {/* Image Collection Grid */}
       <View style={styles.gridWrapper}>
         {allDisplayedImages.length < 8 && (
           <TouchableOpacity
@@ -262,10 +267,8 @@ export default function PostScreen() {
         ))}
       </View>
 
-      {/* Form Fields */}
       <View style={styles.form}>
 
-        {/* Title Input */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Title</Text>
           <View onFocus={() => setFocusedField("title")} onBlur={() => setFocusedField(null)}>
@@ -278,7 +281,6 @@ export default function PostScreen() {
           </View>
         </View>
 
-        {/* Description Input */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Description</Text>
           <View onFocus={() => setFocusedField("description")} onBlur={() => setFocusedField(null)}>
@@ -294,7 +296,6 @@ export default function PostScreen() {
           </View>
         </View>
 
-        {/* Brand Input */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Brand</Text>
           <View onFocus={() => setFocusedField("brand")} onBlur={() => setFocusedField(null)}>
@@ -307,7 +308,6 @@ export default function PostScreen() {
           </View>
         </View>
 
-        {/* Condition Picker */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Condition</Text>
           <TouchableOpacity
@@ -351,7 +351,6 @@ export default function PostScreen() {
           )}
         </View>
 
-        {/* Price Section */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Price (CAD)</Text>
 
@@ -417,7 +416,6 @@ export default function PostScreen() {
           </View>
         </View>
 
-        {/* Meeting Location */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Meeting location</Text>
           <TouchableOpacity
@@ -436,7 +434,6 @@ export default function PostScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Dynamic Publish/Update Button Layout */}
         <TouchableOpacity
           style={[styles.publishButton, isScreenProcessing && { opacity: 0.7 }]}
           activeOpacity={0.8}

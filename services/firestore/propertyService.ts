@@ -70,17 +70,11 @@ function readProperty(data: DocumentData, id: string): Property {
     title: typeof data.title === "string" ? data.title : "",
     description: typeof data.description === "string" ? data.description : "",
     brand: typeof data.brand === "string" ? data.brand : "",
-    condition: data.condition === "Like new" || data.condition === "Good" || data.condition === "Used"
-      ? data.condition
-      : "Used",
-    priceType: data.priceType === "Fixed" || data.priceType === "Flexible"
-      ? data.priceType
-      : "Fixed",
+    condition: data.condition === "Like new" || data.condition === "Good" || data.condition === "Used" ? data.condition : "Used",
+    priceType: data.priceType === "Fixed" || data.priceType === "Flexible" ? data.priceType : "Fixed",
     price: typeof data.price === "number" ? data.price : Number(data.price) || 0,
-    ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" 
-      ? data.ratePeriod 
-      : "month",
-    location: readLocation(data.location), //Returns parsed location object or null for older data.
+    ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" ? data.ratePeriod : "month",
+    location: readLocation(data.location),
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };
