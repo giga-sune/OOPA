@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { Colors, Typography, Radius, Spacing } from "../../styles/globalDesignSystem";
+import { Colors, Radius, Spacing } from "../../styles/globalDesignSystem";
 
 interface PropertyCardProps {
   property: {
@@ -12,6 +12,9 @@ interface PropertyCardProps {
     images?: string[];
   };
   onPress?: () => void;
+  showActions?: boolean;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const { width } = Dimensions.get("window");
@@ -19,12 +22,18 @@ const CONTAINER_PADDING = Spacing.lg || 16;
 const GRID_GAP = 12;
 const CARD_WIDTH = (width - (CONTAINER_PADDING * 2) - GRID_GAP) / 2;
 
-export default function PropertyCard({ property, onPress }: PropertyCardProps) {
+export default function PropertyCard({ 
+  property, 
+  onPress, 
+  showActions = false, 
+  onEdit, 
+  onDelete 
+}: PropertyCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   
   const imageSource = property.images && property.images.length > 0
-  ? { uri: property.images[0] }
-  : require("../../assets/placeholder.png");
+    ? { uri: property.images[0] }
+    : require("../../assets/placeholder.png");
 
   const formatRatePeriod = (period: string) => {
     if (!period) return "";
@@ -38,18 +47,21 @@ export default function PropertyCard({ property, onPress }: PropertyCardProps) {
       <View style={styles.imageWrapper}>
         <Image source={imageSource} style={styles.cardImage} resizeMode="cover" />
         
-        <TouchableOpacity 
-          style={styles.heartOverlayButton} 
-          activeOpacity={0.8}
-          onPress={() => setIsLiked(!isLiked)}
-        >
-          <Feather 
-            name="heart" 
-            size={24} 
-            color={isLiked ? "#FF3B30" : "#FFFFFF"} 
-            style={isLiked ? styles.activeHeartShadow : styles.heartShadow}
-          />
-        </TouchableOpacity>
+        {/* Only display heart icon when management action buttons are hidden */}
+        {!showActions && (
+          <TouchableOpacity 
+            style={styles.heartOverlayButton} 
+            activeOpacity={0.8}
+            onPress={() => setIsLiked(!isLiked)}
+          >
+            <Feather 
+              name="heart" 
+              size={24} 
+              color={isLiked ? "#FF3B30" : "#FFFFFF"} 
+              style={isLiked ? styles.activeHeartShadow : styles.heartShadow}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.infoSection}>
@@ -62,6 +74,28 @@ export default function PropertyCard({ property, onPress }: PropertyCardProps) {
           {property.title}
         </Text>
       </View>
+
+      {showActions && (
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.editButton]} 
+            onPress={() => onEdit && onEdit(property.id)}
+            activeOpacity={0.7}
+          >
+            <Feather name="edit-2" size={14} color="#0F172A" />
+            <Text style={styles.editText}>Edit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.deleteButton]} 
+            onPress={() => onDelete && onDelete(property.id)}
+            activeOpacity={0.7}
+          >
+            <Feather name="trash-2" size={14} color="#DC2626" />
+            <Text style={styles.deleteText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -120,5 +154,36 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     color: "#64748B",
     marginTop: 2,
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  editButton: {
+    backgroundColor: "#F1F5F9", 
+  },
+  deleteButton: {
+    backgroundColor: "#FEE2E2", 
+  },
+  editText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+  deleteText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#DC2626",
   },
 });

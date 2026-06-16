@@ -1,87 +1,179 @@
-import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
+import React, { useState, useEffect } from "react";
+import { 
+  View, 
+  StyleSheet, 
+  FlatList, 
+  Dimensions, 
+  ActivityIndicator, 
+  Text, 
+  Alert,
+  TouchableOpacity
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { collection, query, where, onSnapshot, doc, deleteDoc } from "firebase/firestore";
+import { Feather } from "@expo/vector-icons";
 
-import { useAuth } from "../context/AuthContext";
-
-import { getUserProperties } from "../services/firestore/propertyService";
+import { db, auth } from "../services/firebase/firebaseApp";
 import PropertyCard from "../components/property/PropertyCard";
-import { Colors, Typography, Spacing } from "../styles/globalDesignSystem";
+import { Colors, Spacing } from "../styles/globalDesignSystem";
+
+interface RentalItem {
+  id: string;
+  title: string;
+  price: number;
+  ratePeriod: string;
+  images?: string[];
+  userId?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
 
 export default function MyListingsScreen() {
+  const [items, setItems] = useState<RentalItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigation = useNavigation<any>();
-  const { user } = useAuth();
-  
-  const [listings, setListings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const currentUserId = auth.currentUser?.uid;
 
   useEffect(() => {
-    async function fetchMyListings() {
-      if (!user?.uid) return;
-      try {
-        setLoading(true);
-        const userItems = await getUserProperties(user.uid);
-        setListings(userItems);
-      } catch (error) {
-        console.error("Error fetching user listings:", error);
-      } finally {
-        setLoading(false);
-      }
+    console.log("Checking listings for user ID:", currentUserId);
+
+    if (!currentUserId) {
+      setLoading(false);
+      return;
     }
 
-    void fetchMyListings();
-  }, [user?.uid]);
+    const itemsRef = collection(db, "properties");
+    
+    const q = query(
+      itemsRef, 
+      where("ownerUid", "==", currentUserId)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const fetchedItems: RentalItem[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          
+          // Fallback handlers matching your arrays layout setup
+          const images = Array.isArray(data.images)
+            ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
+            : [];
+
+          const finalImagesArray = images.length > 0 
+            ? images 
+            : (typeof data.imageUri === "string" && data.imageUri.length > 0 ? [data.imageUri] : []);
+
+          return {
+            id: doc.id,
+            title: data.title ?? "Untitled Item", 
+            price: data.price ? Number(data.price) : 0, 
+            ratePeriod: data.ratePeriod ?? "week", 
+            images: finalImagesArray,
+            userId: data.ownerUid, 
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt
+          };
+        });
+        
+        // Front-end side timeline sorting fallback structure
+        const sortedItems = fetchedItems.sort((a, b) => {
+          const timeA = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+          const timeB = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+          return timeA - timeB;
+        });
+
+        setItems(sortedItems);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching my live listings: ", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [currentUserId]);
+
+  const handleDeleteListing = (id: string, title: string) => {
+    Alert.alert(
+      "Delete Listing",
+      `Are you sure you want to permanently delete "${title}"? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, "properties", id));
+            } catch (err) {
+              console.error("Error deleting document from Firestore: ", err);
+              Alert.alert("Error", "Could not remove listing. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleEditListing = (id: string) => {
+    navigation.navigate("MainApp", {
+      screen: "Post",
+      params: { id: id, isEditing: true }
+    });
+  };
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.primary || "#FF7A21"} />
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="small" color={Colors.primary} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Header Container Area Layout Layout */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Feather name="chevron-left" size={28} color="#0F172A" />
+          <Feather name="chevron-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Listing</Text>
+        
+        <Text style={styles.headerTitle}>My Listings</Text>
+        
         <View style={styles.headerSpacer} />
       </View>
 
-      <FlatList
-        data={listings}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.gridRow}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <PropertyCard
-            property={item}
-            onPress={() => navigation.navigate("Details", { propertyId: item.id })}
-          />
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Feather name="package" size={48} color="#94A3B8" />
-            <Text style={styles.emptyText}>You haven't posted any items yet.</Text>
-          </View>
-        }
-      />
+      {items.length === 0 ? (
+        <View style={[styles.container, styles.center]}>
+          <Text style={styles.emptyText}>You haven't posted any items for rent yet.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.rowWrapper}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <PropertyCard
+              property={item}
+              onPress={() => {
+                navigation.navigate("Details", { propertyId: item.id });
+              }}
+              showActions={true}
+              onEdit={(id) => handleEditListing(id)}
+              onDelete={(id) => handleDeleteListing(id, item.title)}
+            />
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -89,52 +181,44 @@ export default function MyListingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white || "#FFFFFF",
+    backgroundColor: "#ffffff",
   },
-  centerContainer: {
-    flex: 1,
+  center: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.white,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.md || 16,
-    paddingTop: Spacing.md || 16, 
-    paddingBottom: Spacing.md || 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 16, 
+    paddingBottom: Spacing.xs,
   },
   backButton: {
     padding: 4,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: "#0F172A",
-    textAlign: "center",
   },
   headerSpacer: {
-    width: 36,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg || 16,
-    paddingTop: Spacing.lg,
-    paddingBottom: 40,
-  },
-  gridRow: {
-    justifyContent: "space-between",
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 100,
-    gap: Spacing.sm,
+    width: 24,
   },
   emptyText: {
-    fontSize: 15,
     color: "#64748B",
-    fontWeight: "500",
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: Spacing.xl,
+  },
+  listContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: 100,
+  },
+  rowWrapper: {
+    justifyContent: "space-between",
+    marginBottom: Spacing.md,
   },
 });

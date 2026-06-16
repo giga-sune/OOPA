@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,9 +8,14 @@ import {
   Alert,
   Image,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db, auth } from "../services/firebase/firebaseApp";
+
+import { uploadImageToStorage } from "../services/storage/storageService";
 
 import InputField from "../components/InputField";
 import { Colors, Typography, Radius, Spacing, Shadows } from "../styles/globalDesignSystem";
@@ -31,11 +36,19 @@ const SQUARE_SIZE = AVAILABLE_WIDTH / 4;
 
 export default function PostScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+
+  const isEditing = route.params?.isEditing ?? false;
+  const propertyId = route.params?.id ?? null;
+
+  const [fetchingData, setFetchingData] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   const [showConditionDropdown, setShowConditionDropdown] = useState(false);
   const [showRateDropdown, setShowRateDropdown] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-
   const [showMapModal, setShowMapModal] = useState(false);
+
+  const [editModeImages, setEditModeImages] = useState<string[]>([]);
 
   const conditionOptions: ConditionType[] = ["Like new", "Good", "Used"];
   const rateOptions: RatePeriodType[] = ["week", "month"];
@@ -65,30 +78,142 @@ export default function PostScreen() {
     error,
   } = usePropertyViewModel();
 
+  useEffect(() => {
+    if (isEditing && propertyId) {
+      const loadListingDetails = async () => {
+        setFetchingData(true);
+        try {
+          const docRef = doc(db, "properties", propertyId);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.title) setTitle(data.title);
+            if (data.description) setDescription(data.description);
+            if (data.brand) setBrand(data.brand);
+            if (data.price) setPrice(String(data.price));
+            if (data.priceType) setPriceType(data.priceType);
+            if (data.condition) setCondition(data.condition as ConditionType);
+            if (data.ratePeriod) setRatePeriod(data.ratePeriod as RatePeriodType);
+            if (data.location) setLocation(data.location);
+            
+            if (Array.isArray(data.images)) {
+              setEditModeImages(data.images);
+            }
+          } else {
+            Alert.alert("Error", "The requested listing could not be found.");
+            navigation.goBack();
+          }
+        } catch (err) {
+          console.error("Failed loading listing details:", err);
+        } finally {
+          setFetchingData(false);
+        }
+      };
+
+      void loadListingDetails();
+    }
+  }, [isEditing, propertyId]);
+
+  const allDisplayedImages = isEditing 
+    ? [...editModeImages, ...selectedImages]
+    : selectedImages;
+
+  const handleRemoveImageCombined = (index: number) => {
+    if (isEditing) {
+      if (index < editModeImages.length) {
+        setEditModeImages((prev) => prev.filter((_, idx) => idx !== index));
+      } else {
+        const relativeNewIndex = index - editModeImages.length;
+        removeImage(relativeNewIndex);
+      }
+    } else {
+      removeImage(index);
+    }
+  };
+
   const handlePublish = async () => {
     if (!location) {
       Alert.alert("Missing Location", "Please pinpoint your preferred meetup location prior to publishing.");
       return;
     }
 
-    const wasSuccessful = await submitProperty();
+    if (isEditing && propertyId) {
+      if (allDisplayedImages.length === 0) {
+        Alert.alert("Missing Images", "Please provide at least one image for your listing.");
+        return;
+      }
 
-    if (wasSuccessful) {
-      Alert.alert(
-        "Success!",
-        "Your item has been successfully published.",
-        [
+      setLocalLoading(true);
+      try {
+        const currentUserId = auth.currentUser?.uid ?? "unknown_user";
+        const uploadedImageUrls: string[] = [...editModeImages];
+
+        for (let i = 0; i < selectedImages.length; i++) {
+          const localUri = selectedImages[i];
+          
+          const fileExtension = localUri.split(".").pop()?.toLowerCase() || "jpg";
+          const imagePath = `properties/${currentUserId}/${Date.now()}_edit_img_${i}.${fileExtension}`;
+          
+          const downloadUrl = await uploadImageToStorage(localUri, imagePath);
+          uploadedImageUrls.push(downloadUrl);
+        }
+
+        const propertyDocRef = doc(db, "properties", propertyId);
+        
+        await updateDoc(propertyDocRef, {
+          title: title.trim(),
+          description: description.trim(),
+          brand: brand.trim(),
+          condition,
+          priceType,
+          price: Number(price),
+          ratePeriod,
+          location,
+          images: uploadedImageUrls,
+          updatedAt: serverTimestamp(),
+        });
+
+        Alert.alert("Success!", "Your listing has been successfully updated.", [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.setParams({ id: undefined, isEditing: undefined });
+              navigation.navigate("Home");
+            },
+          },
+        ]);
+      } catch (err) {
+        console.error("Update failed:", err);
+        Alert.alert("Error", "Could not save updates. Please try again.");
+      } finally {
+        setLocalLoading(false);
+      }
+    } else {
+      const wasSuccessful = await submitProperty();
+      if (wasSuccessful) {
+        Alert.alert("Success!", "Your item has been successfully published.", [
           {
             text: "OK",
             onPress: () => {
               navigation.navigate("Home");
             },
           },
-        ],
-        { cancelable: false }
-      );
+        ]);
+      }
     }
   };
+
+  const isScreenProcessing = loading || localLoading;
+
+  if (fetchingData) {
+    return (
+      <View style={[styles.container, styles.centerLoader]}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+        <Text style={styles.loadingText}>Loading listing details...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -99,36 +224,37 @@ export default function PostScreen() {
     >
       {/* Header Section */}
       <View style={styles.header}>
-        <Text style={styles.title}>Create New Post</Text>
+        <Text style={styles.title}>{isEditing ? "Edit Listing" : "Create New Post"}</Text>
         <Text style={styles.subtitle}>
-          Turn your idle gear into extra cash. Fill in the information below to put your item up for rent.
+          {isEditing 
+            ? "Update your items pricing, descriptive content, or pickup parameters below."
+            : "Turn your idle gear into extra cash. Fill in the information below to put your item up for rent."}
         </Text>
       </View>
 
-      {/* Wrapping Image Collection Grid (4 across width distribution limits) */}
+      {/* Image Collection Grid */}
       <View style={styles.gridWrapper}>
-        {/* Render Trigger block first if index arrays fit under maximum bounds */}
-        {selectedImages.length < 8 && (
+        {allDisplayedImages.length < 8 && (
           <TouchableOpacity
-            style={[styles.imagePickerButton, { width: SQUARE_SIZE, height: SQUARE_SIZE }, loading && styles.disabledButton]}
+            style={[styles.imagePickerButton, { width: SQUARE_SIZE, height: SQUARE_SIZE }, isScreenProcessing && styles.disabledButton]}
             activeOpacity={0.7}
             onPress={() => {
               void pickImage();
             }}
-            disabled={loading}
+            disabled={isScreenProcessing}
           >
             <Feather name="camera" size={24} color={Colors.grayPrimary || "#475569"} />
           </TouchableOpacity>
         )}
 
-        {selectedImages.map((uri, index) => (
+        {allDisplayedImages.map((uri, index) => (
           <View key={uri + index} style={[styles.tileItem, { width: SQUARE_SIZE, height: SQUARE_SIZE }]}>
             <Image source={{ uri }} style={styles.imagePreview} resizeMode="cover" />
             <TouchableOpacity
               style={styles.circleCrossBadge}
               activeOpacity={0.8}
-              onPress={() => removeImage(index)}
-              disabled={loading}
+              onPress={() => handleRemoveImageCombined(index)}
+              disabled={isScreenProcessing}
             >
               <Feather name="x" size={12} color="#000000" />
             </TouchableOpacity>
@@ -245,7 +371,6 @@ export default function PostScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Side-by-Side Flex Combined Row Layout Block */}
           <View style={styles.priceLayoutRow}>
             <View style={styles.priceInputColumn} onFocus={() => setFocusedField("price")} onBlur={() => setFocusedField(null)}>
               <InputField
@@ -257,7 +382,6 @@ export default function PostScreen() {
               />
             </View>
 
-            {/* Custom rate selection drop inline frame container */}
             <View style={styles.rateDropdownWrapper}>
               <TouchableOpacity
                 style={[styles.rateInlineSelector, showRateDropdown && styles.activeDropdownSelector]}
@@ -312,17 +436,17 @@ export default function PostScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Publish Button */}
+        {/* Dynamic Publish/Update Button Layout */}
         <TouchableOpacity
-          style={[styles.publishButton, loading && { opacity: 0.7 }]}
+          style={[styles.publishButton, isScreenProcessing && { opacity: 0.7 }]}
           activeOpacity={0.8}
-          disabled={loading}
+          disabled={isScreenProcessing}
           onPress={() => {
             void handlePublish();
           }}
         >
           <Text style={styles.publishButtonText}>
-            {loading ? "Publishing..." : "Publish"}
+            {isScreenProcessing ? (isEditing ? "Updating..." : "Publishing...") : (isEditing ? "Update Post" : "Publish")}
           </Text>
         </TouchableOpacity>
 
@@ -330,7 +454,6 @@ export default function PostScreen() {
 
       </View>
 
-      {/* Overlay Sub-Modal Sheet implementation */}
       <MapLocationModal
         visible={showMapModal}
         onClose={() => setShowMapModal(false)}
@@ -346,6 +469,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
+  },
+  centerLoader: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#64748B",
   },
   content: {
     paddingHorizontal: CONTAINER_PADDING,
