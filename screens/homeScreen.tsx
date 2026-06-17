@@ -1,51 +1,48 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { View, StyleSheet, FlatList, Dimensions, ActivityIndicator, Text, TextInput } from "react-native";
+import { View, StyleSheet, FlatList, ActivityIndicator, Text, TextInput } from "react-native";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "../services/firebase/firebaseApp";
 import Feather from "@expo/vector-icons/Feather";
+
 import PropertyCard from "../components/property/PropertyCard";
+import { db } from "../services/firebase/firebaseApp";
 import { Colors, Radius, Spacing } from "../styles/globalDesignSystem";
+import type { Property } from "../types/property/propertyTypes";
 import usePropertySearchViewModel from "../viewModels/property/usePropertySearchViewModel";
 
-const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - Spacing.lg * 2 - Spacing.md) / 2;
+type ListingItem = Pick<Property, "id" | "title" | "price" | "ratePeriod" | "images">;
 
-interface ListingItem {
-  id: string;
-  title: string;
-  price: number;
-  ratePeriod: string;
-  images?: string[]; 
+function getNormalizedImages(data: Record<string, unknown>): string[] {
+  const images = Array.isArray(data.images)
+    ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : [];
+
+  if (images.length > 0) {
+    return images;
+  }
+
+  return typeof data.imageUri === "string" && data.imageUri.length > 0 ? [data.imageUri] : [];
 }
 
 function mapSnapshotDocToListingItem(doc: { id: string; data: () => Record<string, unknown> }): ListingItem {
   const data = doc.data();
-  const images = Array.isArray(data.images)
-    ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
-    : [];
 
   return {
     id: doc.id,
     title: typeof data.title === "string" ? data.title : "Untitled Item",
     price: typeof data.price === "number" ? data.price : Number(data.price) || 0,
     ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" ? data.ratePeriod : "week",
-    imageUri: images[0] ?? (typeof data.imageUri === "string" ? data.imageUri : undefined),
+    images: getNormalizedImages(data),
   };
 }
 
-function mapSnapshotDocToListingItem(doc: { id: string; data: () => Record<string, unknown> }): ListingItem {
-  const data = doc.data();
-  const images = Array.isArray(data.images)
-    ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
-    : [];
-
+function mapPropertyToListingItem(property: Property): ListingItem {
   return {
-    id: doc.id,
-    title: typeof data.title === "string" ? data.title : "Untitled Item",
-    price: typeof data.price === "number" ? data.price : Number(data.price) || 0,
-    ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" ? data.ratePeriod : "week",
-    imageUri: images[0] ?? (typeof data.imageUri === "string" ? data.imageUri : undefined),
+    id: property.id,
+    title: property.title,
+    price: property.price,
+    ratePeriod: property.ratePeriod,
+    images: property.images,
   };
 }
 
@@ -57,31 +54,11 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const itemsRef = collection(db, "properties");
-    const q = query(itemsRef, orderBy("updatedAt", "desc"));
+    const itemsQuery = query(itemsRef, orderBy("updatedAt", "desc"));
 
     const unsubscribe = onSnapshot(
-      q,
+      itemsQuery,
       (snapshot) => {
-        const fetchedItems: RentalItem[] = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          const images = Array.isArray(data.images)
-            ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
-            : [];
-
-          const finalImagesArray = images.length > 0 
-            ? images 
-            : (typeof data.imageUri === "string" && data.imageUri.length > 0 ? [data.imageUri] : []);
-
-          return {
-            id: doc.id,
-            title: data.title ?? "Untitled Item", 
-            price: data.price ? Number(data.price) : 0, 
-            ratePeriod: data.ratePeriod ?? "week", 
-            images: finalImagesArray,
-          };
-        });
-        
-        setItems(fetchedItems);
         setItems(snapshot.docs.map((docSnap) => mapSnapshotDocToListingItem(docSnap)));
         setLoading(false);
       },
@@ -95,13 +72,7 @@ export default function HomeScreen() {
   }, []);
 
   const isSearching = searchQuery.trim().length > 0;
-  const activeItems = isSearching ? results.map((item) => ({
-    id: item.id,
-    title: item.title,
-    price: item.price,
-    ratePeriod: item.ratePeriod,
-    imageUri: item.images[0],
-  })) : items;
+  const activeItems = isSearching ? results.map(mapPropertyToListingItem) : items;
 
   return (
     <View style={styles.container}>
@@ -149,34 +120,15 @@ export default function HomeScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View style={{ width: CARD_WIDTH }}>
-              <PropertyCard
-                title={item.title}
-                price={item.price}
-                ratePeriod={item.ratePeriod}
-                imageUri={item.imageUri}
-                onPress={() => console.log(`Selected item: ${item.title}`)}
-              />
-            </View>
+            <PropertyCard
+              property={item}
+              onPress={() => {
+                navigation.navigate("Details", { propertyId: item.id });
+              }}
+            />
           )}
         />
       )}
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.rowWrapper}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <PropertyCard
-            property={item}
-            onPress={() => {
-              navigation.navigate("Details", { propertyId: item.id });
-            }}
-          />
-        )}
-      />
     </View>
   );
 }

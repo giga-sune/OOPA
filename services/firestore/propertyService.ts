@@ -19,7 +19,6 @@ import type {
   UpdatePropertyInput,
   LocationData,
 } from "../../types/property/propertyTypes";
-import { query, where } from "firebase/firestore";
 
 const PROPERTIES_COLLECTION = "properties";
 
