@@ -17,6 +17,7 @@ import MapView, { Circle } from 'react-native-maps';
 import { doc, getDoc } from 'firebase/firestore';
 
 import { db } from '../services/firebase/firebaseApp';
+// Imported Shadows from your global design token ecosystem
 import { Colors, Typography, Radius, Spacing, Shadows } from '../styles/globalDesignSystem';
 import { getPropertyById, getUserProperties } from '../services/firestore/propertyService';
 import type { Property } from '../types/property/propertyTypes';

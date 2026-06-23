@@ -176,7 +176,7 @@ export default function PostScreen() {
           location,
           images: uploadedImageUrls,
           ownerUid: currentUser.uid,
-          ownerDisplayName: currentUser.displayName || "Anonymous User",
+          ownerDisplayName: currentUser.displayName || "Bibek Gurung",
           ownerPhotoURL: currentUser.photoURL || null,
           updatedAt: serverTimestamp(),
         });

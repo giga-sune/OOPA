@@ -139,6 +139,7 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
       ownerUid: user?.uid ?? "",
       ownerEmail: user?.email ?? null,
       
+      // 👇 Bind to your user profiles hooks data instead of firebase auth instances
       ownerDisplayName: profileData?.userName || "OOPA User",
       ownerPhotoURL: avatarImageUri || null,
       
