@@ -1,54 +1,65 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { View, StyleSheet, FlatList, Dimensions, ActivityIndicator, Text } from "react-native";
+import { View, StyleSheet, FlatList, ActivityIndicator, Text, TextInput } from "react-native";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "../services/firebase/firebaseApp";
+import Feather from "@expo/vector-icons/Feather";
+
 import PropertyCard from "../components/property/PropertyCard";
-import { Colors, Spacing } from "../styles/globalDesignSystem";
+import { db } from "../services/firebase/firebaseApp";
+import { Colors, Radius, Spacing } from "../styles/globalDesignSystem";
+import type { Property } from "../types/property/propertyTypes";
+import usePropertySearchViewModel from "../viewModels/property/usePropertySearchViewModel";
 
-const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - Spacing.lg * 2 - Spacing.md) / 2;
+type ListingItem = Pick<Property, "id" | "title" | "price" | "ratePeriod" | "images">;
 
-interface RentalItem {
-  id: string;
-  title: string;
-  price: number;
-  ratePeriod: string;
-  images?: string[]; 
+function getNormalizedImages(data: Record<string, unknown>): string[] {
+  const images = Array.isArray(data.images)
+    ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : [];
+
+  if (images.length > 0) {
+    return images;
+  }
+
+  return typeof data.imageUri === "string" && data.imageUri.length > 0 ? [data.imageUri] : [];
+}
+
+function mapSnapshotDocToListingItem(doc: { id: string; data: () => Record<string, unknown> }): ListingItem {
+  const data = doc.data();
+
+  return {
+    id: doc.id,
+    title: typeof data.title === "string" ? data.title : "Untitled Item",
+    price: typeof data.price === "number" ? data.price : Number(data.price) || 0,
+    ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" ? data.ratePeriod : "week",
+    images: getNormalizedImages(data),
+  };
+}
+
+function mapPropertyToListingItem(property: Property): ListingItem {
+  return {
+    id: property.id,
+    title: property.title,
+    price: property.price,
+    ratePeriod: property.ratePeriod,
+    images: property.images,
+  };
 }
 
 export default function HomeScreen() {
-  const [items, setItems] = useState<RentalItem[]>([]);
+  const [items, setItems] = useState<ListingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const navigation = useNavigation<any>();
+  const { searchQuery, setSearchQuery, results, loading: searchLoading } = usePropertySearchViewModel();
 
   useEffect(() => {
     const itemsRef = collection(db, "properties");
-    const q = query(itemsRef, orderBy("updatedAt", "desc"));
+    const itemsQuery = query(itemsRef, orderBy("updatedAt", "desc"));
 
     const unsubscribe = onSnapshot(
-      q,
+      itemsQuery,
       (snapshot) => {
-        const fetchedItems: RentalItem[] = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          const images = Array.isArray(data.images)
-            ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
-            : [];
-
-          const finalImagesArray = images.length > 0 
-            ? images 
-            : (typeof data.imageUri === "string" && data.imageUri.length > 0 ? [data.imageUri] : []);
-
-          return {
-            id: doc.id,
-            title: data.title ?? "Untitled Item", 
-            price: data.price ? Number(data.price) : 0, 
-            ratePeriod: data.ratePeriod ?? "week", 
-            images: finalImagesArray,
-          };
-        });
-        
-        setItems(fetchedItems);
+        setItems(snapshot.docs.map((docSnap) => mapSnapshotDocToListingItem(docSnap)));
         setLoading(false);
       },
       (error) => {
@@ -60,40 +71,64 @@ export default function HomeScreen() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="small" color={Colors.primary} />
-      </View>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <Text style={styles.emptyText}>No items available for rent right now.</Text>
-      </View>
-    );
-  }
+  const isSearching = searchQuery.trim().length > 0;
+  const activeItems = isSearching ? results.map(mapPropertyToListingItem) : items;
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.rowWrapper}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <PropertyCard
-            property={item}
-            onPress={() => {
-              navigation.navigate("Details", { propertyId: item.id });
-            }}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Feather name="search" size={18} color={Colors.placeholder} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search properties..."
+            placeholderTextColor={Colors.placeholder}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
-        )}
-      />
+        </View>
+      </View>
+
+      {loading && !isSearching ? (
+        <View style={[styles.stateContainer, styles.center]}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      ) : isSearching && searchLoading ? (
+        <View style={[styles.stateContainer, styles.center]}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      ) : isSearching && activeItems.length === 0 ? (
+        <View style={[styles.stateContainer, styles.center]}>
+          <Text style={styles.emptyText}>No matching properties found.</Text>
+        </View>
+      ) : activeItems.length === 0 ? (
+        <View style={[styles.stateContainer, styles.center]}>
+          <Text style={styles.emptyText}>No items available for rent right now.</Text>
+        </View>
+      ) : (
+        <FlatList
+          style={styles.list}
+          data={activeItems}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.rowWrapper}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <PropertyCard
+              property={item}
+              onPress={() => {
+                navigation.navigate("Details", { propertyId: item.id });
+              }}
+            />
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -102,6 +137,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
+  },
+  searchContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.inputBg,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    height: 48,
+  },
+  searchIcon: {
+    marginRight: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    height: "100%",
+    color: Colors.text,
+    fontSize: 15,
+  },
+  loadingText: {
+    marginTop: Spacing.sm,
+    color: Colors.subText,
+    fontSize: 14,
+  },
+  list: {
+    flex: 1,
+  },
+  stateContainer: {
+    flex: 1,
   },
   center: {
     justifyContent: "center",

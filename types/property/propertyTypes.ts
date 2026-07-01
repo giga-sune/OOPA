@@ -23,6 +23,8 @@ export interface Property {
   price: number;
   ratePeriod: PropertyRatePeriod;
   location: LocationData | null;
+  /** Canonical lowercase search index written with every Firestore property document. */
+  searchKeywords: string[];
   createdAt: Date;
   updatedAt: Date;
 }
