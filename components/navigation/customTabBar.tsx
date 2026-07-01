@@ -63,7 +63,6 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       {state.routes.map((route) => {
         const isFocused = state.index === state.routes.indexOf(route);
         const label = route.name as keyof TabParamList;
-        const isPost = label === "Post";
 
         const onPress = () => {
           const event = navigation.emit({
@@ -87,11 +86,9 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               name={icons[label]}
               size={24}
               color={
-                isPost
+                isFocused
                   ? Colors.primary
-                  : isFocused
-                    ? Colors.grayPrimary
-                    : Colors.grayTertiary
+                  : Colors.grayTertiary
               }
             />
 
@@ -99,11 +96,9 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               style={{
                 fontSize: 12,
                 marginTop: 4,
-                color: isPost
+                color: isFocused
                   ? Colors.primary
-                  : isFocused
-                    ? Colors.grayPrimary
-                    : Colors.grayTertiary,
+                  : Colors.grayTertiary,
                 fontWeight: isFocused ? "600" : "400",
               }}
             >

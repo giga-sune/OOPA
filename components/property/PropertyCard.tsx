@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions } from "react-native";
+import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Colors, Radius, Spacing } from "../../styles/globalDesignSystem";
 
@@ -31,7 +31,11 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   
-  const imageSource = property.images && property.images.length > 0
+  const hasRemoteImage = (property.images?.length ?? 0) > 0;
+  
+  const [imageLoading, setImageLoading] = useState(hasRemoteImage);
+  
+  const imageSource = hasRemoteImage && property.images
     ? { uri: property.images[0] }
     : require("../../assets/placeholder.png");
 
@@ -45,9 +49,18 @@ export default function PropertyCard({
   return (
     <TouchableOpacity style={styles.cardContainer} activeOpacity={0.9} onPress={onPress}>
       <View style={styles.imageWrapper}>
-        <Image source={imageSource} style={styles.cardImage} resizeMode="cover" />
+        <Image 
+          source={imageSource} 
+          style={styles.cardImage} 
+          resizeMode="cover" 
+          onLoadEnd={() => setImageLoading(false)}
+        />
         
-        {/* Only display heart icon when management action buttons are hidden */}
+        {imageLoading && (
+          <View style={styles.imageLoaderOverlay}>
+            <ActivityIndicator size="small" color="#FF7A21" />
+          </View>
+        )}
         {!showActions && (
           <TouchableOpacity 
             style={styles.heartOverlayButton} 
@@ -117,6 +130,13 @@ const styles = StyleSheet.create({
   cardImage: {
     width: "100%",
     height: "100%",
+  },
+  imageLoaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#F1F5F9", 
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 2,
   },
   heartOverlayButton: {
     position: "absolute",

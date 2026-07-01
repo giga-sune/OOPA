@@ -74,6 +74,9 @@ export default function HomeScreen() {
   const isSearching = searchQuery.trim().length > 0;
   const activeItems = isSearching ? results.map(mapPropertyToListingItem) : items;
 
+  // Keep spinner alive until loading is false and items are actually updated in state
+  const showInitialLoadingSpinner = loading || items.length === 0;
+
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -93,13 +96,13 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {loading && !isSearching ? (
+      {showInitialLoadingSpinner && !isSearching ? (
         <View style={[styles.stateContainer, styles.center]}>
-          <ActivityIndicator size="small" color={Colors.primary} />
+          <ActivityIndicator size="large" color="#FF7A21" />
         </View>
       ) : isSearching && searchLoading ? (
         <View style={[styles.stateContainer, styles.center]}>
-          <ActivityIndicator size="small" color={Colors.primary} />
+          <ActivityIndicator size="large" color="#FF7A21" />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       ) : isSearching && activeItems.length === 0 ? (
