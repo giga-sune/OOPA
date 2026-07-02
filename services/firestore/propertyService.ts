@@ -11,13 +11,15 @@ import {
   updateDoc,
   where,
   type DocumentData,
+  type QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase/firebaseApp";
 import type {
   CreatePropertyInput,
-  Property,
-  UpdatePropertyInput,
   LocationData,
+  Property,
+  PropertyFilters,
+  UpdatePropertyInput,
 } from "../../types/property/propertyTypes";
 
 const PROPERTIES_COLLECTION = "properties";
@@ -47,6 +49,61 @@ function toDate(value: unknown): Date {
 
 function normalizeSearchPhrase(value: string): string {
   return value.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function hasActiveFilters(filters: PropertyFilters): boolean {
+  return filters.condition !== null || filters.priceBand !== null || filters.priceType !== null;
+}
+
+function isMissingIndexError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "failed-precondition"
+  );
+}
+
+function matchesPriceBand(price: number, priceBand: PropertyFilters["priceBand"]): boolean {
+  if (priceBand === "under-50") {
+    return price < 50;
+  }
+
+  if (priceBand === "50-to-150") {
+    return price >= 50 && price <= 150;
+  }
+
+  if (priceBand === "150-plus") {
+    return price > 150;
+  }
+
+  return true;
+}
+
+async function filterPropertiesWithLocalPriceFallback(
+  filters: PropertyFilters,
+  limitCount: number
+): Promise<Property[]> {
+  const fallbackConstraints: QueryConstraint[] = [];
+
+  if (filters.condition) {
+    fallbackConstraints.push(where("condition", "==", filters.condition));
+  }
+
+  if (filters.priceType) {
+    fallbackConstraints.push(where("priceType", "==", filters.priceType));
+  }
+
+  const fallbackQuery = fallbackConstraints.length > 0
+    ? query(collection(db, PROPERTIES_COLLECTION), ...fallbackConstraints)
+    : query(collection(db, PROPERTIES_COLLECTION));
+
+  const querySnapshot = await getDocs(fallbackQuery);
+
+  return querySnapshot.docs
+    .map((docSnap) => readProperty(docSnap.data(), docSnap.id))
+    .filter((property) => matchesPriceBand(property.price, filters.priceBand))
+    .slice(0, limitCount);
 }
 
 function appendSearchValue(searchKeywords: Set<string>, value: unknown): void {
@@ -212,6 +269,52 @@ export async function searchProperties(searchTerm: string, limitCount: number = 
   const querySnapshot = await getDocs(searchQuery);
 
   return querySnapshot.docs.map((docSnap) => readProperty(docSnap.data(), docSnap.id));
+}
+
+export async function filterProperties(filters: PropertyFilters, limitCount: number = 20): Promise<Property[]> {
+  if (!hasActiveFilters(filters)) {
+    return [];
+  }
+
+  const constraints: QueryConstraint[] = [];
+
+  if (filters.condition) {
+    constraints.push(where("condition", "==", filters.condition));
+  }
+
+  if (filters.priceType) {
+    constraints.push(where("priceType", "==", filters.priceType));
+  }
+
+  if (filters.priceBand === "under-50") {
+    constraints.push(where("price", "<", 50));
+  } else if (filters.priceBand === "50-to-150") {
+    constraints.push(where("price", ">=", 50));
+    constraints.push(where("price", "<=", 150));
+  } else if (filters.priceBand === "150-plus") {
+    constraints.push(where("price", ">", 150));
+  }
+
+  constraints.push(limit(limitCount));
+
+  try {
+    const filterQuery = query(collection(db, PROPERTIES_COLLECTION), ...constraints);
+    const querySnapshot = await getDocs(filterQuery);
+
+    return querySnapshot.docs.map((docSnap) => readProperty(docSnap.data(), docSnap.id));
+  } catch (error) {
+    const shouldUseLocalPriceFallback =
+      isMissingIndexError(error) &&
+      filters.priceBand !== null &&
+      (filters.condition !== null || filters.priceType !== null);
+
+    if (shouldUseLocalPriceFallback) {
+      console.warn("Falling back to local price-band filtering because Firestore composite index is missing.");
+      return filterPropertiesWithLocalPriceFallback(filters, limitCount);
+    }
+
+    throw error;
+  }
 }
 
 export async function getPropertyById(id: string): Promise<Property | null> {

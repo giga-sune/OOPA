@@ -1,6 +1,7 @@
 export type PropertyCondition = "Like new" | "Good" | "Used";
 export type PropertyPriceType = "Fixed" | "Flexible";
 export type PropertyRatePeriod = "week" | "month";
+export type PropertyPriceBand = "under-50" | "50-to-150" | "150-plus";
 
 export interface LocationData {
   address: string;
@@ -43,6 +44,12 @@ export interface CreatePropertyInput {
   price: number;
   ratePeriod: PropertyRatePeriod;
   location: LocationData | null;
+}
+
+export interface PropertyFilters {
+  condition: PropertyCondition | null;
+  priceBand: PropertyPriceBand | null;
+  priceType: PropertyPriceType | null;
 }
 
 export interface UpdatePropertyInput {
