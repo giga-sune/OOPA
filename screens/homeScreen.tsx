@@ -199,7 +199,6 @@ export default function HomeScreen() {
         ) : null}
       </View>
 
-      {/* Full Width Edge-to-Edge Filter Bottom Sheet Overlay */}
       <Modal
         visible={isFilterModalVisible}
         animationType="slide"
