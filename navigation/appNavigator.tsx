@@ -8,6 +8,8 @@ import MyListingsScreen from "../screens/myListingScreen";
 import DetailsScreen from "../screens/detailScreen";
 import MapViewerScreen from "../screens/mapViewerScreen";
 import CheckoutScreen from "../screens/checkoutScreen";
+import LenderRequestDetailScreen from "../screens/lenderRequestDetailScreen";
+import BorrowerOrderDetailScreen from "../screens/borrowerOrderDetailScreen";
 
 import { useAuth } from "../context/AuthContext";
 import type { RootStackParamList } from "../types/navigation/navigationTypes";
@@ -31,6 +33,8 @@ export default function AppNavigator() {
           <Stack.Screen name="Details" component={DetailsScreen} />
           <Stack.Screen name="MapViewer" component={MapViewerScreen} />
           <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
+          <Stack.Screen name="LenderRequestDetailScreen" component={LenderRequestDetailScreen} options={{ headerShown: false }}/>
+          <Stack.Screen name="BorrowerOrderDetailScreen" component={BorrowerOrderDetailScreen} options={{ headerShown: false }} />
         </>
       )}
     </Stack.Navigator>

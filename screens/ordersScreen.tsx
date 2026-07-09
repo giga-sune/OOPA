@@ -1,67 +1,127 @@
-import React, { useState } from "react";
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Platform } from "react-native";
-import OrderListItem, { type OrderData } from "../components/order/orderListItem";
-import { Spacing } from "../styles/globalDesignSystem";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 
-const MOCK_MY_ORDERS: OrderData[] = [
-  {
-    id: "1",
-    title: "Medium Camping Tent",
-    price: 11,
-    ratePeriod: "month",
-    startDate: "20/05/2026",
-    endDate: "30/05/2026",
-    status: "Pending...",
-    imageUrl: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400",
-  },
-  {
-    id: "2",
-    title: "Medium Camping Tent",
-    price: 25,
-    ratePeriod: "week",
-    startDate: "20/05/2026",
-    endDate: "30/05/2026",
-    status: "Completed",
-    imageUrl: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=400",
-  },
-  {
-    id: "3",
-    title: "Medium Camping Tent",
-    price: 25,
-    ratePeriod: "week",
-    startDate: "20/05/2026",
-    endDate: "30/05/2026",
-    status: "Approved",
-    imageUrl: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400",
-  },
-];
-
-const MOCK_REQUESTS: OrderData[] = [];
+import OrderListItem from "../components/order/orderListItem";
+import { db } from "../services/firebase/firebaseApp";
+import { approveRentalRequest, rejectRentalRequest } from "../services/firestore/rentalService";
+import type { Rental } from "../types/rental/rentalTypes";
 
 type TabState = "My Orders" | "Requests";
 
 export default function OrdersScreen() {
+  const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState<TabState>("My Orders");
+  const [myOrders, setMyOrders] = useState<Rental[]>([]);
+  const [requests, setRequests] = useState<Rental[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  const handleReport = (id: string) => {
-    console.log("Report form targeted item reference ID:", id);
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (!user) {
+        setMyOrders([]);
+        setRequests([]);
+        setLoading(false);
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    setLoading(true);
+    const rentalsRef = collection(db, "rentals"); 
+
+    const myOrdersQuery = query(
+      rentalsRef,
+      where("renterUid", "==", currentUser.uid),
+      orderBy("updatedAt", "desc")
+    );
+
+    const requestsQuery = query(
+      rentalsRef,
+      where("ownerUid", "==", currentUser.uid), 
+      orderBy("updatedAt", "desc")
+    );
+
+    const parseSnapshotDoc = (docSnap: any): Rental => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        propertyId: data.propertyId || "",
+        renterUid: data.renterUid || "",
+        renterDisplayName: data.renterDisplayName || null,
+        ownerUid: data.ownerUid || "",
+        ownerDisplayName: data.ownerDisplayName || null,
+        propertyTitle: data.propertyTitle || "Unknown Rental Item",
+        propertyImageUrl: data.propertyImageUrl || null,
+        propertyRatePeriod: data.propertyRatePeriod || "month",
+        propertyPrice: data.propertyPrice || 0,
+        startDate: data.startDate ? data.startDate.toDate() : new Date(),
+        endDate: data.endDate ? data.endDate.toDate() : new Date(),
+        totalUnits: data.totalUnits || 0,
+        totalPrice: data.totalPrice || 0,
+        message: data.message || null,
+        status: data.status || "pending",
+        createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
+        updatedAt: data.updatedAt ? data.updatedAt.toDate() : new Date(),
+      };
+    };
+
+    const unsubscribeOrders = onSnapshot(myOrdersQuery, (snapshot) => {
+      setMyOrders(snapshot.docs.map(parseSnapshotDoc));
+      setLoading(false);
+    }, () => setLoading(false));
+
+    const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
+      setRequests(snapshot.docs.map(parseSnapshotDoc));
+    });
+
+    return () => {
+      unsubscribeOrders();
+      unsubscribeRequests();
+    };
+  }, [currentUser]);
+
+  const handleAcceptRequest = async (rentalId: string) => {
+    try {
+      await approveRentalRequest(rentalId);
+      Alert.alert("Success", "Rental request has been approved.");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to accept booking.");
+    }
   };
 
-  const handleReview = (id: string) => {
-    console.log("Review system execution mapping for item ID:", id);
+  const handleDenyRequest = async (rentalId: string) => {
+    try {
+      await rejectRentalRequest(rentalId);
+      Alert.alert("Declined", "The rental request has been rejected.");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to decline booking.");
+    }
   };
+
+  const handleReport = (id: string) => console.log("Report interaction on:", id);
+  const handleReview = (id: string) => console.log("Review system trigger for:", id);
+
+  const activeData = activeTab === "My Orders" ? myOrders : requests;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.topTabBar}>
         <TouchableOpacity 
           style={[styles.tabButton, activeTab === "My Orders" && styles.activeTabButton]}
           onPress={() => setActiveTab("My Orders")}
           activeOpacity={1}
         >
-          <Text style={[styles.tabText, activeTab === "My Orders" && styles.activeTabText]}>
-            My Orders
-          </Text>
+          <Text style={[styles.tabText, activeTab === "My Orders" && styles.activeTabText]}>My Orders</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -69,79 +129,65 @@ export default function OrdersScreen() {
           onPress={() => setActiveTab("Requests")}
           activeOpacity={1}
         >
-          <Text style={[styles.tabText, activeTab === "Requests" && styles.activeTabText]}>
-            Requests
-          </Text>
+          <Text style={[styles.tabText, activeTab === "Requests" && styles.activeTabText]}>Requests</Text>
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={activeTab === "My Orders" ? MOCK_MY_ORDERS : MOCK_REQUESTS}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <OrderListItem 
-            item={item} 
-            onReportPress={handleReport}
-            onReviewPress={handleReview}
-          />
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              No {activeTab.toLowerCase()} entries right now.
-            </Text>
-          </View>
-        }
-      />
-    </View>
+      {!currentUser ? (
+        <View style={styles.centerLoading}>
+          <Text style={styles.emptyText}>Please log in to track assignments.</Text>
+        </View>
+      ) : loading ? (
+        <View style={styles.centerLoading}>
+          <ActivityIndicator size="large" color="#FF7A21" />
+        </View>
+      ) : (
+        <FlatList
+          data={activeData}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              activeOpacity={0.85}
+              onPress={() => {
+                if (activeTab === "Requests") {
+                  navigation.navigate("LenderRequestDetailScreen", { rentalId: item.id });
+                } else {
+                  navigation.navigate("BorrowerOrderDetailScreen", { rentalId: item.id});
+                }
+              }}
+            >
+              <OrderListItem 
+                item={item} 
+                isIncomingRequest={activeTab === "Requests"}
+                onAcceptPress={handleAcceptRequest}
+                onDenyPress={handleDenyRequest}
+                onReportPress={handleReport}
+                onReviewPress={handleReview}
+              />
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No {activeTab.toLowerCase()} entries found.</Text>
+            </View>
+          }
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-  topTabBar: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#ffffff",
-    paddingTop: Platform.OS === "ios" ? 12 : 4, 
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 2,
-    borderColor: "transparent",
-  },
-  activeTabButton: {
-    borderColor: "#FF7A21", 
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#64748B",
-  },
-  activeTabText: {
-    color: "#0F172A", 
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg || 16,
-    paddingTop: Spacing.sm || 8,
-    paddingBottom: 110,
-  },
-  emptyContainer: {
-    flex: 1,
-    paddingTop: 80,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#94A3B8",
-  },
+  container: { flex: 1, backgroundColor: "#ffffff" },
+  topTabBar: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#E2E8F0", backgroundColor: "#ffffff" },
+  tabButton: { flex: 1, alignItems: "center", paddingVertical: 14, borderBottomWidth: 2, borderColor: "transparent" },
+  activeTabButton: { borderColor: "#FF7A21" },
+  tabText: { fontSize: 16, fontWeight: "600", color: "#64748B" },
+  activeTabText: { color: "#0F172A" },
+  listContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 110 },
+  centerLoading: { flex: 1, justifyContent: "center", alignItems: "center" },
+  emptyContainer: { flex: 1, paddingTop: 80, alignItems: "center", justifyContent: "center" },
+  emptyText: { fontSize: 14, color: "#94A3B8" },
 });

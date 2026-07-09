@@ -253,10 +253,12 @@ export default function DetailsScreen() {
           onPress={() => {
             if (property) {
               navigation.navigate("CheckoutScreen", {
-                propertyId: propertyId,
+                id: propertyId,
+                ownerUid: property.ownerUid,
                 title: property.title,
                 price: property.price,
                 ratePeriod: property.ratePeriod,
+                lenderEmail: property.ownerEmail,
                 image: property.images?.[0] || null,
                 ownerDisplayName: ownerProfile?.displayName || "Lender"
               });

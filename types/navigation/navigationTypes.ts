@@ -13,6 +13,8 @@ export type RootStackParamList = {
     image: string | null;
     ownerDisplayName: string;
   };
+  LenderRequestDetailScreen: { rentalId: string };
+  BorrowerOrderDetailScreen: { rentalId: string };
 };
 
 export type TabParamList = {

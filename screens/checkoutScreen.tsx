@@ -1,316 +1,360 @@
-import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import Feather from "@expo/vector-icons/Feather";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Modal, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
+import { getAuth } from "firebase/auth";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons, Feather } from "@expo/vector-icons";
 
-import CheckoutProductSummary from '../components/checkout/CheckoutProductSummary';
-import { Colors, Spacing } from "../styles/globalDesignSystem";
+import { createRentalRequest } from "../services/firestore/rentalService";
+import { getPropertyById } from "../services/firestore/propertyService";
+
+type ParamList = {
+  CheckoutScreen: {
+    id: string;
+    ownerUid: string;
+  };
+};
 
 export default function CheckoutScreen() {
   const navigation = useNavigation();
-  const route = useRoute<any>();
+  const route = useRoute<RouteProp<ParamList, "CheckoutScreen">>();
+  const { id: propertyId, ownerUid } = route.params || {};
 
-  // Extract price parameters to calculate dynamic total
-  const { price = 0, ratePeriod = 'week' } = route.params || {};
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
 
-  // Form states
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [contact, setContact] = useState("");
+  const [property, setProperty] = useState<any>(null);
+  const [loadingProperty, setLoadingProperty] = useState(true);
+  const [totalPrice, setTotalPrice] = useState(0);
+
   const [message, setMessage] = useState("");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
   
-  // Date State objects
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-
-  // Picker visibility controls
+  const [tempStartDate, setTempStartDate] = useState(new Date());
+  const [tempEndDate, setTempEndDate] = useState(new Date());
+  
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- Calculation Logic ---
-  const calculateTotal = (): string => {
-    if (!startDate || !endDate || price <= 0) return "0.00";
+  useEffect(() => {
+    async function loadItemData() {
+      if (!propertyId) {
+        Alert.alert("Error", "Missing property identification reference.");
+        setLoadingProperty(false);
+        return;
+      }
+      try {
+        setLoadingProperty(true);
+        const data = await getPropertyById(propertyId);
+        if (!data) {
+          Alert.alert("Error", "Could not find item details.");
+          navigation.goBack();
+          return;
+        }
+        setProperty(data);
+      } catch (err) {
+        console.error("Error fetching item details:", err);
+      } finally {
+        setLoadingProperty(false);
+      }
+    }
+    loadItemData();
+  }, [propertyId]);
 
-    // Calculate absolute difference in milliseconds
-    const diffTime = endDate.getTime() - startDate.getTime();
-    if (diffTime < 0) return "0.00";
+  useEffect(() => {
+    if (!property) return;
 
-    // Convert milliseconds to full days
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1; 
-
-    let calculatedTotal = 0;
-    if (ratePeriod === 'week') {
-      // Daily cost based on weekly breakdown
-      calculatedTotal = (price / 7) * diffDays;
+    const diffTime = Math.max(0, endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let units = 1;
+    if (property.ratePeriod === "week") {
+      units = Math.max(1, Math.ceil(diffDays / 7));
     } else {
-      // Daily cost based on monthly (30 day average) breakdown
-      calculatedTotal = (price / 30) * diffDays;
+      units = Math.max(1, Math.ceil(diffDays / 30));
     }
 
-    return calculatedTotal.toFixed(2);
+    setTotalPrice(units * (property.price || 0));
+  }, [startDate, endDate, property]);
+
+  const handleCheckout = async () => {
+    if (!currentUser) {
+      Alert.alert("Authentication Required", "Please log in to rent items.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await createRentalRequest({
+        propertyId: propertyId,
+        renterUid: currentUser.uid,
+        startDate: startDate,
+        endDate: endDate,
+        message: message.trim() || null,
+      });
+
+      Alert.alert(
+        "Request Sent!", 
+        "Your rental request timeline has been submitted for approval.",
+        [
+          { 
+            text: "Return", 
+            onPress: () => {
+              if (navigation.canGoBack()) {
+                navigation.goBack(); 
+              } else {
+                (navigation as any).navigate("HomeTabs"); 
+              }
+            } 
+          }
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert("Checkout Error", error.message || "Something went wrong.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleCheckout = () => {
-    console.log("Processing checkout data...", { 
-      username, 
-      email, 
-      contact, 
-      totalAmount: calculateTotal(),
-      startDate: startDate?.toLocaleDateString('en-GB'),
-      endDate: endDate?.toLocaleDateString('en-GB'),
-    });
-  };
-
-  const formatDateDisplay = (date: Date | null, fallbackPlaceholder: string) => {
-    if (!date) return fallbackPlaceholder;
-    return date.toLocaleDateString('en-GB'); 
-  };
+  if (loadingProperty) {
+    return (
+      <View style={styles.centerLoading}>
+        <ActivityIndicator size="large" color="#FF7A21" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        {/* Custom Navigation Header */}
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-            <Feather name="chevron-left" size={28} color="#000000" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => (navigation as any).popToTop()} style={styles.iconButton}>
-            <Feather name="home" size={24} color="#000000" />
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <View style={styles.topNavBar}>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={28} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton} onPress={() => (navigation as any).navigate("HomeTabs")}>
+          <Ionicons name="home-outline" size={26} color="#000" />
+        </TouchableOpacity>
+      </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
-          
-          <CheckoutProductSummary />
-
-          {/* Form Content Controls */}
-          <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Full Name</Text>
-            <TextInput
-              style={styles.textInput}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="e.g. John Doe"
-              placeholderTextColor={Colors.placeholder || "#94A3B8"}
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        {property && (
+          <View style={styles.itemHeaderContainer}>
+            <Image 
+              source={{ uri: property.propertyImageUrl || property.images?.[0] || "https://placeholder.pics/svg/120" }} 
+              style={styles.itemImage} 
             />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput
-              style={styles.textInput}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="yourname@example.com"
-              placeholderTextColor={Colors.placeholder || "#94A3B8"}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Contact Number</Text>
-            <TextInput
-              style={styles.textInput}
-              value={contact}
-              onChangeText={setContact}
-              placeholder="e.g. +1 (416) 555-0199"
-              placeholderTextColor={Colors.placeholder || "#94A3B8"}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          {/* Date Picker */}
-          <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Rental Period</Text>
-            <View style={styles.dateRow}>
+            <View style={styles.itemDetailsTextContainer}>
+              <Text style={styles.itemPriceText}>${property.price}/{property.ratePeriod}</Text>
+              <Text style={styles.itemTitleText}>{property.title}</Text>
               
-              <TouchableOpacity 
-                style={styles.dateInputWrapper} 
-                activeOpacity={0.7} 
-                onPress={() => setShowStartPicker(true)}
-              >
-                <View style={styles.dateInputMock}>
-                  <Text style={[styles.dateText, !startDate && styles.placeholderText]}>
-                    {formatDateDisplay(startDate, "Start Date")}
-                  </Text>
-                  <Feather name="calendar" size={18} color="#FF7A21" style={styles.calendarIcon} />
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.dateInputWrapper} 
-                activeOpacity={0.7} 
-                onPress={() => setShowEndPicker(true)}
-              >
-                <View style={styles.dateInputMock}>
-                  <Text style={[styles.dateText, !endDate && styles.placeholderText]}>
-                    {formatDateDisplay(endDate, "End Date")}
-                  </Text>
-                  <Feather name="calendar" size={18} color="#FF7A21" style={styles.calendarIcon} />
-                </View>
-              </TouchableOpacity>
-
+              <Text style={styles.lenderLabel}>Lender</Text>
+              <View style={styles.lenderBadge}>
+                <Text style={styles.lenderBadgeText}>{property.ownerDisplayName || "Lender"}</Text>
+              </View>
             </View>
           </View>
+        )}
 
-          {showStartPicker && (
-            <View style={styles.calendarContainer}>
-              <DateTimePicker
-                value={startDate || new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                minimumDate={new Date()}
-                onChange={(event, selectedDate) => {
-                  if (Platform.OS !== 'ios') setShowStartPicker(false);
-                  if (selectedDate) setStartDate(selectedDate);
-                }}
-              />
-              {Platform.OS === 'ios' && (
-                <TouchableOpacity style={styles.closeCalendarBtn} onPress={() => setShowStartPicker(false)}>
-                  <Text style={styles.closeCalendarText}>Confirm Start Date</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+        <Text style={styles.fieldSectionLabel}>Date</Text>
+        <View style={styles.datePickerContainer}>
+          <TouchableOpacity 
+            style={styles.dateInputBlock} 
+            onPress={() => {
+              setTempStartDate(startDate);
+              setShowStartPicker(true);
+            }}
+          >
+            <Text style={styles.dateValuePlaceholder}>{startDate.toLocaleDateString("en-GB")}</Text>
+            <Feather name="calendar" size={20} color="#FF7A21" />
+          </TouchableOpacity>
 
-          {showEndPicker && (
-            <View style={styles.calendarContainer}>
-              <DateTimePicker
-                value={endDate || startDate || new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                minimumDate={startDate || new Date()}
-                onChange={(event, selectedDate) => {
-                  if (Platform.OS !== 'ios') setShowEndPicker(false);
-                  if (selectedDate) setEndDate(selectedDate);
-                }}
-              />
-              {Platform.OS === 'ios' && (
-                <TouchableOpacity style={styles.closeCalendarBtn} onPress={() => setShowEndPicker(false)}>
-                  <Text style={styles.closeCalendarText}>Confirm End Date</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-
-          {/* Message Input */}
-          <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Message Lender</Text>
-            <TextInput
-              style={[styles.textInput, styles.textArea]}
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Introduce yourself and mention your preferred drop-off details..."
-              placeholderTextColor={Colors.placeholder || "#94A3B8"}
-              multiline={true}
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-        </ScrollView>
-
-        {/* Dynamic Sticky Footer Total Calculation Row */}
-        <View style={styles.bottomStickyRow}>
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalPrice}>${calculateTotal()}</Text>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-          </View>
-          <TouchableOpacity style={styles.checkoutButton} activeOpacity={0.9} onPress={handleCheckout}>
-            <Text style={styles.checkoutButtonText}>Checkout</Text>
+          <TouchableOpacity 
+            style={styles.dateInputBlock} 
+            onPress={() => {
+              setTempEndDate(endDate);
+              setShowEndPicker(true);
+            }}
+          >
+            <Text style={styles.dateValuePlaceholder}>{endDate.toLocaleDateString("en-GB")}</Text>
+            <Feather name="calendar" size={20} color="#FF7A21" />
           </TouchableOpacity>
         </View>
 
-      </KeyboardAvoidingView>
+        {/* Start Date Pop-up Modal */}
+        <Modal visible={showStartPicker} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <DateTimePicker
+                value={tempStartDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "inline" : "default"}
+                minimumDate={new Date()}
+                style={styles.nativeCalendarInline}
+                onChange={(event, date) => {
+                  if (Platform.OS === "android") {
+                    setShowStartPicker(false);
+                    if (date) setStartDate(date);
+                  } else if (date) {
+                    setTempStartDate(date);
+                  }
+                }}
+              />
+              {Platform.OS === "ios" && (
+                <View style={styles.modalActions}>
+                  <TouchableOpacity onPress={() => setShowStartPicker(false)}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => {
+                    setStartDate(tempStartDate);
+                    setShowStartPicker(false);
+                  }}>
+                    <Text style={styles.modalConfirmText}>Confirm</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
+
+        {/* End Date Pop-up Modal */}
+        <Modal visible={showEndPicker} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <DateTimePicker
+                value={tempEndDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "inline" : "default"}
+                minimumDate={startDate}
+                style={styles.nativeCalendarInline}
+                onChange={(event, date) => {
+                  if (Platform.OS === "android") {
+                    setShowEndPicker(false);
+                    if (date) setEndDate(date);
+                  } else if (date) {
+                    setTempEndDate(date);
+                  }
+                }}
+              />
+              {Platform.OS === "ios" && (
+                <View style={styles.modalActions}>
+                  <TouchableOpacity onPress={() => setShowEndPicker(false)}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => {
+                    setEndDate(tempEndDate);
+                    setShowEndPicker(false);
+                  }}>
+                    <Text style={styles.modalConfirmText}>Confirm</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
+
+        <Text style={styles.fieldSectionLabel}>Message Lender</Text>
+        <TextInput
+          style={styles.textArea}
+          placeholder="Hey! I would love to borrow your item..."
+          placeholderTextColor="#A1A1A1"
+          multiline
+          value={message}
+          onChangeText={setMessage}
+        />
+      </ScrollView>
+
+      <View style={styles.bottomStickyBar}>
+        <View style={styles.priceContainer}>
+          <Text style={styles.totalPriceValue}>${totalPrice.toFixed(2)}</Text>
+          <Text style={styles.totalPriceLabel}>Total</Text>
+        </View>
+        
+        <TouchableOpacity 
+          style={[styles.checkoutBtn, isSubmitting && styles.disabledBtn]} 
+          onPress={handleCheckout}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <Text style={styles.checkoutBtnText}>Submit Request</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  container: { flex: 1 },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md || 12,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-  },
-  iconButton: { padding: 4 },
-  scrollBody: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xl * 2 },
-  formGroup: { marginBottom: Spacing.md || 16 },
-  inputLabel: { fontSize: 15, fontWeight: "600", color: "#333333", marginBottom: Spacing.xs || 6 },
-  textInput: {
-    backgroundColor: Colors.inputBg || "#FFFFFF",
-    borderWidth: 1,
-    borderColor: Colors.border || "#E2E8F0",
-    borderRadius: 14,
-    height: 48,
-    paddingHorizontal: Spacing.md,
-    fontSize: 15,
-    color: Colors.text || "#0F172A",
-  },
-  textArea: { height: 110, paddingTop: 12, paddingBottom: 12 },
-  dateRow: { flexDirection: "row", gap: 12 },
-  dateInputWrapper: { flex: 1 },
-  dateInputMock: {
-    backgroundColor: Colors.inputBg || "#FFFFFF",
-    borderWidth: 1,
-    borderColor: Colors.border || "#E2E8F0",
-    borderRadius: 14,
-    height: 48,
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  centerLoading: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#FFFFFF" },
+  topNavBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, height: 50, gap: 12 },
+  navButton: { padding: 4 },
+  scrollContainer: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 },
+  
+  itemHeaderContainer: { flexDirection: "row", marginBottom: 28, gap: 16 },
+  itemImage: { width: 120, height: 100, borderRadius: 16, backgroundColor: "#F1F5F9", resizeMode: "cover" },
+  itemDetailsTextContainer: { flex: 1, justifyContent: "center" },
+  itemPriceText: { fontSize: 20, fontWeight: "700", color: "#000000" },
+  itemTitleText: { fontSize: 14, color: "#666666", marginTop: 2, marginBottom: 8 },
+  lenderLabel: { fontSize: 12, color: "#999999", marginBottom: 4 },
+  lenderBadge: { alignSelf: "flex-start", backgroundColor: "#F0F0F0", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
+  lenderBadgeText: { fontSize: 13, color: "#333333", fontWeight: "500" },
+
+  fieldSectionLabel: { fontSize: 16, fontWeight: "600", color: "#000000", marginBottom: 10, marginTop: 4 },
+  datePickerContainer: { flexDirection: "row", gap: 12, marginBottom: 24 },
+  dateInputBlock: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: Spacing.md,
-  },
-  dateText: { fontSize: 14, color: "#0F172A" },
-  placeholderText: { color: "#94A3B8" },
-  calendarIcon: { marginLeft: 4 },
-  calendarContainer: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 14,
-    padding: 10,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    marginBottom: 16,
+    borderColor: "#CCCCCC",
+    borderRadius: 12,
+    height: 50,
+    paddingHorizontal: 14,
+    backgroundColor: "#FFFFFF"
   },
-  closeCalendarBtn: {
-    backgroundColor: "#FF7A21",
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 8,
+  dateValuePlaceholder: { fontSize: 15, color: "#444" },
+
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: "rgba(0,0,0,0.5)", 
+    justifyContent: "center", 
+    alignItems: "center" 
   },
-  closeCalendarText: { color: "#FFF", fontWeight: "600", fontSize: 14 },
-  bottomStickyRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderColor: "#F1F5F9",
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Platform.OS === "ios" ? 12 : Spacing.md,
-    backgroundColor: "#FFFFFF",
+  modalCard: { 
+    backgroundColor: "#FFFFFF", 
+    borderRadius: 24, 
+    paddingHorizontal: 20,
+    paddingVertical: 24, 
+    width: "88%",
+    maxWidth: 360,
+    alignItems: "center"
   },
-  totalContainer: { justifyContent: "center" },
-  totalPrice: { fontSize: 22, fontWeight: "700", color: "#0F172A" },
-  totalLabel: { fontSize: 12, color: "#94A3B8", fontWeight: "500", marginTop: 1 },
-  checkoutButton: { backgroundColor: "#FF7A21", borderRadius: 16, height: 48, paddingHorizontal: 36, justifyContent: "center", alignItems: "center" },
-  checkoutButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  nativeCalendarInline: {
+    width: "100%",
+    alignSelf: "center"
+  },
+  modalActions: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    width: "100%",
+    paddingHorizontal: 8, 
+    marginTop: 20 
+  },
+  modalCancelText: { color: "#64748B", fontSize: 16, fontWeight: "600" },
+  modalConfirmText: { color: "#FF7A21", fontSize: 16, fontWeight: "700" },
+
+  textArea: { borderWidth: 1, borderColor: "#CCCCCC", borderRadius: 14, padding: 16, minHeight: 130, textAlignVertical: "top", fontSize: 15, color: "#000000", backgroundColor: "#FFFFFF" },
+  bottomStickyBar: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#FFFFFF", paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  priceContainer: { flexDirection: "column-reverse" },
+  totalPriceLabel: { fontSize: 12, color: "#888888", marginTop: 2 },
+  totalPriceValue: { fontSize: 24, fontWeight: "700", color: "#000000" },
+  checkoutBtn: { backgroundColor: "#FF7A21", height: 48, borderRadius: 12, justifyContent: "center", alignItems: "center", paddingHorizontal: 32 },
+  disabledBtn: { opacity: 0.6 },
+  checkoutBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" }
 });
