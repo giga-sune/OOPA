@@ -1,0 +1,271 @@
+[debug] [2026-07-14T04:51:05.783Z] ----------------------------------------------------------------------
+[debug] [2026-07-14T04:51:05.787Z] Command:       /usr/local/bin/node /usr/local/bin/firebase emulators:start --only functions
+[debug] [2026-07-14T04:51:05.787Z] CLI Version:   15.23.0
+[debug] [2026-07-14T04:51:05.787Z] Platform:      darwin
+[debug] [2026-07-14T04:51:05.787Z] Node Version:  v24.13.0
+[debug] [2026-07-14T04:51:05.787Z] Detected Agent: codex_cli
+[debug] [2026-07-14T04:51:05.788Z] Time:          Tue Jul 14 2026 00:51:05 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-14T04:51:05.788Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-14T04:51:07.404Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-14T04:51:07.405Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[info] i  emulators: Starting emulators: functions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions"}}
+[debug] [2026-07-14T04:51:08.092Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-07-14T04:51:08.092Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-07-14T04:51:08.098Z] Write emulator hub locator at /var/folders/w7/01_p82795vg5l0cdqd2mkp2r0000gn/T/hub-oopa-e977a.json
+[debug] [2026-07-14T04:51:08.675Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-07-14T04:51:08.676Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-07-14T04:51:08.676Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"functions":[{"address":"0.0.0.0","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect"}}
+[debug] [2026-07-14T04:51:08.800Z] defaultcredentials: writing to file /Users/sunegeleta/.config/firebase/sunegeleta_gmail_com_application_default_credentials.json
+[debug] [2026-07-14T04:51:08.808Z] Setting GAC to /Users/sunegeleta/.config/firebase/sunegeleta_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/sunegeleta/.config/firebase/sunegeleta_gmail_com_application_default_credentials.json"}}
+[debug] [2026-07-14T04:51:08.809Z] Checked if tokens are valid: false, expires at: 1784000029974
+[debug] [2026-07-14T04:51:08.810Z] Checked if tokens are valid: false, expires at: 1784000029974
+[debug] [2026-07-14T04:51:08.810Z] > refreshing access token with scopes: []
+[debug] [2026-07-14T04:51:08.814Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-14T04:51:08.814Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-14T04:51:09.077Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-14T04:51:09.077Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-14T04:51:09.143Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/oopa-e977a/adminSdkConfig [none]
+[debug] [2026-07-14T04:51:09.733Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/oopa-e977a/adminSdkConfig 200
+[debug] [2026-07-14T04:51:09.733Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/oopa-e977a/adminSdkConfig {"projectId":"oopa-e977a","storageBucket":"oopa-e977a.firebasestorage.app"}
+[info] i  ui: downloading ui-v1.15.0.zip... {"metadata":{"emulator":{"name":"ui"},"message":"downloading ui-v1.15.0.zip..."}}
+[debug] [2026-07-14T04:51:09.777Z] >>> [apiv2][query] GET https://storage.googleapis.com/firebase-preview-drop/emulator/ui-v1.15.0.zip 
+[debug] [2026-07-14T04:51:10.021Z] <<< [apiv2][status] GET https://storage.googleapis.com/firebase-preview-drop/emulator/ui-v1.15.0.zip 200
+[debug] [2026-07-14T04:51:10.022Z] <<< [apiv2][body] GET https://storage.googleapis.com/firebase-preview-drop/emulator/ui-v1.15.0.zip [stream]
+[debug] [2026-07-14T04:51:11.074Z] Data is 3538469
+[debug] [2026-07-14T04:51:11.075Z] [unzip] Entry: client/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-07-14T04:51:11.075Z] [unzip] Processing entry: client/
+[debug] [2026-07-14T04:51:11.075Z] [unzip] mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/
+[debug] [2026-07-14T04:51:11.076Z] [unzip] Entry: client/favicon-16x16.png (compressed_size=293 bytes, uncompressed_size=293 bytes)
+[debug] [2026-07-14T04:51:11.076Z] [unzip] Processing entry: client/favicon-16x16.png
+[debug] [2026-07-14T04:51:11.076Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.077Z] [unzip] Writing file: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/favicon-16x16.png
+[debug] [2026-07-14T04:51:11.078Z] [unzip] Entry: client/safari-pinned-tab.svg (compressed_size=1433 bytes, uncompressed_size=2611 bytes)
+[debug] [2026-07-14T04:51:11.079Z] [unzip] Processing entry: client/safari-pinned-tab.svg
+[debug] [2026-07-14T04:51:11.079Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.079Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/safari-pinned-tab.svg
+[debug] [2026-07-14T04:51:11.081Z] [unzip] Entry: client/favicon.ico (compressed_size=2933 bytes, uncompressed_size=13294 bytes)
+[debug] [2026-07-14T04:51:11.081Z] [unzip] Processing entry: client/favicon.ico
+[debug] [2026-07-14T04:51:11.082Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.082Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/favicon.ico
+[debug] [2026-07-14T04:51:11.084Z] [unzip] Entry: client/index.html (compressed_size=1364 bytes, uncompressed_size=3071 bytes)
+[debug] [2026-07-14T04:51:11.084Z] [unzip] Processing entry: client/index.html
+[debug] [2026-07-14T04:51:11.084Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.084Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/index.html
+[debug] [2026-07-14T04:51:11.086Z] [unzip] Entry: client/android-chrome-192x192.png (compressed_size=2684 bytes, uncompressed_size=2684 bytes)
+[debug] [2026-07-14T04:51:11.086Z] [unzip] Processing entry: client/android-chrome-192x192.png
+[debug] [2026-07-14T04:51:11.086Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.086Z] [unzip] Writing file: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/android-chrome-192x192.png
+[debug] [2026-07-14T04:51:11.087Z] [unzip] Entry: client/apple-touch-icon.png (compressed_size=2123 bytes, uncompressed_size=2152 bytes)
+[debug] [2026-07-14T04:51:11.088Z] [unzip] Processing entry: client/apple-touch-icon.png
+[debug] [2026-07-14T04:51:11.088Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.088Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/apple-touch-icon.png
+[debug] [2026-07-14T04:51:11.090Z] [unzip] Entry: client/android-chrome-512x512.png (compressed_size=5369 bytes, uncompressed_size=5411 bytes)
+[debug] [2026-07-14T04:51:11.090Z] [unzip] Processing entry: client/android-chrome-512x512.png
+[debug] [2026-07-14T04:51:11.090Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.090Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/android-chrome-512x512.png
+[debug] [2026-07-14T04:51:11.092Z] [unzip] Entry: client/manifest.json (compressed_size=245 bytes, uncompressed_size=551 bytes)
+[debug] [2026-07-14T04:51:11.092Z] [unzip] Processing entry: client/manifest.json
+[debug] [2026-07-14T04:51:11.092Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.092Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/manifest.json
+[debug] [2026-07-14T04:51:11.095Z] [unzip] Entry: client/robots.txt (compressed_size=26 bytes, uncompressed_size=26 bytes)
+[debug] [2026-07-14T04:51:11.095Z] [unzip] Processing entry: client/robots.txt
+[debug] [2026-07-14T04:51:11.095Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.096Z] [unzip] Writing file: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/robots.txt
+[debug] [2026-07-14T04:51:11.097Z] [unzip] Entry: client/mstile-150x150.png (compressed_size=2034 bytes, uncompressed_size=2034 bytes)
+[debug] [2026-07-14T04:51:11.097Z] [unzip] Processing entry: client/mstile-150x150.png
+[debug] [2026-07-14T04:51:11.097Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.098Z] [unzip] Writing file: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/mstile-150x150.png
+[debug] [2026-07-14T04:51:11.099Z] [unzip] Entry: client/assets/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-07-14T04:51:11.099Z] [unzip] Processing entry: client/assets/
+[debug] [2026-07-14T04:51:11.099Z] [unzip] mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/
+[debug] [2026-07-14T04:51:11.100Z] [unzip] Entry: client/assets/index-BX-A56oj.js (compressed_size=582089 bytes, uncompressed_size=2092775 bytes)
+[debug] [2026-07-14T04:51:11.100Z] [unzip] Processing entry: client/assets/index-BX-A56oj.js
+[debug] [2026-07-14T04:51:11.100Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets
+[debug] [2026-07-14T04:51:11.100Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/index-BX-A56oj.js
+[debug] [2026-07-14T04:51:11.118Z] [unzip] Entry: client/assets/index-CjB9C900.css (compressed_size=35979 bytes, uncompressed_size=298654 bytes)
+[debug] [2026-07-14T04:51:11.118Z] [unzip] Processing entry: client/assets/index-CjB9C900.css
+[debug] [2026-07-14T04:51:11.119Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets
+[debug] [2026-07-14T04:51:11.119Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/index-CjB9C900.css
+[debug] [2026-07-14T04:51:11.122Z] [unzip] Entry: client/assets/index-BX-A56oj.js.map (compressed_size=2362482 bytes, uncompressed_size=10036679 bytes)
+[debug] [2026-07-14T04:51:11.122Z] [unzip] Processing entry: client/assets/index-BX-A56oj.js.map
+[debug] [2026-07-14T04:51:11.122Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets
+[debug] [2026-07-14T04:51:11.123Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/index-BX-A56oj.js.map
+[debug] [2026-07-14T04:51:11.194Z] [unzip] Entry: client/assets/extensions/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-07-14T04:51:11.194Z] [unzip] Processing entry: client/assets/extensions/
+[debug] [2026-07-14T04:51:11.194Z] [unzip] mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/extensions/
+[debug] [2026-07-14T04:51:11.195Z] [unzip] Entry: client/assets/extensions/default-extension.png (compressed_size=1646 bytes, uncompressed_size=1657 bytes)
+[debug] [2026-07-14T04:51:11.195Z] [unzip] Processing entry: client/assets/extensions/default-extension.png
+[debug] [2026-07-14T04:51:11.195Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/extensions
+[debug] [2026-07-14T04:51:11.195Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/extensions/default-extension.png
+[debug] [2026-07-14T04:51:11.197Z] [unzip] Entry: client/assets/img/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-07-14T04:51:11.197Z] [unzip] Processing entry: client/assets/img/
+[debug] [2026-07-14T04:51:11.197Z] [unzip] mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/img/
+[debug] [2026-07-14T04:51:11.197Z] [unzip] Entry: client/assets/img/database.png (compressed_size=29449 bytes, uncompressed_size=29988 bytes)
+[debug] [2026-07-14T04:51:11.198Z] [unzip] Processing entry: client/assets/img/database.png
+[debug] [2026-07-14T04:51:11.198Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/img
+[debug] [2026-07-14T04:51:11.198Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/img/database.png
+[debug] [2026-07-14T04:51:11.199Z] [unzip] Entry: client/assets/provider-icons/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-07-14T04:51:11.200Z] [unzip] Processing entry: client/assets/provider-icons/
+[debug] [2026-07-14T04:51:11.200Z] [unzip] mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/
+[debug] [2026-07-14T04:51:11.200Z] [unzip] Entry: client/assets/provider-icons/auth_service_saml.svg (compressed_size=575 bytes, uncompressed_size=1226 bytes)
+[debug] [2026-07-14T04:51:11.201Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_saml.svg
+[debug] [2026-07-14T04:51:11.201Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.201Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_saml.svg
+[debug] [2026-07-14T04:51:11.203Z] [unzip] Entry: client/assets/provider-icons/auth_service_phone.svg (compressed_size=261 bytes, uncompressed_size=414 bytes)
+[debug] [2026-07-14T04:51:11.203Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_phone.svg
+[debug] [2026-07-14T04:51:11.203Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.203Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_phone.svg
+[debug] [2026-07-14T04:51:11.205Z] [unzip] Entry: client/assets/provider-icons/auth_service_facebook.svg (compressed_size=289 bytes, uncompressed_size=457 bytes)
+[debug] [2026-07-14T04:51:11.206Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_facebook.svg
+[debug] [2026-07-14T04:51:11.206Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.207Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_facebook.svg
+[debug] [2026-07-14T04:51:11.208Z] [unzip] Entry: client/assets/provider-icons/auth_service_game_center.svg (compressed_size=991 bytes, uncompressed_size=3921 bytes)
+[debug] [2026-07-14T04:51:11.208Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_game_center.svg
+[debug] [2026-07-14T04:51:11.208Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.208Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_game_center.svg
+[debug] [2026-07-14T04:51:11.210Z] [unzip] Entry: client/assets/provider-icons/auth_service_apple.svg (compressed_size=230 bytes, uncompressed_size=334 bytes)
+[debug] [2026-07-14T04:51:11.210Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_apple.svg
+[debug] [2026-07-14T04:51:11.210Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.211Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_apple.svg
+[debug] [2026-07-14T04:51:11.212Z] [unzip] Entry: client/assets/provider-icons/auth_service_github.svg (compressed_size=466 bytes, uncompressed_size=838 bytes)
+[debug] [2026-07-14T04:51:11.213Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_github.svg
+[debug] [2026-07-14T04:51:11.213Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.213Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_github.svg
+[debug] [2026-07-14T04:51:11.214Z] [unzip] Entry: client/assets/provider-icons/auth_service_mslive.svg (compressed_size=203 bytes, uncompressed_size=378 bytes)
+[debug] [2026-07-14T04:51:11.214Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_mslive.svg
+[debug] [2026-07-14T04:51:11.214Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.215Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_mslive.svg
+[debug] [2026-07-14T04:51:11.217Z] [unzip] Entry: client/assets/provider-icons/auth_service_yahoo.svg (compressed_size=577 bytes, uncompressed_size=1182 bytes)
+[debug] [2026-07-14T04:51:11.217Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_yahoo.svg
+[debug] [2026-07-14T04:51:11.217Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.217Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_yahoo.svg
+[debug] [2026-07-14T04:51:11.219Z] [unzip] Entry: client/assets/provider-icons/auth_service_twitter.svg (compressed_size=444 bytes, uncompressed_size=751 bytes)
+[debug] [2026-07-14T04:51:11.219Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_twitter.svg
+[debug] [2026-07-14T04:51:11.219Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.219Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_twitter.svg
+[debug] [2026-07-14T04:51:11.221Z] [unzip] Entry: client/assets/provider-icons/auth_service_play_games.svg (compressed_size=565 bytes, uncompressed_size=1173 bytes)
+[debug] [2026-07-14T04:51:11.221Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_play_games.svg
+[debug] [2026-07-14T04:51:11.221Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.221Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_play_games.svg
+[debug] [2026-07-14T04:51:11.223Z] [unzip] Entry: client/assets/provider-icons/auth_service_email.svg (compressed_size=228 bytes, uncompressed_size=326 bytes)
+[debug] [2026-07-14T04:51:11.223Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_email.svg
+[debug] [2026-07-14T04:51:11.223Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.223Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_email.svg
+[debug] [2026-07-14T04:51:11.225Z] [unzip] Entry: client/assets/provider-icons/auth_service_google.svg (compressed_size=409 bytes, uncompressed_size=720 bytes)
+[debug] [2026-07-14T04:51:11.225Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_google.svg
+[debug] [2026-07-14T04:51:11.225Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.226Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_google.svg
+[debug] [2026-07-14T04:51:11.227Z] [unzip] Entry: client/assets/provider-icons/auth_service_oidc.svg (compressed_size=414 bytes, uncompressed_size=858 bytes)
+[debug] [2026-07-14T04:51:11.227Z] [unzip] Processing entry: client/assets/provider-icons/auth_service_oidc.svg
+[debug] [2026-07-14T04:51:11.227Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons
+[debug] [2026-07-14T04:51:11.227Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/assets/provider-icons/auth_service_oidc.svg
+[debug] [2026-07-14T04:51:11.229Z] [unzip] Entry: client/browserconfig.xml (compressed_size=491 bytes, uncompressed_size=822 bytes)
+[debug] [2026-07-14T04:51:11.229Z] [unzip] Processing entry: client/browserconfig.xml
+[debug] [2026-07-14T04:51:11.229Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.230Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/browserconfig.xml
+[debug] [2026-07-14T04:51:11.232Z] [unzip] Entry: client/favicon-32x32.png (compressed_size=475 bytes, uncompressed_size=475 bytes)
+[debug] [2026-07-14T04:51:11.232Z] [unzip] Processing entry: client/favicon-32x32.png
+[debug] [2026-07-14T04:51:11.232Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client
+[debug] [2026-07-14T04:51:11.232Z] [unzip] Writing file: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/client/favicon-32x32.png
+[debug] [2026-07-14T04:51:11.233Z] [unzip] Entry: server/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-07-14T04:51:11.233Z] [unzip] Processing entry: server/
+[debug] [2026-07-14T04:51:11.234Z] [unzip] mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/server/
+[debug] [2026-07-14T04:51:11.234Z] [unzip] Entry: server/server.mjs.map (compressed_size=217845 bytes, uncompressed_size=944978 bytes)
+[debug] [2026-07-14T04:51:11.238Z] [unzip] Processing entry: server/server.mjs.map
+[debug] [2026-07-14T04:51:11.238Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/server
+[debug] [2026-07-14T04:51:11.239Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/server/server.mjs.map
+[debug] [2026-07-14T04:51:11.248Z] [unzip] Entry: server/server.mjs (compressed_size=276407 bytes, uncompressed_size=933701 bytes)
+[debug] [2026-07-14T04:51:11.248Z] [unzip] Processing entry: server/server.mjs
+[debug] [2026-07-14T04:51:11.248Z] [unzip] else mkdir: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/server
+[debug] [2026-07-14T04:51:11.248Z] [unzip] deflating: /Users/sunegeleta/.cache/firebase/emulators/ui-v1.15.0/server/server.mjs
+[info] i  functions: Watching "/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions\" for Cloud Functions..."}}
+[debug] [2026-07-14T04:51:11.264Z] Validating nodejs source
+[debug] [2026-07-14T04:51:12.102Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "24"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "stripe": "^22.3.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.4.1",
+    "typescript": "^6.0.0"
+  },
+  "private": true
+}
+[debug] [2026-07-14T04:51:12.102Z] Building nodejs source
+[debug] [2026-07-14T04:51:12.103Z] Failed to find version of module node: reached end of search path /Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules
+[info] ✔  functions: Using node@24 from host. 
+[debug] [2026-07-14T04:51:12.106Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-07-14T04:51:12.117Z] Found firebase-functions binary at '/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8331
+
+[debug] [2026-07-14T04:51:14.388Z] Got response from /__/functions.yaml {"endpoints":{"createPaymentIntent":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","secretEnvironmentVariables":[{"key":"STRIPE_SECRET_KEY"}],"labels":{},"callableTrigger":{},"entryPoint":"createPaymentIntent"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{},"params":[{"type":"secret","name":"STRIPE_SECRET_KEY"}]}
+[info] ✔  functions: Loaded functions definitions from source: createPaymentIntent. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: createPaymentIntent."}}
+[info] ✔  functions[us-central1-createPaymentIntent]: http function initialized (http://127.0.0.1:5001/oopa-e977a/us-central1/createPaymentIntent). {"metadata":{"emulator":{"name":"functions"},"message":"http function initialized (http://127.0.0.1:5001/oopa-e977a/us-central1/createPaymentIntent)."}}
+[debug] [2026-07-14T04:51:17.426Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬──────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port    │ View in Emulator UI             │
+├───────────┼──────────────┼─────────────────────────────────┤
+│ Functions │ 0.0.0.0:5001 │ http://127.0.0.1:4000/functions │
+└───────────┴──────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-07-14T04:52:51.308Z] [work-queue] {"queuedWork":["/oopa-e977a/us-central1/createPaymentIntent-2026-07-14T04:52:51.308Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-07-14T04:52:51.309Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/oopa-e977a/us-central1/createPaymentIntent-2026-07-14T04:52:51.308Z"],"workRunningCount":1}
+[debug] [2026-07-14T04:52:51.309Z] Accepted request POST /oopa-e977a/us-central1/createPaymentIntent --> us-central1-createPaymentIntent
+[debug] [2026-07-14T04:52:51.311Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-07-14T04:52:51.312Z] [functions] Got req.url=/oopa-e977a/us-central1/createPaymentIntent, mapping to path=/ {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/oopa-e977a/us-central1/createPaymentIntent, mapping to path=/"}}
+[debug] [2026-07-14T04:52:51.317Z] [worker-pool] addWorker(us-central1-createPaymentIntent) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-createPaymentIntent)"}}
+[debug] [2026-07-14T04:52:51.318Z] [worker-pool] Adding worker with key us-central1-createPaymentIntent, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-createPaymentIntent, total=1"}}
+[debug] [2026-07-14T04:52:52.036Z] [runtime-status] [7071] Resolved module firebase-admin {"declared":true,"installed":true,"version":"13.10.0","resolution":"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"13.10.0\",\"resolution\":\"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-07-14T04:52:52.037Z] [runtime-status] [7071] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.2.5","resolution":"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"7.2.5\",\"resolution\":\"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-07-14T04:52:52.037Z] [runtime-status] [7071] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2026-07-14T04:52:52.039Z] [runtime-status] [7071] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.2.5","resolution":"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"7.2.5\",\"resolution\":\"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-07-14T04:52:52.039Z] [runtime-status] [7071] Detected firebase-functions v7+, skipping legacy stubs. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Detected firebase-functions v7+, skipping legacy stubs."}}
+[debug] [2026-07-14T04:52:52.040Z] [runtime-status] [7071] Resolved module firebase-admin {"declared":true,"installed":true,"version":"13.10.0","resolution":"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"13.10.0\",\"resolution\":\"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-07-14T04:52:52.089Z] [runtime-status] [7071] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.2.5","resolution":"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"7.2.5\",\"resolution\":\"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-07-14T04:52:52.366Z] [runtime-status] [7071] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"13.10.0","resolution":"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"13.10.0\",\"resolution\":\"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[debug] [2026-07-14T04:52:52.441Z] [runtime-status] [7071] Functions runtime initialized. {"cwd":"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions","node_version":"24.13.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Functions runtime initialized. {\"cwd\":\"/Users/sunegeleta/Documents/mad/SECTION 7/oppa app/versions/version 1 /OOPA/my-app/functions\",\"node_version\":\"24.13.0\"}"}}
+[debug] [2026-07-14T04:52:52.442Z] [runtime-status] [7071] Listening to port: /var/folders/w7/01_p82795vg5l0cdqd2mkp2r0000gn/T/fire_emu_32ab2f20da8c2220.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[runtime-status] [7071] Listening to port: /var/folders/w7/01_p82795vg5l0cdqd2mkp2r0000gn/T/fire_emu_32ab2f20da8c2220.sock"}}
+[debug] [2026-07-14T04:52:52.544Z] [worker-us-central1-createPaymentIntent-c96965ad-cccd-425f-95ec-a670e74e2087]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[worker-us-central1-createPaymentIntent-c96965ad-cccd-425f-95ec-a670e74e2087]: IDLE"}}
+[debug] [2026-07-14T04:52:52.545Z] [worker-pool] submitRequest(triggerId=us-central1-createPaymentIntent) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-createPaymentIntent)"}}
+[info] i  functions: Beginning execution of "us-central1-createPaymentIntent" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"Beginning execution of \"us-central1-createPaymentIntent\""}}
+[debug] [2026-07-14T04:52:52.545Z] [worker-us-central1-createPaymentIntent-c96965ad-cccd-425f-95ec-a670e74e2087]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[worker-us-central1-createPaymentIntent-c96965ad-cccd-425f-95ec-a670e74e2087]: BUSY"}}
+[info] >  {"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"} {"user":{"verifications":{"app":"MISSING","auth":"VALID"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":">  {\"verifications\":{\"app\":\"MISSING\",\"auth\":\"VALID\"},\"logging.googleapis.com/labels\":{\"firebase-log-type\":\"callable-request-verification\"},\"severity\":\"DEBUG\",\"message\":\"Callable request verification passed\"}"}}
+[debug] [2026-07-14T04:52:53.205Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-createPaymentIntent" in 659.625217ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"Finished \"us-central1-createPaymentIntent\" in 659.625217ms"}}
+[debug] [2026-07-14T04:52:53.205Z] [worker-us-central1-createPaymentIntent-c96965ad-cccd-425f-95ec-a670e74e2087]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"[worker-us-central1-createPaymentIntent-c96965ad-cccd-425f-95ec-a670e74e2087]: IDLE"}}
+[debug] [2026-07-14T04:52:53.205Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-07-14T04:52:53.205Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createPaymentIntent"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-07-14T04:52:53.205Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}

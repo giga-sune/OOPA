@@ -1,0 +1,57 @@
+[debug] [2026-07-14T02:33:34.208Z] ----------------------------------------------------------------------
+[debug] [2026-07-14T02:33:34.291Z] Command:       /usr/local/bin/node /usr/local/bin/firebase functions:secrets:get STRIPE_SECRET_KEY --project oopa-e977a
+[debug] [2026-07-14T02:33:34.318Z] CLI Version:   15.23.0
+[debug] [2026-07-14T02:33:34.318Z] Platform:      darwin
+[debug] [2026-07-14T02:33:34.319Z] Node Version:  v24.13.0
+[debug] [2026-07-14T02:33:34.321Z] Detected Agent: codex_cli
+[debug] [2026-07-14T02:33:34.344Z] Time:          Mon Jul 13 2026 22:33:34 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-14T02:33:34.344Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-14T02:33:45.328Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-14T02:33:45.333Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-14T02:33:46.156Z] Checked if tokens are valid: false, expires at: 1783970109258
+[debug] [2026-07-14T02:33:46.175Z] Checked if tokens are valid: false, expires at: 1783970109258
+[debug] [2026-07-14T02:33:46.178Z] > refreshing access token with scopes: []
+[debug] [2026-07-14T02:33:46.261Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-14T02:33:46.262Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-14T02:33:50.971Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-14T02:33:50.973Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-14T02:33:51.438Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com [none]
+[debug] [2026-07-14T02:33:51.439Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com  x-goog-user-project=oopa-e977a
+[debug] [2026-07-14T02:33:52.257Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com 200
+[debug] [2026-07-14T02:33:52.258Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com [omitted]
+[debug] [2026-07-14T02:33:52.262Z] Checked if tokens are valid: true, expires at: 1784000029974
+[debug] [2026-07-14T02:33:52.263Z] Checked if tokens are valid: true, expires at: 1784000029974
+[debug] [2026-07-14T02:33:52.263Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com:enable [none]
+[debug] [2026-07-14T02:33:52.263Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com:enable  x-goog-user-project=oopa-e977a
+[debug] [2026-07-14T02:33:52.814Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com:enable 200
+[debug] [2026-07-14T02:33:52.817Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/secretmanager.googleapis.com:enable [omitted]
+[debug] [2026-07-14T02:34:02.919Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-14T02:34:02.920Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-14T02:34:02.921Z] [iam] checking project oopa-e977a for permissions ["firebase.projects.get","secretmanager.secrets.get"]
+[debug] [2026-07-14T02:34:02.924Z] Checked if tokens are valid: true, expires at: 1784000029974
+[debug] [2026-07-14T02:34:02.925Z] Checked if tokens are valid: true, expires at: 1784000029974
+[debug] [2026-07-14T02:34:02.925Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions [none]
+[debug] [2026-07-14T02:34:02.926Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions  x-goog-user-project=oopa-e977a
+[debug] [2026-07-14T02:34:02.940Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.get"]}
+[debug] [2026-07-14T02:34:03.503Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions 200
+[debug] [2026-07-14T02:34:03.504Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.get"]}
+[debug] [2026-07-14T02:34:03.521Z] Checked if tokens are valid: true, expires at: 1784000029974
+[debug] [2026-07-14T02:34:03.522Z] Checked if tokens are valid: true, expires at: 1784000029974
+[debug] [2026-07-14T02:34:03.522Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/oopa-e977a/secrets/STRIPE_SECRET_KEY/versions [none]
+[debug] [2026-07-14T02:34:04.544Z] <<< [apiv2][status] GET https://secretmanager.googleapis.com/v1/projects/oopa-e977a/secrets/STRIPE_SECRET_KEY/versions 404
+[debug] [2026-07-14T02:34:04.546Z] <<< [apiv2][body] GET https://secretmanager.googleapis.com/v1/projects/oopa-e977a/secrets/STRIPE_SECRET_KEY/versions {"error":{"code":404,"message":"Secret [projects/455696734050/secrets/STRIPE_SECRET_KEY] not found.","status":"NOT_FOUND"}}
+[error] 
+[error] Error: Request to https://secretmanager.googleapis.com/v1/projects/oopa-e977a/secrets/STRIPE_SECRET_KEY/versions had HTTP Error: 404, Secret [projects/455696734050/secrets/STRIPE_SECRET_KEY] not found.
+[debug] [2026-07-14T02:34:04.833Z] Error Context: {
+  "body": {
+    "error": {
+      "code": 404,
+      "message": "Secret [projects/455696734050/secrets/STRIPE_SECRET_KEY] not found.",
+      "status": "NOT_FOUND"
+    }
+  },
+  "response": {
+    "statusCode": 404
+  }
+}
