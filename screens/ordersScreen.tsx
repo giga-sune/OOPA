@@ -107,9 +107,29 @@ export default function OrdersScreen() {
       Alert.alert("Error", err.message || "Failed to decline booking.");
     }
   };
-
-  const handleReport = (id: string) => console.log("Report interaction on:", id);
-  const handleReview = (id: string) => console.log("Review system trigger for:", id);
+  const handleReport = (item: Rental) => {
+    navigation.navigate("ReportItemScreen", { 
+      rental: {
+        ...item,
+        startDate: item.startDate instanceof Date ? item.startDate.toISOString() : item.startDate,
+        endDate: item.endDate instanceof Date ? item.endDate.toISOString() : item.endDate,
+        createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
+        updatedAt: item.updatedAt instanceof Date ? item.updatedAt.toISOString() : item.updatedAt,
+      }
+    });
+  };
+  
+  const handleReview = (item: Rental) => {
+    navigation.navigate("ReviewItemScreen", { 
+      rental: {
+        ...item,
+        startDate: item.startDate instanceof Date ? item.startDate.toISOString() : item.startDate,
+        endDate: item.endDate instanceof Date ? item.endDate.toISOString() : item.endDate,
+        createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
+        updatedAt: item.updatedAt instanceof Date ? item.updatedAt.toISOString() : item.updatedAt,
+      }
+    });
+  };
 
   const activeData = activeTab === "My Orders" ? myOrders : requests;
 
@@ -142,38 +162,38 @@ export default function OrdersScreen() {
           <ActivityIndicator size="large" color="#FF7A21" />
         </View>
       ) : (
-        <FlatList
-          data={activeData}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              activeOpacity={0.85}
-              onPress={() => {
-                if (activeTab === "Requests") {
-                  navigation.navigate("LenderRequestDetailScreen", { rentalId: item.id });
-                } else {
-                  navigation.navigate("BorrowerOrderDetailScreen", { rentalId: item.id});
-                }
-              }}
-            >
-              <OrderListItem 
-                item={item} 
-                isIncomingRequest={activeTab === "Requests"}
-                onAcceptPress={handleAcceptRequest}
-                onDenyPress={handleDenyRequest}
-                onReportPress={handleReport}
-                onReviewPress={handleReview}
-              />
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No {activeTab.toLowerCase()} entries found.</Text>
-            </View>
-          }
-        />
+<FlatList
+  data={activeData}
+  keyExtractor={(item) => item.id}
+  contentContainerStyle={styles.listContent}
+  showsVerticalScrollIndicator={false}
+  renderItem={({ item }) => (
+    <TouchableOpacity 
+      activeOpacity={0.85}
+      onPress={() => {
+        if (activeTab === "Requests") {
+          navigation.navigate("LenderRequestDetailScreen", { rentalId: item.id });
+        } else {
+          navigation.navigate("BorrowerOrderDetailScreen", { rentalId: item.id });
+        }
+      }}
+    >
+      <OrderListItem 
+        item={item} 
+        isIncomingRequest={activeTab === "Requests"}
+        onAcceptPress={handleAcceptRequest}
+        onDenyPress={handleDenyRequest}
+        onReportPress={() => handleReport(item)}
+        onReviewPress={() => handleReview(item)}
+      />
+    </TouchableOpacity>
+  )}
+  ListEmptyComponent={
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>No {activeTab.toLowerCase()} entries found.</Text>
+    </View>
+  }
+/>
       )}
     </SafeAreaView>
   );

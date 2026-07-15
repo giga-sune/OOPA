@@ -1,3 +1,5 @@
+import type { Rental } from "../rental/rentalTypes";
+
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
@@ -15,6 +17,8 @@ export type RootStackParamList = {
   };
   LenderRequestDetailScreen: { rentalId: string };
   BorrowerOrderDetailScreen: { rentalId: string };
+  ReviewItemScreen: { rental: Rental };
+  ReportItemScreen: { rental: Rental };
 };
 
 export type TabParamList = {

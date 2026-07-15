@@ -252,12 +252,12 @@ const styles = StyleSheet.create({
     
     statusBadge: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
     approvedBadge: { backgroundColor: "#F0FDF4" },
-    rejectedBadge: { backgroundColor: "#F1F5F9" }, // Light gray background matching screenshot 3
-    pendingBadge: { backgroundColor: "#F1F5F9" }, // Light gray background matching screenshot 1
+    rejectedBadge: { backgroundColor: "#F1F5F9" },
+    pendingBadge: { backgroundColor: "#F1F5F9" },
     statusText: { fontSize: 12, fontWeight: "600" },
     approvedText: { color: "#166534" },
-    rejectedText: { color: "#475569" }, // Slate gray text matching screenshot 3
-    pendingText: { color: "#475569" }, // Slate gray text matching screenshot 1
+    rejectedText: { color: "#475569" },
+    pendingText: { color: "#475569" },
 
     sectionLabel: { fontSize: 22, fontWeight: "700", color: "#0F172A", marginBottom: 14, marginTop: 8 },
 
