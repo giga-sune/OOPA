@@ -17,6 +17,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { NavigationContainer } from "@react-navigation/native";
+import { StripeProvider } from "@stripe/stripe-react-native";
 
 import AppNavigator from "./navigation/appNavigator";
 
@@ -61,21 +62,25 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#fcfcfc" }}>
-          <StatusBar barStyle="dark-content" />
+    <StripeProvider
+      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+    >
+      <SafeAreaProvider>
+        <AuthProvider>
+          <SafeAreaView style={{ flex: 1, backgroundColor: "#fcfcfc" }}>
+            <StatusBar barStyle="dark-content" />
 
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-          >
-            <NavigationContainer>
-              <AppNavigator />
-            </NavigationContainer>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </AuthProvider>
-    </SafeAreaProvider>
+            <KeyboardAvoidingView
+              style={{ flex: 1 }}
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+            >
+              <NavigationContainer>
+                <AppNavigator />
+              </NavigationContainer>
+            </KeyboardAvoidingView>
+          </SafeAreaView>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </StripeProvider>
   );
 }

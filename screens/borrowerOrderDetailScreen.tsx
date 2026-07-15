@@ -7,6 +7,7 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
 
 import { db } from "../services/firebase/firebaseApp";
+import usePaymentViewModel from "../viewModels/payment/usePaymentViewModel";
 
 type ParamList = {
     borrowerOrderDetailScreen: {
@@ -18,6 +19,7 @@ export default function BorrowerOrderDetailScreen() {
     const route = useRoute<RouteProp<ParamList, "borrowerOrderDetailScreen" | any>>();
     const navigation = useNavigation();
     const { rentalId } = route.params || {};
+    const { isPaying, pay } = usePaymentViewModel();
 
     const [rental, setRental] = useState<any>(null);
     const [lenderProfile, setLenderProfile] = useState<any>(null);
@@ -184,6 +186,22 @@ export default function BorrowerOrderDetailScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {isApproved && (
+                    <TouchableOpacity
+                        style={styles.paymentButton}
+                        onPress={() => pay(rental.totalPrice)}
+                        disabled={isPaying}
+                    >
+                        {isPaying ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <Text style={styles.paymentButtonText}>
+                                Pay ${Number(rental.totalPrice).toFixed(2)}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                )}
+
                 {/* Section: Meetup map */}
                 <Text style={styles.sectionLabel}>Where to meet</Text>
                 <View style={styles.mapCardWrapper}>
@@ -278,6 +296,20 @@ const styles = StyleSheet.create({
     },
     messageButtonTextDisabled: {
         color: "#64748B", 
+    },
+
+    paymentButton: {
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: "#FF7A21",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 28,
+    },
+    paymentButtonText: {
+        fontSize: 17,
+        fontWeight: "700",
+        color: "#FFFFFF",
     },
 
     mapCardWrapper: { width: "100%", height: 165, borderRadius: 24, overflow: "hidden", backgroundColor: "#F1F5F9", borderWidth: 1, borderColor: "#E2E8F0" },
