@@ -2,6 +2,11 @@ import {
   doc,
   runTransaction,
   serverTimestamp,
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
   type DocumentData,
 } from "firebase/firestore";
 
@@ -15,6 +20,79 @@ import {
 const RENTALS_COLLECTION = "rentals";
 const REVIEWS_COLLECTION = "reviews";
 const USERS_COLLECTION = "users";
+
+export interface Review {
+  rentalId: string;
+  propertyId: string;
+  reviewerUid: string;
+  reviewerDisplayName: string | null;
+  reviewerPhotoURL: string | null;
+  rating: number;
+  reviewText: string;
+  createdAt: Date;
+}
+
+// Convert Firestore timestamps cleanly
+function toReviewDate(value: any): Date {
+  if (value && typeof value === 'object' && 'toDate' in value) {
+    return value.toDate();
+  }
+  return new Date(value || Date.now());
+}
+
+/**
+ * Fetches all reviews for a specific property (most recent first)
+ */
+export async function getReviewsForProperty(propertyId: string): Promise<Review[]> {
+  if (!propertyId.trim()) return [];
+
+  const reviewsQuery = query(
+    collection(db, REVIEWS_COLLECTION),
+    where("propertyId", "==", propertyId),
+    orderBy("createdAt", "desc")
+  );
+
+  const snapshot = await getDocs(reviewsQuery);
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      rentalId: docSnap.id,
+      propertyId: data.propertyId,
+      reviewerUid: data.reviewerUid,
+      reviewerDisplayName: data.reviewerDisplayName,
+      reviewerPhotoURL: data.reviewerPhotoURL,
+      rating: data.rating,
+      reviewText: data.reviewText,
+      createdAt: toReviewDate(data.createdAt),
+    };
+  });
+}
+
+/**
+ * Fetches a preview (latest 2 or 3) of reviews and calculates averages
+ */
+export async function getPropertyReviewSummary(propertyId: string) {
+  const allReviews = await getReviewsForProperty(propertyId);
+  
+  if (allReviews.length === 0) {
+    return {
+      reviewsPreview: [],
+      totalReviews: 0,
+      averageRating: 0,
+    };
+  }
+
+  const sum = allReviews.reduce((acc, r) => acc + r.rating, 0);
+  const averageRating = parseFloat((sum / allReviews.length).toFixed(1));
+
+  return {
+    reviewsPreview: allReviews.slice(0, 3), // Latest 3 reviews
+    totalReviews: allReviews.length,
+    averageRating,
+  };
+}
+
+// --- Your Existing Write Functions & Helpers ---
 
 function isValidRating(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= 5;
@@ -130,9 +208,10 @@ export async function createReview(input: CreateReviewInput): Promise<string> {
       throw new Error("This rental has an invalid end date.");
     }
 
-    if (rentalEndTime > Date.now()) {
-      throw new Error("You can review this item after the rental has ended.");
-    }
+    // TEMPORARY BYPASS: Comment out the date check so future rentals can be reviewed
+    // if (rentalEndTime > Date.now()) {
+    //   throw new Error("You can review this item after the rental has ended.");
+    // }
 
     if (typeof rental.propertyId !== "string" || !rental.propertyId.trim()) {
       throw new Error("This rental is missing its item reference.");

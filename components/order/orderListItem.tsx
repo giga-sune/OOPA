@@ -1,10 +1,10 @@
 import React, { useRef, useState } from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
-import type { Rental } from "../../types/rental/rentalTypes"; // 👈 Adjust path to your types file
+import type { Rental } from "../../types/rental/rentalTypes";
 import type { PaymentStatus } from "../../types/payment/paymentTypes";
 
 interface OrderListItemProps {
-  item: Rental; // 👈 Uses your friend's unified data model type definitions
+  item: Rental;
   isIncomingRequest: boolean;
   paymentStatus?: PaymentStatus;
   isPaymentStatusLoading?: boolean;
@@ -67,8 +67,9 @@ export default function OrderListItem({
     decisionInFlight !== null || isPaymentLocked || normalizedStatus === "approved";
   const canLeaveReview =
     !isIncomingRequest &&
-    item.status.toLowerCase() === "approved" &&
-    item.endDate.getTime() <= Date.now();
+    item.status.toLowerCase() === "approved";
+    // item.status.toLowerCase() === "approved" &&
+    // item.endDate.getTime() <= Date.now();
 
   return (
     <View style={styles.cardContainer}>

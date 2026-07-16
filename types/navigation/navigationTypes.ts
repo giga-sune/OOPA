@@ -19,6 +19,10 @@ export type RootStackParamList = {
   BorrowerOrderDetailScreen: { rentalId: string };
   ReviewItemScreen: { rental: Rental };
   ReportItemScreen: { rental: Rental };
+  AllReviews: { 
+    propertyId: string; 
+    propertyTitle: string; 
+  };
 };
 
 export type TabParamList = {
