@@ -6,6 +6,11 @@ import { getAuth } from "firebase/auth";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons, Feather } from "@expo/vector-icons";
 
+// 1. Stripe & Cloud Functions Imports
+import { useStripe } from "@stripe/stripe-react-native";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../services/firebase/firebaseApp"; // 👈 Ensure this relative path points to your firebaseApp.ts
+
 import { createRentalRequest } from "../services/firestore/rentalService";
 import { getPropertyById } from "../services/firestore/propertyService";
 
@@ -23,6 +28,9 @@ export default function CheckoutScreen() {
 
   const auth = getAuth();
   const currentUser = auth.currentUser;
+
+  // 2. Access Stripe's Payment Sheet triggers
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const [property, setProperty] = useState<any>(null);
   const [loadingProperty, setLoadingProperty] = useState(true);
@@ -86,9 +94,52 @@ export default function CheckoutScreen() {
       return;
     }
 
+    if (totalPrice <= 0) {
+      Alert.alert("Invalid Amount", "Rental total must be greater than $0.00.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // 3. Call your local Firebase Cloud Function to create the Payment Intent
+      // Stripe requires values in cents ($15.00 CAD = 1500 cents)
+      const amountInCents = Math.round(totalPrice * 100);
+      
+      const createPaymentIntentFn = httpsCallable<{ amount: number }, { clientSecret: string }>(
+        functions,
+        "createPaymentIntent"
+      );
+
+      const response = await createPaymentIntentFn({ amount: amountInCents });
+      const { clientSecret } = response.data;
+
+      // 4. Initialize Stripe's UI Payment Sheet
+      const { error: initError } = await initPaymentSheet({
+        merchantDisplayName: "OOPA App",
+        paymentIntentClientSecret: clientSecret,
+        defaultBillingDetails: {
+          email: currentUser.email || undefined,
+        },
+      });
+
+      if (initError) {
+        Alert.alert("Stripe Initialization Failed", initError.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 5. Present the native Stripe interface to collect card details
+      const { error: paymentError } = await presentPaymentSheet();
+
+      if (paymentError) {
+        // User cancelled or payment failed
+        Alert.alert("Payment Cancelled", paymentError.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 6. Only create the Firestore record after Stripe confirms success
       await createRentalRequest({
         propertyId: propertyId,
         renterUid: currentUser.uid,
@@ -98,8 +149,8 @@ export default function CheckoutScreen() {
       });
 
       Alert.alert(
-        "Request Sent!", 
-        "Your rental request timeline has been submitted for approval.",
+        "Success!", 
+        "Payment processed and rental request has been submitted for approval.",
         [
           { 
             text: "Return", 
@@ -114,6 +165,7 @@ export default function CheckoutScreen() {
         ]
       );
     } catch (error: any) {
+      console.error("Payment flow error: ", error);
       Alert.alert("Checkout Error", error.message || "Something went wrong.");
     } finally {
       setIsSubmitting(false);
@@ -280,7 +332,7 @@ export default function CheckoutScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.checkoutBtnText}>Submit Request</Text>
+            <Text style={styles.checkoutBtnText}>Submit & Pay</Text>
           )}
         </TouchableOpacity>
       </View>
