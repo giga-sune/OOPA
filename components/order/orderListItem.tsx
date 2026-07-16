@@ -1,12 +1,15 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
 import type { Rental } from "../../types/rental/rentalTypes"; // 👈 Adjust path to your types file
+import type { PaymentStatus } from "../../types/payment/paymentTypes";
 
 interface OrderListItemProps {
   item: Rental; // 👈 Uses your friend's unified data model type definitions
   isIncomingRequest: boolean;
-  onAcceptPress?: (id: string) => void;
-  onDenyPress?: (id: string) => void;
+  paymentStatus?: PaymentStatus;
+  isPaymentStatusLoading?: boolean;
+  onAcceptPress?: (id: string) => Promise<void>;
+  onDenyPress?: (id: string) => Promise<void>;
   onReportPress: (id: string) => void;
   onReviewPress: (id: string) => void;
 }
@@ -14,11 +17,35 @@ interface OrderListItemProps {
 export default function OrderListItem({
   item,
   isIncomingRequest,
+  paymentStatus = "unpaid",
+  isPaymentStatusLoading = false,
   onAcceptPress,
   onDenyPress,
   onReportPress,
   onReviewPress,
 }: OrderListItemProps) {
+  const decisionInFlightRef = useRef(false);
+  const [decisionInFlight, setDecisionInFlight] = useState<
+    "approved" | "rejected" | null
+  >(null);
+
+  const handleDecisionPress = async (nextStatus: "approved" | "rejected") => {
+    const callback = nextStatus === "approved" ? onAcceptPress : onDenyPress;
+
+    if (decisionInFlightRef.current || !callback) {
+      return;
+    }
+
+    decisionInFlightRef.current = true;
+    setDecisionInFlight(nextStatus);
+
+    try {
+      await callback(item.id);
+    } finally {
+      decisionInFlightRef.current = false;
+      setDecisionInFlight(null);
+    }
+  };
   
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -29,6 +56,19 @@ export default function OrderListItem({
   };
 
   const badgeStyle = getStatusColor(item.status);
+  const normalizedStatus = item.status.toLowerCase();
+  const isPaymentLocked =
+    isPaymentStatusLoading ||
+    paymentStatus === "processing" ||
+    paymentStatus === "paid";
+  const isDenyDisabled =
+    decisionInFlight !== null || isPaymentLocked || normalizedStatus === "rejected";
+  const isAcceptDisabled =
+    decisionInFlight !== null || isPaymentLocked || normalizedStatus === "approved";
+  const canLeaveReview =
+    !isIncomingRequest &&
+    item.status.toLowerCase() === "approved" &&
+    item.endDate.getTime() <= Date.now();
 
   return (
     <View style={styles.cardContainer}>
@@ -57,22 +97,61 @@ export default function OrderListItem({
       </View>
 
       {/* Dynamic Action Controls */}
-      {isIncomingRequest && item.status.toLowerCase() === "pending" ? (
-        <View style={styles.actionButtonRow}>
-          <TouchableOpacity style={[styles.actionBtn, styles.denyBtn]} onPress={() => onDenyPress?.(item.id)}>
-            <Text style={styles.denyBtnText}>Decline</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.actionBtn, styles.acceptBtn]} onPress={() => onAcceptPress?.(item.id)}>
-            <Text style={styles.acceptBtnText}>Accept</Text>
-          </TouchableOpacity>
-        </View>
+      {isIncomingRequest ? (
+        <>
+          <View style={styles.actionButtonRow}>
+            <TouchableOpacity
+              style={[
+                styles.actionBtn,
+                styles.denyBtn,
+                isDenyDisabled && styles.actionBtnDisabled,
+              ]}
+              onPress={() => void handleDecisionPress("rejected")}
+              disabled={isDenyDisabled}
+            >
+              <Text style={styles.denyBtnText}>
+                {decisionInFlight === "rejected" ? "Declining..." : "Decline"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.actionBtn,
+                styles.acceptBtn,
+                isAcceptDisabled && styles.actionBtnDisabled,
+              ]}
+              onPress={() => void handleDecisionPress("approved")}
+              disabled={isAcceptDisabled}
+            >
+              <Text style={styles.acceptBtnText}>
+                {decisionInFlight === "approved" ? "Accepting..." : "Accept"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {isPaymentLocked && (
+            <Text style={styles.paymentLockText}>
+              {paymentStatus === "paid"
+                ? "Decision locked after payment"
+                : "Decision locked while payment is processing"}
+            </Text>
+          )}
+
+          {normalizedStatus !== "pending" && (
+            <TouchableOpacity
+              style={[styles.secondaryBtn, styles.reportButton]}
+              onPress={() => onReportPress(item.id)}
+            >
+              <Text style={styles.secondaryBtnText}>Report</Text>
+            </TouchableOpacity>
+          )}
+        </>
       ) : (
         <View style={styles.actionButtonRow}>
           <TouchableOpacity style={styles.secondaryBtn} onPress={() => onReportPress(item.id)}>
             <Text style={styles.secondaryBtnText}>Report</Text>
           </TouchableOpacity>
-          {item.status.toLowerCase() === "approved" && (
+          {canLeaveReview && (
             <TouchableOpacity style={styles.secondaryBtn} onPress={() => onReviewPress(item.id)}>
               <Text style={styles.secondaryBtnText}>Leave Review</Text>
             </TouchableOpacity>
@@ -97,9 +176,12 @@ const styles = StyleSheet.create({
   actionButtonRow: { flexDirection: "row", gap: 10, marginTop: 14, borderTopWidth: 1, borderColor: "#F1F5F9", paddingTop: 10 },
   actionBtn: { flex: 1, height: 38, borderRadius: 10, justifyContent: "center", alignItems: "center" },
   acceptBtn: { backgroundColor: "#FF7A21" },
+  actionBtnDisabled: { opacity: 0.45 },
   acceptBtnText: { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
   denyBtn: { backgroundColor: "#F1F5F9", borderWidth: 1, borderColor: "#E2E8F0" },
   denyBtnText: { color: "#64748B", fontWeight: "600", fontSize: 14 },
   secondaryBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: "#F8FAFC" },
   secondaryBtnText: { color: "#64748B", fontSize: 13, fontWeight: "500" },
+  paymentLockText: { color: "#64748B", fontSize: 12, marginTop: 8, textAlign: "center" },
+  reportButton: { alignSelf: "flex-start", marginTop: 8 },
 });

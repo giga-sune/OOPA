@@ -1,0 +1,315 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Existing authenticated access for users and properties is preserved.
+//
+// rentals/{rentalId}
+//   Immutable rental, participant, item, pricing, and creation fields.
+//   The trusted owner may update only status and updatedAt while unpaid.
+//
+// payments/{rentalId}
+//   rentalId, propertyId, renterUid, ownerUid: bounded strings
+//   amountInCents: positive integer; currency: "cad"; provider: "stripe"
+//   stripePaymentIntentId: bounded string; attemptNumber: positive integer
+//   status: "unpaid", "processing", or "paid"
+//   createdAt, updatedAt: timestamps; paidAt: timestamp or null
+//   All writes are performed by Firebase Functions through the Admin SDK.
+//
+// reviews/{rentalId}
+//   One immutable renter-to-property review after an approved rental ends.
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function uidUnchanged() {
+      return isAuthenticated() &&
+        request.resource.data.reviewerUid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return request.resource.data.reviewerUid == resource.data.reviewerUid;
+    }
+
+    function isValidNullableString(value, maxLength) {
+      return value == null ||
+        (value is string && value.size() >= 1 && value.size() <= maxLength);
+    }
+
+    function isValidNullableUrl(value) {
+      return value == null ||
+        (value is string &&
+          value.size() >= 10 &&
+          value.size() <= 2048 &&
+          value.matches('^https?://.*'));
+    }
+
+    function hasValidRentalFields(data) {
+      return data.keys().hasAll([
+          'propertyId',
+          'renterUid',
+          'renterDisplayName',
+          'ownerUid',
+          'ownerDisplayName',
+          'propertyTitle',
+          'propertyImageUrl',
+          'propertyRatePeriod',
+          'propertyPrice',
+          'startDate',
+          'endDate',
+          'totalUnits',
+          'totalPrice',
+          'message',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'propertyId',
+          'renterUid',
+          'renterDisplayName',
+          'ownerUid',
+          'ownerDisplayName',
+          'propertyTitle',
+          'propertyImageUrl',
+          'propertyRatePeriod',
+          'propertyPrice',
+          'startDate',
+          'endDate',
+          'totalUnits',
+          'totalPrice',
+          'message',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]);
+    }
+
+    function isValidRental(data) {
+      return hasValidRentalFields(data) &&
+        data.propertyId is string &&
+        data.propertyId.size() >= 1 &&
+        data.propertyId.size() <= 1500 &&
+        data.renterUid is string &&
+        data.renterUid.size() >= 1 &&
+        data.renterUid.size() <= 128 &&
+        isValidNullableString(data.renterDisplayName, 100) &&
+        data.ownerUid is string &&
+        data.ownerUid.size() >= 1 &&
+        data.ownerUid.size() <= 128 &&
+        isValidNullableString(data.ownerDisplayName, 100) &&
+        data.propertyTitle is string &&
+        data.propertyTitle.size() >= 1 &&
+        data.propertyTitle.size() <= 200 &&
+        isValidNullableUrl(data.propertyImageUrl) &&
+        data.propertyRatePeriod in ['week', 'month'] &&
+        data.propertyPrice is number &&
+        data.propertyPrice > 0 &&
+        data.propertyPrice <= 1000000 &&
+        data.startDate is timestamp &&
+        data.endDate is timestamp &&
+        data.endDate > data.startDate &&
+        data.totalUnits is int &&
+        data.totalUnits >= 1 &&
+        data.totalUnits <= 10000 &&
+        data.totalPrice is number &&
+        data.totalPrice == data.propertyPrice * data.totalUnits &&
+        data.totalPrice > 0 &&
+        data.totalPrice <= 100000000 &&
+        isValidNullableString(data.message, 2000) &&
+        data.status in [
+          'pending',
+          'approved',
+          'rejected',
+          'completed',
+          'cancelled'
+        ] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function matchesTrustedProperty(data) {
+      let propertyPath =
+        /databases/$(database)/documents/properties/$(data.propertyId);
+      let property = get(propertyPath).data;
+
+      return exists(propertyPath) &&
+        property.ownerUid == data.ownerUid &&
+        property.ownerUid != data.renterUid &&
+        property.title == data.propertyTitle &&
+        property.price == data.propertyPrice &&
+        property.ratePeriod == data.propertyRatePeriod;
+    }
+
+    function paymentAllowsRentalDecision(rentalId) {
+      let paymentPath =
+        /databases/$(database)/documents/payments/$(rentalId);
+
+      return !exists(paymentPath) || get(paymentPath).data.status == 'unpaid';
+    }
+
+    function isValidRentalDecisionUpdate(rentalId) {
+      return isValidRental(request.resource.data) &&
+        request.auth.uid == resource.data.ownerUid &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.renterUid == resource.data.renterUid &&
+        request.resource.data.status in ['approved', 'rejected'] &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'updatedAt'
+        ]) &&
+        paymentAllowsRentalDecision(rentalId);
+    }
+
+    function hasValidReviewFields(data) {
+      return data.keys().hasAll([
+          'rentalId',
+          'propertyId',
+          'reviewerUid',
+          'reviewerDisplayName',
+          'reviewerPhotoURL',
+          'rating',
+          'reviewText',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'rentalId',
+          'propertyId',
+          'reviewerUid',
+          'reviewerDisplayName',
+          'reviewerPhotoURL',
+          'rating',
+          'reviewText',
+          'createdAt'
+        ]);
+    }
+
+    function isValidReview(data) {
+      return hasValidReviewFields(data) &&
+        data.rentalId is string &&
+        data.rentalId.size() >= 1 &&
+        data.rentalId.size() <= 1500 &&
+        data.propertyId is string &&
+        data.propertyId.size() >= 1 &&
+        data.propertyId.size() <= 1500 &&
+        data.reviewerUid is string &&
+        data.reviewerUid.size() >= 1 &&
+        data.reviewerUid.size() <= 128 &&
+        isValidNullableString(data.reviewerDisplayName, 100) &&
+        isValidNullableUrl(data.reviewerPhotoURL) &&
+        data.rating is int &&
+        data.rating >= 1 &&
+        data.rating <= 5 &&
+        data.reviewText is string &&
+        data.reviewText.size() >= 10 &&
+        data.reviewText.size() <= 1000 &&
+        data.createdAt is timestamp &&
+        data.createdAt == request.time;
+    }
+
+    function matchesRental(reviewId, data) {
+      let rentalPath =
+        /databases/$(database)/documents/rentals/$(reviewId);
+      let rental = get(rentalPath).data;
+
+      return exists(rentalPath) &&
+        reviewId == data.rentalId &&
+        rental.renterUid == request.auth.uid &&
+        rental.renterUid == data.reviewerUid &&
+        rental.propertyId == data.propertyId &&
+        rental.status == 'approved' &&
+        rental.endDate is timestamp &&
+        rental.endDate <= request.time;
+    }
+
+    function matchesReviewerProfile(data) {
+      let profilePath =
+        /databases/$(database)/documents/users/$(data.reviewerUid);
+      let profileExists = exists(profilePath);
+      let profile = get(profilePath).data;
+
+      return (!profileExists &&
+          data.reviewerDisplayName == null &&
+          data.reviewerPhotoURL == null) ||
+        (profileExists &&
+          (data.reviewerDisplayName == null ||
+            (profile.keys().hasAny(['userName']) &&
+              profile.userName is string &&
+              data.reviewerDisplayName == profile.userName)) &&
+          (data.reviewerPhotoURL == null ||
+            (profile.keys().hasAny(['profilePictureUrl']) &&
+              profile.profilePictureUrl is string &&
+              data.reviewerPhotoURL == profile.profilePictureUrl) ||
+            (profile.keys().hasAny(['photoURL']) &&
+              profile.photoURL is string &&
+              data.reviewerPhotoURL == profile.photoURL)));
+    }
+
+    // Preserve current access for collections outside this payment change.
+    match /users/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /properties/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /rentals/{rentalId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.renterUid == request.auth.uid ||
+          resource.data.ownerUid == request.auth.uid);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.renterUid == request.auth.uid &&
+        isValidRental(request.resource.data) &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        matchesTrustedProperty(request.resource.data);
+
+      allow update: if isAuthenticated() &&
+        isValidRentalDecisionUpdate(rentalId);
+
+      allow delete: if false;
+    }
+
+    match /payments/{rentalId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.renterUid == request.auth.uid ||
+          resource.data.ownerUid == request.auth.uid);
+
+      allow create, update, delete: if false;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.reviewerUid) &&
+        uidUnchanged() &&
+        !exists(/databases/$(database)/documents/reviews/$(reviewId)) &&
+        isValidReview(request.resource.data) &&
+        matchesRental(reviewId, request.resource.data) &&
+        matchesReviewerProfile(request.resource.data);
+
+      allow update: if isOwner(resource.data.reviewerUid) &&
+        uidNotModified() &&
+        isValidReview(request.resource.data) &&
+        false;
+
+      allow delete: if false;
+    }
+  }
+}

@@ -5,26 +5,41 @@ import {
 } from "firebase/functions";
 
 import { app } from "../firebase/firebaseApp";
+import type {
+  CreatePaymentIntentResult,
+  PaymentStatus,
+} from "../../types/payment/paymentTypes";
 
 const functions = getFunctions(app);
+const emulatorHost = process.env.EXPO_PUBLIC_FUNCTIONS_EMULATOR_HOST;
 
-connectFunctionsEmulator(
-  functions,
-  process.env.EXPO_PUBLIC_FUNCTIONS_EMULATOR_HOST!,
-  5001
-);
+if (__DEV__ && emulatorHost) {
+  connectFunctionsEmulator(functions, emulatorHost, 5001);
+}
 
 const createPaymentIntentCallable = httpsCallable<
-  { amount: number },
-  { clientSecret: string }
+  { rentalId: string },
+  CreatePaymentIntentResult
 >(functions, "createPaymentIntent");
 
+const cancelPaymentAttemptCallable = httpsCallable<
+  { rentalId: string },
+  { paymentStatus: PaymentStatus }
+>(functions, "cancelPaymentAttempt");
+
 export async function createPaymentIntent(
-  amountInCents: number
-): Promise<string> {
+  rentalId: string
+): Promise<CreatePaymentIntentResult> {
   const result = await createPaymentIntentCallable({
-    amount: amountInCents,
+    rentalId,
   });
 
-  return result.data.clientSecret;
+  return result.data;
+}
+
+export async function cancelPaymentAttempt(
+  rentalId: string
+): Promise<PaymentStatus> {
+  const result = await cancelPaymentAttemptCallable({ rentalId });
+  return result.data.paymentStatus;
 }
