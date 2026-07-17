@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
@@ -13,6 +14,7 @@ import {
 import { db } from "../firebase/firebaseApp";
 import { getPropertyById } from "./propertyService";
 import { getUserProfile } from "./userService";
+import { sendNativePush } from "../notification/pushNotificationService";
 import type {
   CreateRentalRequestInput,
   Rental,
@@ -21,6 +23,7 @@ import type {
 } from "../../types/rental/rentalTypes";
 
 const RENTALS_COLLECTION = "rentals";
+const NOTIFICATIONS_COLLECTION = "notifications";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 function toDate(value: unknown): Date {
@@ -151,6 +154,7 @@ async function updateRentalStatus(rentalId: string, status: RentalStatus): Promi
   });
 }
 
+// CREATE RENTAL REQUEST (Creates a Pending Request & Notifies the Lender/Owner)
 export async function createRentalRequest(
   input: CreateRentalRequestInput
 ): Promise<string> {
@@ -173,14 +177,19 @@ export async function createRentalRequest(
     property.ratePeriod
   );
 
+  const renterDisplayName = getDisplayName(renterProfile?.userName);
+  const propertyTitle = property.title;
+  const propertyImageUrl = property.images[0] ?? null;
+
+  // Create the rental document in Firestore
   const docRef = await addDoc(collection(db, RENTALS_COLLECTION), {
     propertyId: property.id,
     renterUid: input.renterUid.trim(),
-    renterDisplayName: getDisplayName(renterProfile?.userName),
+    renterDisplayName,
     ownerUid: property.ownerUid,
     ownerDisplayName: getDisplayName(property.ownerDisplayName),
-    propertyTitle: property.title,
-    propertyImageUrl: property.images[0] ?? null,
+    propertyTitle,
+    propertyImageUrl,
     propertyRatePeriod: property.ratePeriod,
     propertyPrice: property.price,
     startDate: input.startDate,
@@ -192,6 +201,39 @@ export async function createRentalRequest(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  // 1. In-App Notification (Real-time center fetch)
+  const callerName = renterDisplayName || "A borrower";
+  try {
+    await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+      recipientUid: property.ownerUid,
+      type: "new_request",
+      categoryLabel: "New Request",
+      bodyText: `${callerName} requested to borrow your "${propertyTitle}".`,
+      propertyImageUrl,
+      createdAt: serverTimestamp(),
+      read: false,
+    });
+  } catch (error) {
+    console.error("Failed to generate checkout notification:", error);
+  }
+
+  // 2. Lock-screen System Native Push Notification
+  try {
+    const ownerDoc = await getDoc(doc(db, "users", property.ownerUid));
+    if (ownerDoc.exists()) {
+      const ownerData = ownerDoc.data();
+      if (ownerData?.expoPushToken) {
+        await sendNativePush(
+          ownerData.expoPushToken,
+          "🎁 New Rental Request!",
+          `${callerName} wants to borrow your "${propertyTitle}".`
+        );
+      }
+    }
+  } catch (pushError) {
+    console.error("Failed to deliver native push request:", pushError);
+  }
 
   return docRef.id;
 }
@@ -228,10 +270,82 @@ export async function getRentalsByOwner(ownerUid: string): Promise<Rental[]> {
   );
 }
 
+// APPROVE RENTAL REQUEST (Approves & Notifies the Borrower/Renter)
 export async function approveRentalRequest(rentalId: string): Promise<void> {
+  // Update status to approved
   await updateRentalStatus(rentalId, "approved");
+
+  // Fetch the updated rental details to trigger notifications
+  try {
+    const rentalSnap = await getDoc(doc(db, RENTALS_COLLECTION, rentalId));
+    if (rentalSnap.exists()) {
+      const rentalData = rentalSnap.data();
+      const targetItemTitle = rentalData.propertyTitle || "your requested item";
+      
+      // 1. In-App Notification Write
+      await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+        recipientUid: rentalData.renterUid,
+        type: "request_approved",
+        categoryLabel: "Rental Approved",
+        bodyText: `Great news! Your request to borrow "${targetItemTitle}" has been approved.`,
+        propertyImageUrl: rentalData.propertyImageUrl || null,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
+
+      // 2. Lock-screen System Native Push Notification
+      const renterDoc = await getDoc(doc(db, "users", rentalData.renterUid));
+      if (renterDoc.exists()) {
+        const renterProfileData = renterDoc.data();
+        if (renterProfileData?.expoPushToken) {
+          await sendNativePush(
+            renterProfileData.expoPushToken,
+            "✅ Rental Approved!",
+            `Great news! Your request for "${targetItemTitle}" has been approved.`
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to generate approval notification routes:", error);
+  }
 }
 
+// REJECT RENTAL REQUEST (Rejects & Notifies the Borrower/Renter)
 export async function rejectRentalRequest(rentalId: string): Promise<void> {
   await updateRentalStatus(rentalId, "rejected");
+
+  try {
+    const rentalSnap = await getDoc(doc(db, RENTALS_COLLECTION, rentalId));
+    if (rentalSnap.exists()) {
+      const rentalData = rentalSnap.data();
+      const targetItemTitle = rentalData.propertyTitle || "your requested item";
+      
+      //In-App Notification Write
+      await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+        recipientUid: rentalData.renterUid,
+        type: "request_rejected",
+        categoryLabel: "Rental Declined",
+        bodyText: `Sorry, your request to borrow "${targetItemTitle}" was declined by the owner.`,
+        propertyImageUrl: rentalData.propertyImageUrl || null,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
+
+      //Lock-screen System Native Push Notification
+      const renterDoc = await getDoc(doc(db, "users", rentalData.renterUid));
+      if (renterDoc.exists()) {
+        const renterProfileData = renterDoc.data();
+        if (renterProfileData?.expoPushToken) {
+          await sendNativePush(
+            renterProfileData.expoPushToken,
+            "❌ Rental Request Update",
+            `Your request for "${targetItemTitle}" was declined.`
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to generate rejection notification routes:", error);
+  }
 }

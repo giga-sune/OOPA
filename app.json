@@ -34,6 +34,12 @@
           "enableGooglePay": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3b532cb8-542a-456d-9ce7-d6329d1a70dd"
+      }
+    },
+    "owner": "bibekgrg"
   }
 }

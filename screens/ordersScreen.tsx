@@ -8,7 +8,9 @@ import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import OrderListItem from "../components/order/orderListItem";
 import { db } from "../services/firebase/firebaseApp";
 import { approveRentalRequest, rejectRentalRequest } from "../services/firestore/rentalService";
+import { subscribeToOwnerPayments } from "../services/firestore/paymentService";
 import type { Rental } from "../types/rental/rentalTypes";
+import type { PaymentStatus } from "../types/payment/paymentTypes";
 
 type TabState = "My Orders" | "Requests";
 
@@ -18,6 +20,10 @@ export default function OrdersScreen() {
   const [myOrders, setMyOrders] = useState<Rental[]>([]);
   const [requests, setRequests] = useState<Rental[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [paymentsLoading, setPaymentsLoading] = useState<boolean>(true);
+  const [paymentStatuses, setPaymentStatuses] = useState<
+    Record<string, PaymentStatus>
+  >({});
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -27,6 +33,8 @@ export default function OrdersScreen() {
       if (!user) {
         setMyOrders([]);
         setRequests([]);
+        setPaymentStatuses({});
+        setPaymentsLoading(false);
         setLoading(false);
       }
     });
@@ -37,6 +45,7 @@ export default function OrdersScreen() {
     if (!currentUser) return;
 
     setLoading(true);
+    setPaymentsLoading(true);
     const rentalsRef = collection(db, "rentals"); 
 
     const myOrdersQuery = query(
@@ -84,9 +93,21 @@ export default function OrdersScreen() {
       setRequests(snapshot.docs.map(parseSnapshotDoc));
     });
 
+    const unsubscribePayments = subscribeToOwnerPayments(
+      currentUser.uid,
+      (nextPaymentStatuses) => {
+        setPaymentStatuses(nextPaymentStatuses);
+        setPaymentsLoading(false);
+      },
+      () => {
+        setPaymentsLoading(true);
+      }
+    );
+
     return () => {
       unsubscribeOrders();
       unsubscribeRequests();
+      unsubscribePayments();
     };
   }, [currentUser]);
 
@@ -181,6 +202,10 @@ export default function OrdersScreen() {
       <OrderListItem 
         item={item} 
         isIncomingRequest={activeTab === "Requests"}
+        paymentStatus={paymentStatuses[item.id] ?? "unpaid"}
+        isPaymentStatusLoading={
+          activeTab === "Requests" && paymentsLoading
+        }
         onAcceptPress={handleAcceptRequest}
         onDenyPress={handleDenyRequest}
         onReportPress={() => handleReport(item)}

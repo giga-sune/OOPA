@@ -2,11 +2,16 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
 
 import { db } from "../services/firebase/firebaseApp";
+import {
+    approveRentalRequest,
+    rejectRentalRequest,
+} from "../services/firestore/rentalService";
+import usePaymentStatusViewModel from "../viewModels/payment/usePaymentStatusViewModel";
 
 type ParamList = {
     lenderRequestDetailScreen: {
@@ -23,6 +28,11 @@ export default function LenderRequestDetailScreen() {
     const [renterProfile, setRenterProfile] = useState<any>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [processing, setProcessing] = useState<boolean>(false);
+    const {
+        paymentStatus,
+        isPaymentLoading,
+        paymentStatusError,
+    } = usePaymentStatusViewModel(rentalId || "");
 
     useEffect(() => {
         async function fetchRequestDetails() {
@@ -70,12 +80,11 @@ export default function LenderRequestDetailScreen() {
 
         try {
             setProcessing(true);
-            const rentalRef = doc(db, "rentals", rentalId);
-            
-            await updateDoc(rentalRef, {
-                status: nextStatus,
-                updatedAt: new Date()
-            });
+            if (nextStatus === "approved") {
+                await approveRentalRequest(rentalId);
+            } else {
+                await rejectRentalRequest(rentalId);
+            }
 
             setRental((prev: any) => ({ ...prev, status: nextStatus }));
             Alert.alert("Success", `Request has been ${nextStatus}.`);
@@ -107,6 +116,14 @@ export default function LenderRequestDetailScreen() {
 
     const currentStatus = rental?.status?.toLowerCase() || "pending";
     const isRejected = currentStatus === "denied" || currentStatus === "rejected";
+    const isPaymentLocked =
+        isPaymentLoading ||
+        paymentStatus === "processing" ||
+        paymentStatus === "paid" ||
+        Boolean(paymentStatusError);
+    const isDenyDisabled = processing || isPaymentLocked || isRejected;
+    const isAcceptDisabled =
+        processing || isPaymentLocked || currentStatus === "approved";
 
     const borrowerName = renterProfile?.userName || renterProfile?.displayName || rental?.renterDisplayName || "Renter";
     const borrowerEmail = renterProfile?.email || "No email available";
@@ -176,25 +193,53 @@ export default function LenderRequestDetailScreen() {
                     )}
 
                     {/* Contextually Swapped Action Layout Buttons Inside the Card */}
-                    {currentStatus === "pending" && (
-                        <View style={styles.actionRow}>
-                            <TouchableOpacity 
-                                style={[styles.denyButton, processing && { opacity: 0.6 }]} 
-                                onPress={() => handleStatusUpdate("rejected")}
-                                disabled={processing}
-                            >
-                                <Text style={styles.denyButtonText}>Deny</Text>
-                            </TouchableOpacity>
+                    <View style={styles.actionRow}>
+                        <TouchableOpacity
+                            style={[
+                                styles.denyButton,
+                                isDenyDisabled && styles.decisionButtonDisabled,
+                            ]}
+                            onPress={() => void handleStatusUpdate("rejected")}
+                            disabled={isDenyDisabled}
+                        >
+                            <Text style={styles.denyButtonText}>
+                                {processing && !isRejected ? "Updating..." : "Deny"}
+                            </Text>
+                        </TouchableOpacity>
 
-                            <TouchableOpacity 
-                                style={[styles.approveButton, processing && { opacity: 0.6 }]} 
-                                onPress={() => handleStatusUpdate("approved")}
-                                disabled={processing}
-                            >
-                                {processing ? <ActivityIndicator color="#FFF" /> : <Text style={styles.approveButtonText}>Accept</Text>}
-                            </TouchableOpacity>
-                        </View>
+                        <TouchableOpacity
+                            style={[
+                                styles.approveButton,
+                                isAcceptDisabled && styles.decisionButtonDisabled,
+                            ]}
+                            onPress={() => void handleStatusUpdate("approved")}
+                            disabled={isAcceptDisabled}
+                        >
+                            {processing && currentStatus !== "approved" ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.approveButtonText}>Accept</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+
+                    {paymentStatus === "paid" && (
+                        <Text style={styles.paymentLockText}>
+                            This request is locked because the rental has been paid.
+                        </Text>
                     )}
+
+                    {paymentStatus === "processing" && (
+                        <Text style={styles.paymentLockText}>
+                            This request is locked while payment is processing.
+                        </Text>
+                    )}
+
+                    {paymentStatusError ? (
+                        <Text style={styles.paymentLockError}>
+                            {paymentStatusError}
+                        </Text>
+                    ) : null}
 
                     {currentStatus === "approved" && (
                         <TouchableOpacity
@@ -290,6 +335,9 @@ const styles = StyleSheet.create({
     denyButtonText: { fontSize: 16, fontWeight: "600", color: "#475569" },
     approveButton: { flex: 1, height: 48, borderRadius: 24, backgroundColor: "#FF7A21", justifyContent: "center", alignItems: "center" },
     approveButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
+    decisionButtonDisabled: { opacity: 0.45 },
+    paymentLockText: { color: "#64748B", fontSize: 13, marginTop: 10, textAlign: "center" },
+    paymentLockError: { color: "#B91C1C", fontSize: 13, marginTop: 10, textAlign: "center" },
 
     messageButton: { width: "100%", height: 48, borderRadius: 24, backgroundColor: "#FF7A21", justifyContent: "center", alignItems: "center", marginTop: 24 },
     messageButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },

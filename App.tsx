@@ -1,6 +1,7 @@
 import "react-native-gesture-handler";
-import React from "react";
+import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import {
   ActivityIndicator,
@@ -26,6 +27,7 @@ import useAuthSessionViewModel, {
 } from "./viewModels/auth/useAuthSessionViewModel";
 
 import { AuthProvider } from "./context/AuthContext";
+import { registerForPushNotificationsAsync } from "./services/notification/pushNotificationService";
 
 export default function App() {
   const {
@@ -38,6 +40,17 @@ export default function App() {
     "SFProDisplay-Semibold": require("./assets/fonts/SF-Pro-Display-Semibold.otf"),
     "SFProDisplay-Bold": require("./assets/fonts/SF-Pro-Display-Bold.otf"),
   });
+
+  // Track auth changes to register device token for lockscreen alerts
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        registerForPushNotificationsAsync(user.uid);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   if (initializing || !fontsLoaded) {
     return (

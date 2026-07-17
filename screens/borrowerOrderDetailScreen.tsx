@@ -19,7 +19,14 @@ export default function BorrowerOrderDetailScreen() {
     const route = useRoute<RouteProp<ParamList, "borrowerOrderDetailScreen" | any>>();
     const navigation = useNavigation();
     const { rentalId } = route.params || {};
-    const { isPaying, pay } = usePaymentViewModel();
+    const {
+        isPaying,
+        isPaymentLoading,
+        paymentStatus,
+        paymentStatusError,
+        isPaymentComplete,
+        pay,
+    } = usePaymentViewModel(rentalId || "");
 
     const [rental, setRental] = useState<any>(null);
     const [lenderProfile, setLenderProfile] = useState<any>(null);
@@ -96,6 +103,12 @@ export default function BorrowerOrderDetailScreen() {
 
     // Check if the order is approved to enable messaging
     const isApproved = rental?.status?.toLowerCase() === "approved";
+    const isPaid = isPaymentComplete;
+    const isPaymentButtonDisabled =
+        isPaying ||
+        isPaymentLoading ||
+        isPaid ||
+        Boolean(paymentStatusError);
 
     // ✅ FIX: Fallbacks configured to read 'userName' from user doc, or 'ownerDisplayName' from rental doc
     const lenderName = 
@@ -187,19 +200,33 @@ export default function BorrowerOrderDetailScreen() {
                 </View>
 
                 {isApproved && (
-                    <TouchableOpacity
-                        style={styles.paymentButton}
-                        onPress={() => pay(rental.totalPrice)}
-                        disabled={isPaying}
-                    >
-                        {isPaying ? (
-                            <ActivityIndicator color="#FFFFFF" />
-                        ) : (
-                            <Text style={styles.paymentButtonText}>
-                                Pay ${Number(rental.totalPrice).toFixed(2)}
+                    <>
+                        <TouchableOpacity
+                            style={[
+                                styles.paymentButton,
+                                isPaymentButtonDisabled && styles.paymentButtonDisabled,
+                            ]}
+                            onPress={() => void pay()}
+                            disabled={isPaymentButtonDisabled}
+                        >
+                            {isPaying || isPaymentLoading ? (
+                                <ActivityIndicator color="#FFFFFF" />
+                            ) : (
+                                <Text style={styles.paymentButtonText}>
+                                    {isPaid
+                                        ? "Paid"
+                                        : paymentStatus === "processing"
+                                            ? "Continue Payment"
+                                            : `Pay $${Number(rental.totalPrice).toFixed(2)}`}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                        {paymentStatusError ? (
+                            <Text style={styles.paymentStatusError}>
+                                {paymentStatusError}
                             </Text>
-                        )}
-                    </TouchableOpacity>
+                        ) : null}
+                    </>
                 )}
 
                 {/* Section: Meetup map */}
@@ -306,10 +333,20 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 28,
     },
+    paymentButtonDisabled: {
+        opacity: 0.6,
+    },
     paymentButtonText: {
         fontSize: 17,
         fontWeight: "700",
         color: "#FFFFFF",
+    },
+    paymentStatusError: {
+        color: "#B91C1C",
+        fontSize: 13,
+        marginTop: -18,
+        marginBottom: 28,
+        textAlign: "center",
     },
 
     mapCardWrapper: { width: "100%", height: 165, borderRadius: 24, overflow: "hidden", backgroundColor: "#F1F5F9", borderWidth: 1, borderColor: "#E2E8F0" },

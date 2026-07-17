@@ -55,3 +55,369 @@
     "statusCode": 404
   }
 }
+[debug] [2026-07-15T17:35:05.426Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T17:35:05.430Z] Command:       /usr/local/bin/node /usr/local/bin/firebase firestore:databases:list --project oopa-e977a
+[debug] [2026-07-15T17:35:05.430Z] CLI Version:   15.23.0
+[debug] [2026-07-15T17:35:05.430Z] Platform:      darwin
+[debug] [2026-07-15T17:35:05.430Z] Node Version:  v24.13.0
+[debug] [2026-07-15T17:35:05.430Z] Detected Agent: codex_cli
+[debug] [2026-07-15T17:35:05.431Z] Time:          Wed Jul 15 2026 13:35:05 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-15T17:35:05.431Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T17:35:06.971Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T17:35:06.972Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-15T17:35:06.972Z] [iam] checking project oopa-e977a for permissions ["datastore.databases.list","firebase.projects.get"]
+[debug] [2026-07-15T17:35:06.993Z] Checked if tokens are valid: false, expires at: 1784085593999
+[debug] [2026-07-15T17:35:06.993Z] Checked if tokens are valid: false, expires at: 1784085593999
+[debug] [2026-07-15T17:35:06.994Z] > refreshing access token with scopes: []
+[debug] [2026-07-15T17:35:06.997Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-15T17:35:06.997Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T17:35:07.212Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-15T17:35:07.212Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T17:35:07.258Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions [none]
+[debug] [2026-07-15T17:35:07.258Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions  x-goog-user-project=oopa-e977a
+[debug] [2026-07-15T17:35:07.258Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.databases.list","firebase.projects.get"]}
+[debug] [2026-07-15T17:35:07.626Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions 200
+[debug] [2026-07-15T17:35:07.626Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.databases.list","firebase.projects.get"]}
+[debug] [2026-07-15T17:35:07.627Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:35:07.627Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:35:07.627Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases [none]
+[debug] [2026-07-15T17:35:08.180Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases 200
+[debug] [2026-07-15T17:35:08.181Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases {"databases":[{"name":"projects/oopa-e977a/databases/(default)","uid":"1ddc3277-dd20-4e05-977d-9d4e436b64b2","createTime":"2026-05-18T01:51:42.589404Z","updateTime":"2026-05-18T01:51:42.589404Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-07-15T16:35:08.343064Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IIyxjPWb1ZUDMLf/jqLdwZQD"}]}
+[info] ┌────────────────────────────────────────────┬────────────────────┬────────────────────┐
+│ Database Name                              │ Edition            │ Type               │
+├────────────────────────────────────────────┼────────────────────┼────────────────────┤
+│ projects/oopa-e977a/databases/(default)    │ STANDARD           │ FIRESTORE_NATIVE   │
+└────────────────────────────────────────────┴────────────────────┴────────────────────┘
+[debug] [2026-07-15T17:36:35.467Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T17:36:35.473Z] Command:       /usr/local/bin/node /usr/local/bin/firebase firestore:databases:get (default) --project oopa-e977a
+[debug] [2026-07-15T17:36:35.473Z] CLI Version:   15.23.0
+[debug] [2026-07-15T17:36:35.473Z] Platform:      darwin
+[debug] [2026-07-15T17:36:35.473Z] Node Version:  v24.13.0
+[debug] [2026-07-15T17:36:35.473Z] Detected Agent: codex_cli
+[debug] [2026-07-15T17:36:35.473Z] Time:          Wed Jul 15 2026 13:36:35 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-15T17:36:35.473Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T17:36:36.856Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T17:36:36.857Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-15T17:36:36.857Z] [iam] checking project oopa-e977a for permissions ["datastore.databases.get","firebase.projects.get"]
+[debug] [2026-07-15T17:36:36.871Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:36:36.871Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:36:36.873Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions [none]
+[debug] [2026-07-15T17:36:36.873Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions  x-goog-user-project=oopa-e977a
+[debug] [2026-07-15T17:36:36.873Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.databases.get","firebase.projects.get"]}
+[debug] [2026-07-15T17:36:37.267Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions 200
+[debug] [2026-07-15T17:36:37.267Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.databases.get","firebase.projects.get"]}
+[debug] [2026-07-15T17:36:37.267Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:36:37.268Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:36:37.270Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) [none]
+[debug] [2026-07-15T17:36:37.640Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) 200
+[debug] [2026-07-15T17:36:37.640Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) {"name":"projects/oopa-e977a/databases/(default)","uid":"1ddc3277-dd20-4e05-977d-9d4e436b64b2","createTime":"2026-05-18T01:51:42.589404Z","updateTime":"2026-05-18T01:51:42.589404Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-07-15T16:36:37.786780Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IP2k75+c1ZUDMLf/jqLdwZQD"}
+[info] ┌──────────────────────────────┬──────────────────────────────────────────────────┐
+│ Field                        │ Value                                            │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Name                         │ projects/oopa-e977a/databases/(default)          │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Create Time                  │ 2026-05-18T01:51:42.589404Z                      │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Last Update Time             │ 2026-05-18T01:51:42.589404Z                      │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Type                         │ FIRESTORE_NATIVE                                 │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Edition                      │ STANDARD                                         │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Location                     │ nam5                                             │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Delete Protection State      │ DELETE_PROTECTION_DISABLED                       │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Point In Time Recovery       │ POINT_IN_TIME_RECOVERY_DISABLED                  │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Earliest Version Time        │ 2026-07-15T16:36:37.786780Z                      │
+├──────────────────────────────┼──────────────────────────────────────────────────┤
+│ Version Retention Period     │ 3600s                                            │
+└──────────────────────────────┴──────────────────────────────────────────────────┘
+[debug] [2026-07-15T17:49:10.452Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T17:49:10.456Z] Command:       /usr/local/bin/node /usr/local/bin/firebase emulators:exec --only firestore node --test tests/firestore/review.rules.test.mjs
+[debug] [2026-07-15T17:49:10.456Z] CLI Version:   15.23.0
+[debug] [2026-07-15T17:49:10.456Z] Platform:      darwin
+[debug] [2026-07-15T17:49:10.456Z] Node Version:  v24.13.0
+[debug] [2026-07-15T17:49:10.457Z] Detected Agent: codex_cli
+[debug] [2026-07-15T17:49:10.457Z] Time:          Wed Jul 15 2026 13:49:10 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-15T17:49:10.457Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T17:49:12.076Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T17:49:12.077Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-15T17:49:12.104Z] The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+
+[debug] [2026-07-15T17:49:12.112Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[debug] [2026-07-15T17:49:12.116Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[error] 
+[error] Error: Process `java -version` has exited with code 1. Please make sure Java is installed and on your system PATH.
+-----Original stdout-----
+-----Original stderr-----
+The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+
+[debug] [2026-07-15T17:49:23.895Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T17:49:23.900Z] Command:       /usr/local/bin/node /usr/local/bin/firebase deploy --only firestore:rules --dry-run --project oopa-e977a
+[debug] [2026-07-15T17:49:23.901Z] CLI Version:   15.23.0
+[debug] [2026-07-15T17:49:23.901Z] Platform:      darwin
+[debug] [2026-07-15T17:49:23.901Z] Node Version:  v24.13.0
+[debug] [2026-07-15T17:49:23.901Z] Detected Agent: codex_cli
+[debug] [2026-07-15T17:49:23.901Z] Time:          Wed Jul 15 2026 13:49:23 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-15T17:49:23.901Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T17:49:25.229Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T17:49:25.230Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-15T17:49:25.230Z] [iam] checking project oopa-e977a for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-07-15T17:49:25.244Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:25.244Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:25.245Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions [none]
+[debug] [2026-07-15T17:49:25.246Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions  x-goog-user-project=oopa-e977a
+[debug] [2026-07-15T17:49:25.246Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-07-15T17:49:25.701Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions 200
+[debug] [2026-07-15T17:49:25.702Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'oopa-e977a'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-07-15T17:49:25.704Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:25.705Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:25.705Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/firestore.googleapis.com [none]
+[debug] [2026-07-15T17:49:25.705Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/firestore.googleapis.com  x-goog-user-project=oopa-e977a
+[debug] [2026-07-15T17:49:26.140Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/firestore.googleapis.com 200
+[debug] [2026-07-15T17:49:26.140Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/oopa-e977a/services/firestore.googleapis.com [omitted]
+[info] ✔  firestore: required API firestore.googleapis.com is enabled 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-07-15T17:49:26.167Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:26.168Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:26.168Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) [none]
+[debug] [2026-07-15T17:49:26.512Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) 200
+[debug] [2026-07-15T17:49:26.513Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) {"name":"projects/oopa-e977a/databases/(default)","uid":"1ddc3277-dd20-4e05-977d-9d4e436b64b2","createTime":"2026-05-18T01:51:42.589404Z","updateTime":"2026-05-18T01:51:42.589404Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-07-15T16:49:26.643262Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IPzEvo6f1ZUDMLf/jqLdwZQD"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-07-15T17:49:26.517Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:26.517Z] Checked if tokens are valid: true, expires at: 1784140506212
+[debug] [2026-07-15T17:49:26.517Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test [none]
+[debug] [2026-07-15T17:49:26.517Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test [omitted]
+[debug] [2026-07-15T17:49:26.952Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test 200
+[debug] [2026-07-15T17:49:26.953Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test {"issues":[{"sourcePosition":{"fileName":"firestore.rules","line":34,"column":14,"currentOffset":1250,"endOffset":1256},"description":"Unused function: isOwner.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":35,"column":35,"currentOffset":1302,"endOffset":1308},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":43,"column":14,"currentOffset":1484,"endOffset":1497},"description":"Unused function: uidNotModified.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":44,"column":14,"currentOffset":1516,"endOffset":1522},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":44,"column":51,"currentOffset":1553,"endOffset":1560},"description":"Invalid variable name: resource.","severity":"WARNING"}]}
+[warn] ⚠  [W] 34:14 - Unused function: isOwner. 
+[warn] ⚠  [W] 35:35 - Invalid variable name: request. 
+[warn] ⚠  [W] 43:14 - Unused function: uidNotModified. 
+[warn] ⚠  [W] 44:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 44:51 - Invalid variable name: resource. 
+[info] ✔  cloud.firestore: rules file firestore.rules compiled successfully 
+[info] 
+[info] ✔  Dry run complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/oopa-e977a/overview
+[debug] [2026-07-16T01:37:22.692Z] ----------------------------------------------------------------------
+[debug] [2026-07-16T01:37:22.695Z] Command:       /usr/local/bin/node /usr/local/bin/firebase firestore:databases:list --project oopa-e977a
+[debug] [2026-07-16T01:37:22.695Z] CLI Version:   15.23.0
+[debug] [2026-07-16T01:37:22.695Z] Platform:      darwin
+[debug] [2026-07-16T01:37:22.695Z] Node Version:  v24.13.0
+[debug] [2026-07-16T01:37:22.695Z] Detected Agent: codex_cli
+[debug] [2026-07-16T01:37:22.695Z] Time:          Wed Jul 15 2026 21:37:22 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-16T01:37:22.696Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-16T01:37:24.082Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-16T01:37:24.083Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-16T01:37:24.083Z] [iam] checking project oopa-e977a for permissions ["datastore.databases.list","firebase.projects.get"]
+[debug] [2026-07-16T01:37:24.095Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T01:37:24.095Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T01:37:24.095Z] > refreshing access token with scopes: []
+[debug] [2026-07-16T01:37:24.097Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-16T01:37:24.097Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-16T01:37:24.126Z] *** [apiv2] error from fetch(https://www.googleapis.com/oauth2/v3/token, {"headers":{},"method":"POST","body":{"type":"Buffer","data":[45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,53,97,101,55,51,98,97,54,99,99,53,98,100,53,51,102,52,97,98,55,52,100,54,54,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,114,101,102,114,101,115,104,95,116,111,107,101,110,34,13,10,13,10,49,47,47,48,49,84,117,107,116,45,89,50,72,84,70,82,67,103,89,73,65,82,65,65,71,65,69,83,78,119,70,45,76,57,73,114,72,82,105,111,56,81,67,104,67,45,118,54,106,82,54,106,111,57,99,54,105,106,76,117,80,104,48,50,107,87,56,69,118,115,101,83,82,70,99,106,84,88,78,121,118,102,119,110,102,120,53,77,66,89,87,49,105,118,72,70,119,113,120,105,54,87,52,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,53,97,101,55,51,98,97,54,99,99,53,98,100,53,51,102,52,97,98,55,52,100,54,54,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,105,100,34,13,10,13,10,53,54,51,53,56,52,51,51,53,56,54,57,45,102,103,114,104,103,109,100,52,55,98,113,110,101,107,105,106,53,105,56,98,53,112,114,48,51,104,111,56,52,57,101,54,46,97,112,112,115,46,103,111,111,103,108,101,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,53,97,101,55,51,98,97,54,99,99,53,98,100,53,51,102,52,97,98,55,52,100,54,54,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,115,101,99,114,101,116,34,13,10,13,10,106,57,105,86,90,102,83,56,107,107,67,69,70,85,80,97,65,101,74,86,48,115,65,105,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,53,97,101,55,51,98,97,54,99,99,53,98,100,53,51,102,52,97,98,55,52,100,54,54,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,103,114,97,110,116,95,116,121,112,101,34,13,10,13,10,114,101,102,114,101,115,104,95,116,111,107,101,110,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,53,97,101,55,51,98,97,54,99,99,53,98,100,53,51,102,52,97,98,55,52,100,54,54,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,115,99,111,112,101,34,13,10,13,10,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,53,97,101,55,51,98,97,54,99,99,53,98,100,53,51,102,52,97,98,55,52,100,54,54,45,45,13,10]}}): Error: getaddrinfo ENOTFOUND www.googleapis.com
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-16T01:37:24.126Z] [iam] error while checking permissions, command may fail: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-16T01:37:24.127Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T01:37:24.127Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T01:37:24.127Z] > refreshing access token with scopes: []
+[debug] [2026-07-16T01:37:24.128Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-16T01:37:24.128Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-16T01:37:24.131Z] *** [apiv2] error from fetch(https://www.googleapis.com/oauth2/v3/token, {"headers":{},"method":"POST","body":{"type":"Buffer","data":[45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,100,53,52,51,51,99,53,100,57,100,54,49,49,54,50,99,57,50,54,101,99,49,99,55,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,114,101,102,114,101,115,104,95,116,111,107,101,110,34,13,10,13,10,49,47,47,48,49,84,117,107,116,45,89,50,72,84,70,82,67,103,89,73,65,82,65,65,71,65,69,83,78,119,70,45,76,57,73,114,72,82,105,111,56,81,67,104,67,45,118,54,106,82,54,106,111,57,99,54,105,106,76,117,80,104,48,50,107,87,56,69,118,115,101,83,82,70,99,106,84,88,78,121,118,102,119,110,102,120,53,77,66,89,87,49,105,118,72,70,119,113,120,105,54,87,52,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,100,53,52,51,51,99,53,100,57,100,54,49,49,54,50,99,57,50,54,101,99,49,99,55,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,105,100,34,13,10,13,10,53,54,51,53,56,52,51,51,53,56,54,57,45,102,103,114,104,103,109,100,52,55,98,113,110,101,107,105,106,53,105,56,98,53,112,114,48,51,104,111,56,52,57,101,54,46,97,112,112,115,46,103,111,111,103,108,101,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,100,53,52,51,51,99,53,100,57,100,54,49,49,54,50,99,57,50,54,101,99,49,99,55,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,115,101,99,114,101,116,34,13,10,13,10,106,57,105,86,90,102,83,56,107,107,67,69,70,85,80,97,65,101,74,86,48,115,65,105,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,100,53,52,51,51,99,53,100,57,100,54,49,49,54,50,99,57,50,54,101,99,49,99,55,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,103,114,97,110,116,95,116,121,112,101,34,13,10,13,10,114,101,102,114,101,115,104,95,116,111,107,101,110,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,100,53,52,51,51,99,53,100,57,100,54,49,49,54,50,99,57,50,54,101,99,49,99,55,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,115,99,111,112,101,34,13,10,13,10,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,100,53,52,51,51,99,53,100,57,100,54,49,49,54,50,99,57,50,54,101,99,49,99,55,45,45,13,10]}}): Error: getaddrinfo ENOTFOUND www.googleapis.com
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] 
+[error] Error: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-16T01:37:24.409Z] Error: EPERM: operation not permitted, open '/Users/sunegeleta/.config/configstore/firebase-tools.json.2804480091'
+    at Object.openSync (node:fs:559:18)
+    at writeFile.writeFileSync [as sync] (/usr/local/lib/node_modules/firebase-tools/node_modules/write-file-atomic/index.js:205:13)
+    at set all (/usr/local/lib/node_modules/firebase-tools/node_modules/configstore/index.js:61:20)
+    at Configstore.delete (/usr/local/lib/node_modules/firebase-tools/node_modules/configstore/index.js:101:12)
+    at process.<anonymous> (/usr/local/lib/node_modules/firebase-tools/lib/bin/cli.js:90:45)
+    at process.emit (node:events:520:35)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at Timeout._onTimeout (/usr/local/lib/node_modules/firebase-tools/lib/errorOut.js:20:17)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-07-16T02:03:39.970Z] ----------------------------------------------------------------------
+[debug] [2026-07-16T02:03:39.973Z] Command:       /usr/local/bin/node /usr/local/bin/firebase emulators:exec --only firestore true
+[debug] [2026-07-16T02:03:39.973Z] CLI Version:   15.23.0
+[debug] [2026-07-16T02:03:39.973Z] Platform:      darwin
+[debug] [2026-07-16T02:03:39.973Z] Node Version:  v24.13.0
+[debug] [2026-07-16T02:03:39.974Z] Detected Agent: codex_cli
+[debug] [2026-07-16T02:03:39.974Z] Time:          Wed Jul 15 2026 22:03:39 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-16T02:03:39.974Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-16T02:03:41.606Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-16T02:03:41.607Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-16T02:03:41.649Z] The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+
+[debug] [2026-07-16T02:03:41.654Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[debug] [2026-07-16T02:03:41.656Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[error] 
+[error] Error: Process `java -version` has exited with code 1. Please make sure Java is installed and on your system PATH.
+-----Original stdout-----
+-----Original stderr-----
+The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+
+[debug] [2026-07-16T02:03:41.955Z] Error: EPERM: operation not permitted, open '/Users/sunegeleta/.config/configstore/firebase-tools.json.3522665912'
+    at Object.openSync (node:fs:559:18)
+    at writeFile.writeFileSync [as sync] (/usr/local/lib/node_modules/firebase-tools/node_modules/write-file-atomic/index.js:205:13)
+    at set all (/usr/local/lib/node_modules/firebase-tools/node_modules/configstore/index.js:61:20)
+    at Configstore.delete (/usr/local/lib/node_modules/firebase-tools/node_modules/configstore/index.js:101:12)
+    at process.<anonymous> (/usr/local/lib/node_modules/firebase-tools/lib/bin/cli.js:90:45)
+    at process.emit (node:events:520:35)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at Timeout._onTimeout (/usr/local/lib/node_modules/firebase-tools/lib/errorOut.js:20:17)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-07-16T02:03:50.605Z] ----------------------------------------------------------------------
+[debug] [2026-07-16T02:03:50.609Z] Command:       /usr/local/bin/node /usr/local/bin/firebase deploy --only firestore:rules --dry-run --project oopa-e977a
+[debug] [2026-07-16T02:03:50.610Z] CLI Version:   15.23.0
+[debug] [2026-07-16T02:03:50.610Z] Platform:      darwin
+[debug] [2026-07-16T02:03:50.610Z] Node Version:  v24.13.0
+[debug] [2026-07-16T02:03:50.611Z] Detected Agent: codex_cli
+[debug] [2026-07-16T02:03:50.611Z] Time:          Wed Jul 15 2026 22:03:50 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-16T02:03:50.611Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-16T02:03:52.238Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-16T02:03:52.239Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-16T02:03:52.240Z] [iam] checking project oopa-e977a for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-07-16T02:03:52.256Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:03:52.256Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:03:52.257Z] > refreshing access token with scopes: []
+[debug] [2026-07-16T02:03:52.261Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-16T02:03:52.261Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-16T02:03:52.299Z] *** [apiv2] error from fetch(https://www.googleapis.com/oauth2/v3/token, {"headers":{},"method":"POST","body":{"type":"Buffer","data":[45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,101,53,54,55,98,54,57,53,55,102,100,50,55,99,52,101,53,102,57,48,98,52,100,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,114,101,102,114,101,115,104,95,116,111,107,101,110,34,13,10,13,10,49,47,47,48,49,84,117,107,116,45,89,50,72,84,70,82,67,103,89,73,65,82,65,65,71,65,69,83,78,119,70,45,76,57,73,114,72,82,105,111,56,81,67,104,67,45,118,54,106,82,54,106,111,57,99,54,105,106,76,117,80,104,48,50,107,87,56,69,118,115,101,83,82,70,99,106,84,88,78,121,118,102,119,110,102,120,53,77,66,89,87,49,105,118,72,70,119,113,120,105,54,87,52,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,101,53,54,55,98,54,57,53,55,102,100,50,55,99,52,101,53,102,57,48,98,52,100,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,105,100,34,13,10,13,10,53,54,51,53,56,52,51,51,53,56,54,57,45,102,103,114,104,103,109,100,52,55,98,113,110,101,107,105,106,53,105,56,98,53,112,114,48,51,104,111,56,52,57,101,54,46,97,112,112,115,46,103,111,111,103,108,101,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,101,53,54,55,98,54,57,53,55,102,100,50,55,99,52,101,53,102,57,48,98,52,100,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,115,101,99,114,101,116,34,13,10,13,10,106,57,105,86,90,102,83,56,107,107,67,69,70,85,80,97,65,101,74,86,48,115,65,105,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,101,53,54,55,98,54,57,53,55,102,100,50,55,99,52,101,53,102,57,48,98,52,100,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,103,114,97,110,116,95,116,121,112,101,34,13,10,13,10,114,101,102,114,101,115,104,95,116,111,107,101,110,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,101,53,54,55,98,54,57,53,55,102,100,50,55,99,52,101,53,102,57,48,98,52,100,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,115,99,111,112,101,34,13,10,13,10,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,101,53,54,55,98,54,57,53,55,102,100,50,55,99,52,101,53,102,57,48,98,52,100,97,45,45,13,10]}}): Error: getaddrinfo ENOTFOUND www.googleapis.com
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-16T02:03:52.300Z] [iam] error while checking permissions, command may fail: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[info] 
+[info] === Deploying to 'oopa-e977a'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-07-16T02:03:52.305Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:03:52.305Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:03:52.305Z] > refreshing access token with scopes: []
+[debug] [2026-07-16T02:03:52.306Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-16T02:03:52.306Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-16T02:03:52.312Z] *** [apiv2] error from fetch(https://www.googleapis.com/oauth2/v3/token, {"headers":{},"method":"POST","body":{"type":"Buffer","data":[45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,56,98,98,49,53,97,100,57,52,52,52,57,98,49,50,97,98,55,53,52,100,54,98,57,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,114,101,102,114,101,115,104,95,116,111,107,101,110,34,13,10,13,10,49,47,47,48,49,84,117,107,116,45,89,50,72,84,70,82,67,103,89,73,65,82,65,65,71,65,69,83,78,119,70,45,76,57,73,114,72,82,105,111,56,81,67,104,67,45,118,54,106,82,54,106,111,57,99,54,105,106,76,117,80,104,48,50,107,87,56,69,118,115,101,83,82,70,99,106,84,88,78,121,118,102,119,110,102,120,53,77,66,89,87,49,105,118,72,70,119,113,120,105,54,87,52,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,56,98,98,49,53,97,100,57,52,52,52,57,98,49,50,97,98,55,53,52,100,54,98,57,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,105,100,34,13,10,13,10,53,54,51,53,56,52,51,51,53,56,54,57,45,102,103,114,104,103,109,100,52,55,98,113,110,101,107,105,106,53,105,56,98,53,112,114,48,51,104,111,56,52,57,101,54,46,97,112,112,115,46,103,111,111,103,108,101,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,56,98,98,49,53,97,100,57,52,52,52,57,98,49,50,97,98,55,53,52,100,54,98,57,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,115,101,99,114,101,116,34,13,10,13,10,106,57,105,86,90,102,83,56,107,107,67,69,70,85,80,97,65,101,74,86,48,115,65,105,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,56,98,98,49,53,97,100,57,52,52,52,57,98,49,50,97,98,55,53,52,100,54,98,57,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,103,114,97,110,116,95,116,121,112,101,34,13,10,13,10,114,101,102,114,101,115,104,95,116,111,107,101,110,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,56,98,98,49,53,97,100,57,52,52,52,57,98,49,50,97,98,55,53,52,100,54,98,57,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,115,99,111,112,101,34,13,10,13,10,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,56,98,98,49,53,97,100,57,52,52,52,57,98,49,50,97,98,55,53,52,100,54,98,57,45,45,13,10]}}): Error: getaddrinfo ENOTFOUND www.googleapis.com
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-07-16T02:03:52.316Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:03:52.325Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:03:52.326Z] > refreshing access token with scopes: []
+[debug] [2026-07-16T02:03:52.327Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-16T02:03:52.328Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-16T02:03:52.334Z] *** [apiv2] error from fetch(https://www.googleapis.com/oauth2/v3/token, {"headers":{},"method":"POST","body":{"type":"Buffer","data":[45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,51,54,50,51,54,55,52,51,51,102,101,101,52,51,51,56,98,100,102,56,100,55,48,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,114,101,102,114,101,115,104,95,116,111,107,101,110,34,13,10,13,10,49,47,47,48,49,84,117,107,116,45,89,50,72,84,70,82,67,103,89,73,65,82,65,65,71,65,69,83,78,119,70,45,76,57,73,114,72,82,105,111,56,81,67,104,67,45,118,54,106,82,54,106,111,57,99,54,105,106,76,117,80,104,48,50,107,87,56,69,118,115,101,83,82,70,99,106,84,88,78,121,118,102,119,110,102,120,53,77,66,89,87,49,105,118,72,70,119,113,120,105,54,87,52,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,51,54,50,51,54,55,52,51,51,102,101,101,52,51,51,56,98,100,102,56,100,55,48,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,105,100,34,13,10,13,10,53,54,51,53,56,52,51,51,53,56,54,57,45,102,103,114,104,103,109,100,52,55,98,113,110,101,107,105,106,53,105,56,98,53,112,114,48,51,104,111,56,52,57,101,54,46,97,112,112,115,46,103,111,111,103,108,101,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,51,54,50,51,54,55,52,51,51,102,101,101,52,51,51,56,98,100,102,56,100,55,48,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,99,108,105,101,110,116,95,115,101,99,114,101,116,34,13,10,13,10,106,57,105,86,90,102,83,56,107,107,67,69,70,85,80,97,65,101,74,86,48,115,65,105,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,51,54,50,51,54,55,52,51,51,102,101,101,52,51,51,56,98,100,102,56,100,55,48,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,103,114,97,110,116,95,116,121,112,101,34,13,10,13,10,114,101,102,114,101,115,104,95,116,111,107,101,110,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,51,54,50,51,54,55,52,51,51,102,101,101,52,51,51,56,98,100,102,56,100,55,48,97,13,10,67,111,110,116,101,110,116,45,68,105,115,112,111,115,105,116,105,111,110,58,32,102,111,114,109,45,100,97,116,97,59,32,110,97,109,101,61,34,115,99,111,112,101,34,13,10,13,10,13,10,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,51,54,50,51,54,55,52,51,51,102,101,101,52,51,51,56,98,100,102,56,100,55,48,97,45,45,13,10]}}): Error: getaddrinfo ENOTFOUND www.googleapis.com
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] 
+[error] Error: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-16T02:03:52.610Z] Error: EPERM: operation not permitted, open '/Users/sunegeleta/.config/configstore/firebase-tools.json.2138347650'
+    at Object.openSync (node:fs:559:18)
+    at writeFile.writeFileSync [as sync] (/usr/local/lib/node_modules/firebase-tools/node_modules/write-file-atomic/index.js:205:13)
+    at set all (/usr/local/lib/node_modules/firebase-tools/node_modules/configstore/index.js:61:20)
+    at Configstore.delete (/usr/local/lib/node_modules/firebase-tools/node_modules/configstore/index.js:101:12)
+    at process.<anonymous> (/usr/local/lib/node_modules/firebase-tools/lib/bin/cli.js:90:45)
+    at process.emit (node:events:520:35)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at Timeout._onTimeout (/usr/local/lib/node_modules/firebase-tools/lib/errorOut.js:20:17)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-07-16T02:05:19.584Z] ----------------------------------------------------------------------
+[debug] [2026-07-16T02:05:19.587Z] Command:       /usr/local/bin/node /usr/local/bin/firebase deploy --only firestore:rules --dry-run --project oopa-e977a
+[debug] [2026-07-16T02:05:19.588Z] CLI Version:   15.23.0
+[debug] [2026-07-16T02:05:19.588Z] Platform:      darwin
+[debug] [2026-07-16T02:05:19.588Z] Node Version:  v24.13.0
+[debug] [2026-07-16T02:05:19.588Z] Detected Agent: codex_cli
+[debug] [2026-07-16T02:05:19.588Z] Time:          Wed Jul 15 2026 22:05:19 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-07-16T02:05:19.588Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-16T02:05:20.577Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-16T02:05:20.578Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-07-16T02:05:20.578Z] [iam] checking project oopa-e977a for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-07-16T02:05:20.591Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:05:20.592Z] Checked if tokens are valid: false, expires at: 1784140506212
+[debug] [2026-07-16T02:05:20.592Z] > refreshing access token with scopes: []
+[debug] [2026-07-16T02:05:20.594Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-16T02:05:20.594Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-16T02:05:20.998Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-16T02:05:20.998Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-16T02:05:21.045Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions [none]
+[debug] [2026-07-16T02:05:21.045Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions  x-goog-user-project=oopa-e977a
+[debug] [2026-07-16T02:05:21.045Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-07-16T02:05:21.578Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions 200
+[debug] [2026-07-16T02:05:21.578Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/oopa-e977a:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'oopa-e977a'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-07-16T02:05:21.584Z] Checked if tokens are valid: true, expires at: 1784171119998
+[debug] [2026-07-16T02:05:21.584Z] Checked if tokens are valid: true, expires at: 1784171119998
+[debug] [2026-07-16T02:05:21.584Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) [none]
+[debug] [2026-07-16T02:05:22.071Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) 200
+[debug] [2026-07-16T02:05:22.071Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/oopa-e977a/databases/(default) {"name":"projects/oopa-e977a/databases/(default)","uid":"1ddc3277-dd20-4e05-977d-9d4e436b64b2","createTime":"2026-05-18T01:51:42.589404Z","updateTime":"2026-05-18T01:51:42.589404Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-07-16T01:05:22.248549Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IMPKiPuN1pUDMLf/jqLdwZQD"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-07-16T02:05:22.075Z] Checked if tokens are valid: true, expires at: 1784171119998
+[debug] [2026-07-16T02:05:22.075Z] Checked if tokens are valid: true, expires at: 1784171119998
+[debug] [2026-07-16T02:05:22.076Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test [none]
+[debug] [2026-07-16T02:05:22.076Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test [omitted]
+[debug] [2026-07-16T02:05:22.628Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test 200
+[debug] [2026-07-16T02:05:22.628Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/oopa-e977a:test {}
+[info] ✔  cloud.firestore: rules file firestore.rules compiled successfully 
+[info] 
+[info] ✔  Dry run complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/oopa-e977a/overview

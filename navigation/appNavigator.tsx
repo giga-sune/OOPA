@@ -12,6 +12,7 @@ import LenderRequestDetailScreen from "../screens/lenderRequestDetailScreen";
 import BorrowerOrderDetailScreen from "../screens/borrowerOrderDetailScreen";
 import ReviewItemScreen from "../screens/reviewItemScreen";
 import ReportItemScreen from "../screens/reportItemScreen";
+import AllReviewsScreen from "../screens/allReviewScreen";
 
 import { useAuth } from "../context/AuthContext";
 import type { RootStackParamList } from "../types/navigation/navigationTypes";
@@ -39,6 +40,7 @@ export default function AppNavigator() {
           <Stack.Screen name="BorrowerOrderDetailScreen" component={BorrowerOrderDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="ReviewItemScreen" component={ReviewItemScreen} />
           <Stack.Screen name="ReportItemScreen" component={ReportItemScreen} />
+          <Stack.Screen name="AllReviews" component={AllReviewsScreen} />
         </>
       )}
     </Stack.Navigator>

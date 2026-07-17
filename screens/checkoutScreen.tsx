@@ -6,10 +6,10 @@ import { getAuth } from "firebase/auth";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons, Feather } from "@expo/vector-icons";
 
-// 1. Stripe & Cloud Functions Imports
+// Stripe & Cloud Functions Imports
 import { useStripe } from "@stripe/stripe-react-native";
 import { httpsCallable } from "firebase/functions";
-import { functions } from "../services/firebase/firebaseApp"; // 👈 Ensure this relative path points to your firebaseApp.ts
+import { functions } from "../services/firebase/firebaseApp";
 
 import { createRentalRequest } from "../services/firestore/rentalService";
 import { getPropertyById } from "../services/firestore/propertyService";
@@ -29,7 +29,7 @@ export default function CheckoutScreen() {
   const auth = getAuth();
   const currentUser = auth.currentUser;
 
-  // 2. Access Stripe's Payment Sheet triggers
+  // Access Stripe's Payment Sheet triggers
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const [property, setProperty] = useState<any>(null);
@@ -102,7 +102,7 @@ export default function CheckoutScreen() {
     setIsSubmitting(true);
 
     try {
-      // 3. Call your local Firebase Cloud Function to create the Payment Intent
+      // Call local Firebase Cloud Function to create the Payment Intent
       // Stripe requires values in cents ($15.00 CAD = 1500 cents)
       const amountInCents = Math.round(totalPrice * 100);
       
@@ -114,7 +114,7 @@ export default function CheckoutScreen() {
       const response = await createPaymentIntentFn({ amount: amountInCents });
       const { clientSecret } = response.data;
 
-      // 4. Initialize Stripe's UI Payment Sheet
+      // Initialize Stripe's UI Payment Sheet
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: "OOPA App",
         paymentIntentClientSecret: clientSecret,
@@ -129,7 +129,6 @@ export default function CheckoutScreen() {
         return;
       }
 
-      // 5. Present the native Stripe interface to collect card details
       const { error: paymentError } = await presentPaymentSheet();
 
       if (paymentError) {
@@ -139,7 +138,7 @@ export default function CheckoutScreen() {
         return;
       }
 
-      // 6. Only create the Firestore record after Stripe confirms success
+      // Only create the Firestore record after Stripe confirms success
       await createRentalRequest({
         propertyId: propertyId,
         renterUid: currentUser.uid,
@@ -248,7 +247,12 @@ export default function CheckoutScreen() {
                 onChange={(event, date) => {
                   if (Platform.OS === "android") {
                     setShowStartPicker(false);
-                    if (date) setStartDate(date);
+                    if (date) {
+                      setStartDate(date);
+                      if (date.getTime() >= endDate.getTime()) {
+                        setEndDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
+                      }
+                    }
                   } else if (date) {
                     setTempStartDate(date);
                   }
@@ -261,6 +265,9 @@ export default function CheckoutScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => {
                     setStartDate(tempStartDate);
+                    if (tempStartDate.getTime() >= endDate.getTime()) {
+                      setEndDate(new Date(tempStartDate.getTime() + 24 * 60 * 60 * 1000));
+                    }
                     setShowStartPicker(false);
                   }}>
                     <Text style={styles.modalConfirmText}>Confirm</Text>
