@@ -159,6 +159,26 @@ service cloud.firestore {
       return !exists(paymentPath) || get(paymentPath).data.status == 'unpaid';
     }
 
+    function isRentalParticipant(rentalId) {
+      let rentalPath =
+        /databases/$(database)/documents/rentals/$(rentalId);
+
+      return exists(rentalPath) &&
+        (get(rentalPath).data.renterUid == request.auth.uid ||
+          get(rentalPath).data.ownerUid == request.auth.uid);
+    }
+
+    function canReadPayment(rentalId) {
+      let paymentPath =
+        /databases/$(database)/documents/payments/$(rentalId);
+
+      return isAuthenticated() &&
+        ((exists(paymentPath) &&
+            (resource.data.renterUid == request.auth.uid ||
+              resource.data.ownerUid == request.auth.uid)) ||
+          (!exists(paymentPath) && isRentalParticipant(rentalId)));
+    }
+
     function isValidRentalDecisionUpdate(rentalId) {
       return isValidRental(request.resource.data) &&
         request.auth.uid == resource.data.ownerUid &&
@@ -286,9 +306,7 @@ service cloud.firestore {
     }
 
     match /payments/{rentalId} {
-      allow read: if isAuthenticated() &&
-        (resource.data.renterUid == request.auth.uid ||
-          resource.data.ownerUid == request.auth.uid);
+      allow read: if canReadPayment(rentalId);
 
       allow create, update, delete: if false;
     }

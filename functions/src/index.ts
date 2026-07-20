@@ -149,7 +149,7 @@ async function markPaymentFromWebhook(
 }
 
 export const createPaymentIntent = onCall(
-  {secrets: [stripeSecretKey]},
+  {invoker: "public", secrets: [stripeSecretKey]},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError(
@@ -322,7 +322,7 @@ export const createPaymentIntent = onCall(
 );
 
 export const cancelPaymentAttempt = onCall(
-  {secrets: [stripeSecretKey]},
+  {invoker: "public", secrets: [stripeSecretKey]},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError(
@@ -389,7 +389,10 @@ export const cancelPaymentAttempt = onCall(
 );
 
 export const stripePaymentWebhook = onRequest(
-  {secrets: [stripeSecretKey, stripeWebhookSecret]},
+  {
+    invoker: "public",
+    secrets: [stripeSecretKey, stripeWebhookSecret],
+  },
   async (request, response) => {
     const signatureHeader = request.headers["stripe-signature"];
     const signature = Array.isArray(signatureHeader) ?

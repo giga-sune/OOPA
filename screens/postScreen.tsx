@@ -73,7 +73,10 @@ export default function PostScreen() {
     removeImage,
     location,
     setLocation,
+    generateDescription,
     submitProperty,
+    aiLoading,
+    aiError,
     loading,
     error,
   } = usePropertyViewModel();
@@ -294,6 +297,22 @@ export default function PostScreen() {
               containerStyle={styles.descriptionContainer}
             />
           </View>
+          <TouchableOpacity
+            style={[
+              styles.aiAssistButton,
+              (aiLoading || isScreenProcessing) && styles.aiAssistButtonDisabled,
+            ]}
+            activeOpacity={0.8}
+            disabled={aiLoading || isScreenProcessing}
+            onPress={() => {
+              void generateDescription();
+            }}
+          >
+            <Text style={styles.aiAssistButtonText}>
+              {aiLoading ? "Writing..." : "AI Assist"}
+            </Text>
+          </TouchableOpacity>
+          {aiError ? <Text style={styles.aiErrorText}>{aiError}</Text> : null}
         </View>
 
         <View style={styles.fieldGroup}>
@@ -435,9 +454,12 @@ export default function PostScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.publishButton, isScreenProcessing && { opacity: 0.7 }]}
+          style={[
+            styles.publishButton,
+            (isScreenProcessing || aiLoading) && { opacity: 0.7 },
+          ]}
           activeOpacity={0.8}
-          disabled={isScreenProcessing}
+          disabled={isScreenProcessing || aiLoading}
           onPress={() => {
             void handlePublish();
           }}
@@ -548,6 +570,30 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: "flex-start",
     paddingVertical: Spacing.xs,
+  },
+  aiAssistButton: {
+    minHeight: 40,
+    alignSelf: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.white,
+  },
+  aiAssistButtonDisabled: {
+    opacity: 0.6,
+  },
+  aiAssistButtonText: {
+    ...Typography.bodySmall,
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+  aiErrorText: {
+    ...Typography.bodySmall,
+    color: Colors.error,
+    textAlign: "right",
   },
   dropdownSelector: {
     height: 58,
