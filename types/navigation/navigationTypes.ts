@@ -15,6 +15,7 @@ export type RootStackParamList = {
     image: string | null;
     ownerDisplayName: string;
   };
+
   LenderRequestDetailScreen: { rentalId: string };
   BorrowerOrderDetailScreen: { rentalId: string };
   ReviewItemScreen: { rental: Rental };
@@ -23,11 +24,18 @@ export type RootStackParamList = {
     propertyId: string; 
     propertyTitle: string; 
   };
+
+  ChatRoom: { 
+    rentalId: string; 
+    title: string; 
+    recipientUid: string; 
+    recipientName: string; 
+  };
 };
 
 export type TabParamList = {
   Home: undefined;
-  Search: undefined;
+  Inbox: undefined;
   Post: undefined;
   Orders: undefined;
   Profile: undefined;

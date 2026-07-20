@@ -7,6 +7,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  setDoc,
   where,
   type DocumentData,
 } from "firebase/firestore";
@@ -202,7 +203,7 @@ export async function createRentalRequest(
     updatedAt: serverTimestamp(),
   });
 
-  // 1. In-App Notification (Real-time center fetch)
+  // In-App Notification (Real-time center fetch)
   const callerName = renterDisplayName || "A borrower";
   try {
     await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
@@ -218,7 +219,7 @@ export async function createRentalRequest(
     console.error("Failed to generate checkout notification:", error);
   }
 
-  // 2. Lock-screen System Native Push Notification
+  // Lock-screen System Native Push Notification
   try {
     const ownerDoc = await getDoc(doc(db, "users", property.ownerUid));
     if (ownerDoc.exists()) {
@@ -270,19 +271,18 @@ export async function getRentalsByOwner(ownerUid: string): Promise<Rental[]> {
   );
 }
 
-// APPROVE RENTAL REQUEST (Approves & Notifies the Borrower/Renter)
+// APPROVE RENTAL REQUEST (Approves, Notifies the Borrower, & Inits Chat Channel)
 export async function approveRentalRequest(rentalId: string): Promise<void> {
-  // Update status to approved
+  // Update status to approved in the rentals collection
   await updateRentalStatus(rentalId, "approved");
 
-  // Fetch the updated rental details to trigger notifications
   try {
     const rentalSnap = await getDoc(doc(db, RENTALS_COLLECTION, rentalId));
     if (rentalSnap.exists()) {
       const rentalData = rentalSnap.data();
       const targetItemTitle = rentalData.propertyTitle || "your requested item";
       
-      // 1. In-App Notification Write
+      // In-App Notification Write
       await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
         recipientUid: rentalData.renterUid,
         type: "request_approved",
@@ -293,7 +293,7 @@ export async function approveRentalRequest(rentalId: string): Promise<void> {
         read: false,
       });
 
-      // 2. Lock-screen System Native Push Notification
+      //Lock-screen System Native Push Notification
       const renterDoc = await getDoc(doc(db, "users", rentalData.renterUid));
       if (renterDoc.exists()) {
         const renterProfileData = renterDoc.data();
@@ -305,9 +305,27 @@ export async function approveRentalRequest(rentalId: string): Promise<void> {
           );
         }
       }
+
+      //AUTOMATICALLY INITIALIZE CHAT CHANNEL
+      // Use setDoc with { merge: true } so it creates the document if it's missing,
+      const CHATS_COLLECTION = "chats";
+      await setDoc(doc(db, CHATS_COLLECTION, rentalId), {
+        rentalId: rentalId,
+        propertyId: rentalData.propertyId || "",
+        propertyTitle: targetItemTitle,
+        propertyImageUrl: rentalData.propertyImageUrl || null,
+        renterUid: rentalData.renterUid,
+        renterDisplayName: rentalData.renterDisplayName || "Borrower",
+        ownerUid: rentalData.ownerUid,
+        ownerDisplayName: rentalData.ownerDisplayName || "Lender",
+        lastMessage: "System: Rental request approved! You can now message each other.",
+        lastMessageTimestamp: serverTimestamp(),
+        unreadBy: [rentalData.renterUid], // Alerts the borrower there's a new channel open
+      }, { merge: true }); 
+      
     }
   } catch (error) {
-    console.error("Failed to generate approval notification routes:", error);
+    console.error("Failed to generate approval notification or chat channels:", error);
   }
 }
 
@@ -321,7 +339,7 @@ export async function rejectRentalRequest(rentalId: string): Promise<void> {
       const rentalData = rentalSnap.data();
       const targetItemTitle = rentalData.propertyTitle || "your requested item";
       
-      //In-App Notification Write
+      // In-App Notification Write
       await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
         recipientUid: rentalData.renterUid,
         type: "request_rejected",
@@ -332,7 +350,7 @@ export async function rejectRentalRequest(rentalId: string): Promise<void> {
         read: false,
       });
 
-      //Lock-screen System Native Push Notification
+      // Lock-screen System Native Push Notification
       const renterDoc = await getDoc(doc(db, "users", rentalData.renterUid));
       if (renterDoc.exists()) {
         const renterProfileData = renterDoc.data();

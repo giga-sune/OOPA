@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
 
@@ -17,7 +18,7 @@ type ParamList = {
 
 export default function BorrowerOrderDetailScreen() {
     const route = useRoute<RouteProp<ParamList, "borrowerOrderDetailScreen" | any>>();
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const { rentalId } = route.params || {};
     const {
         isPaying,
@@ -42,7 +43,6 @@ export default function BorrowerOrderDetailScreen() {
 
             try {
                 setLoading(true);
-                // 1. Fetch rental transaction document
                 const rentalRef = doc(db, "rentals", rentalId);
                 const rentalSnap = await getDoc(rentalRef);
 
@@ -55,10 +55,8 @@ export default function BorrowerOrderDetailScreen() {
                 const rentalData = rentalSnap.data();
                 setRental({ id: rentalSnap.id, ...rentalData });
 
-                // ✅ FIX: Use 'ownerUid' to match your database schema
                 const targetOwnerUid = rentalData.ownerUid;
 
-                // 2. Fetch lender profile from the users collection
                 if (targetOwnerUid) {
                     const userRef = doc(db, "users", targetOwnerUid);
                     const userSnap = await getDoc(userRef);
@@ -93,15 +91,6 @@ export default function BorrowerOrderDetailScreen() {
         return `${day}/${month}/${year}`;
     };
 
-    if (loading) {
-        return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#FF7A21" />
-            </View>
-        );
-    }
-
-    // Check if the order is approved to enable messaging
     const isApproved = rental?.status?.toLowerCase() === "approved";
     const isPaid = isPaymentComplete;
     const isPaymentButtonDisabled =
@@ -110,7 +99,6 @@ export default function BorrowerOrderDetailScreen() {
         isPaid ||
         Boolean(paymentStatusError);
 
-    // ✅ FIX: Fallbacks configured to read 'userName' from user doc, or 'ownerDisplayName' from rental doc
     const lenderName = 
         lenderProfile?.userName || 
         lenderProfile?.displayName || 
@@ -126,14 +114,65 @@ export default function BorrowerOrderDetailScreen() {
         lenderProfile?.profileImageUrl ||
         "https://ui-avatars.com/api/?name=" + encodeURIComponent(lenderName) + "&background=E2E8F0&color=64748B";
 
-    const handleMessagePress = () => {
-        if (!isApproved) return;
-        Alert.alert("Message", `Opening chat with ${lenderName}`);
+    const handleMessagePress = async () => {
+        if (!isApproved || !rental) return;
+
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            Alert.alert("Error", "You must be logged in to send messages.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const chatRoomId = rental.id; 
+            const chatRef = doc(db, "chats", chatRoomId);
+            const chatSnap = await getDoc(chatRef);
+
+            if (!chatSnap.exists()) {
+                await setDoc(chatRef, {
+                    id: rental.id,
+                    rentalId: rental.id,
+                    propertyTitle: rental.propertyTitle,
+                    propertyImageUrl: rental.propertyImageUrl || "",
+                    renterUid: rental.renterUid,
+                    ownerUid: rental.ownerUid,
+                    renterDisplayName: rental.renterDisplayName || "Borrower",
+                    ownerDisplayName: lenderName,
+                    participantUids: [rental.renterUid, rental.ownerUid],
+                    createdAt: new Date(),
+                    lastMessage: "Chat initiated",
+                    lastMessageText: "Chat initiated",
+                    lastMessageTimestamp: new Date(),
+                    unreadBy: [],
+                });
+            }
+
+            navigation.navigate("ChatRoom", {
+                rentalId: rental.id,
+                title: rental.propertyTitle,
+                recipientUid: rental.ownerUid,
+                recipientName: lenderName,
+            });
+        } catch (error) {
+            console.error("Error organizing chat structural session:", error);
+            Alert.alert("Error", "Could not synchronize chat workspace channel.");
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (loading) {
+        return (
+            <View style={styles.centerContainer}>
+                <ActivityIndicator size="large" color="#FF7A21" />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-            {/* Header section */}
             <View style={styles.headerRow}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <Ionicons name="chevron-back" size={26} color="#000" />
@@ -142,7 +181,6 @@ export default function BorrowerOrderDetailScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* Item Context Overview Section */}
                 {rental && (
                     <View style={styles.itemOverviewContainer}>
                         <Image
@@ -158,7 +196,6 @@ export default function BorrowerOrderDetailScreen() {
                                 {formatRawDateString(rental.startDate)} to {formatRawDateString(rental.endDate)}
                             </Text>
                             
-                            {/* Status Pill Badge */}
                             <View style={[styles.statusBadge, isApproved ? styles.approvedBadge : styles.pendingBadge]}>
                                 <Text style={[styles.statusText, isApproved ? styles.approvedText : styles.pendingText]}>
                                     {rental?.status || "Pending"}
@@ -168,7 +205,6 @@ export default function BorrowerOrderDetailScreen() {
                     </View>
                 )}
 
-                {/* Section: Lended From */}
                 <Text style={styles.sectionLabel}>Lended From</Text>
                 <View style={styles.profileCard}>
                     <View style={styles.profileHeader}>
@@ -186,7 +222,6 @@ export default function BorrowerOrderDetailScreen() {
                         </View>
                     </View>
 
-                    {/* Conditional Message Button setup */}
                     <TouchableOpacity
                         style={[styles.messageButton, !isApproved && styles.messageButtonDisabled]}
                         onPress={handleMessagePress}
@@ -229,7 +264,6 @@ export default function BorrowerOrderDetailScreen() {
                     </>
                 )}
 
-                {/* Section: Meetup map */}
                 <Text style={styles.sectionLabel}>Where to meet</Text>
                 <View style={styles.mapCardWrapper}>
                     <MapView
@@ -265,89 +299,35 @@ const styles = StyleSheet.create({
     backButton: { paddingVertical: 4, paddingRight: 8 },
     headerTitle: { fontSize: 24, fontWeight: "700", color: "#0F172A" },
     scrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 60 },
-
     itemOverviewContainer: { flexDirection: "row", marginBottom: 28, gap: 16, alignItems: "flex-start" },
     itemImage: { width: 110, height: 100, borderRadius: 16, backgroundColor: "#F8FAFC", resizeMode: "cover" },
     itemDetailsText: { flex: 1, justifyContent: "center" },
     priceText: { fontSize: 20, fontWeight: "700", color: "#000000" },
     itemTitle: { fontSize: 15, color: "#64748B", marginTop: 2, marginBottom: 4 },
     durationDatesSubtext: { fontSize: 13, color: "#475569", fontWeight: "500", marginBottom: 6 },
-    
     statusBadge: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
     approvedBadge: { backgroundColor: "#F0FDF4" },
     pendingBadge: { backgroundColor: "#FEF3C7" },
     statusText: { fontSize: 12, fontWeight: "600", textTransform: "capitalize" },
     approvedText: { color: "#166534" },
     pendingText: { color: "#92400E" },
-
     sectionLabel: { fontSize: 22, fontWeight: "700", color: "#0F172A", marginBottom: 14, marginTop: 8 },
-
-    profileCard: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 24,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
-        marginBottom: 28,
-        shadowColor: "#0F172A",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 12,
-        elevation: 2,
-    },
+    profileCard: { backgroundColor: "#FFFFFF", borderRadius: 24, padding: 20, borderWidth: 1, borderColor: "#F1F5F9", marginBottom: 28, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
     profileHeader: { flexDirection: "row", gap: 14, marginBottom: 20, alignItems: "center" },
     avatarImage: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#E2E8F0" },
     profileMeta: { flex: 1 },
     lenderName: { fontSize: 18, fontWeight: "700", color: "#0F172A" },
     lenderEmail: { fontSize: 14, color: "#64748B", marginTop: 1 },
-
     inlineDateContainer: { flexDirection: "row", alignItems: "center", marginTop: 6 },
     inlineCalendarIcon: { marginRight: 5 },
     timelineText: { fontSize: 13, color: "#475569", fontWeight: "500" },
-
-    messageButton: {
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: "#FF7A21", 
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
-    },
-    messageButtonDisabled: {
-        backgroundColor: "#CBD5E1", 
-    },
-    messageButtonText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#FFFFFF",
-    },
-    messageButtonTextDisabled: {
-        color: "#64748B", 
-    },
-
-    paymentButton: {
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: "#FF7A21",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 28,
-    },
-    paymentButtonDisabled: {
-        opacity: 0.6,
-    },
-    paymentButtonText: {
-        fontSize: 17,
-        fontWeight: "700",
-        color: "#FFFFFF",
-    },
-    paymentStatusError: {
-        color: "#B91C1C",
-        fontSize: 13,
-        marginTop: -18,
-        marginBottom: 28,
-        textAlign: "center",
-    },
-
+    messageButton: { height: 48, borderRadius: 24, backgroundColor: "#FF7A21", justifyContent: "center", alignItems: "center", width: "100%" },
+    messageButtonDisabled: { backgroundColor: "#CBD5E1" },
+    messageButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
+    messageButtonTextDisabled: { color: "#64748B" },
+    paymentButton: { height: 52, borderRadius: 26, backgroundColor: "#FF7A21", justifyContent: "center", alignItems: "center", marginBottom: 28 },
+    paymentButtonDisabled: { opacity: 0.6 },
+    paymentButtonText: { fontSize: 17, fontWeight: "700", color: "#FFFFFF" },
+    paymentStatusError: { color: "#B91C1C", fontSize: 13, marginTop: -18, marginBottom: 28, textAlign: "center" },
     mapCardWrapper: { width: "100%", height: 165, borderRadius: 24, overflow: "hidden", backgroundColor: "#F1F5F9", borderWidth: 1, borderColor: "#E2E8F0" },
 });

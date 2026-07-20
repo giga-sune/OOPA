@@ -2,15 +2,13 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
 
 import { db } from "../services/firebase/firebaseApp";
-import {
-    approveRentalRequest,
-    rejectRentalRequest,
-} from "../services/firestore/rentalService";
+import { approveRentalRequest, rejectRentalRequest } from "../services/firestore/rentalService";
 import usePaymentStatusViewModel from "../viewModels/payment/usePaymentStatusViewModel";
 
 type ParamList = {
@@ -21,7 +19,7 @@ type ParamList = {
 
 export default function LenderRequestDetailScreen() {
     const route = useRoute<RouteProp<ParamList, "lenderRequestDetailScreen" | any>>();
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const { rentalId } = route.params || {};
 
     const [rental, setRental] = useState<any>(null);
@@ -96,8 +94,53 @@ export default function LenderRequestDetailScreen() {
         }
     };
 
-    const handleMessagePress = () => {
-        Alert.alert("Message", `Opening chat session with ${borrowerName}`);
+    const handleMessagePress = async () => {
+        if (!rental) return;
+
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            Alert.alert("Error", "Verification timeout. Please re-authenticate your session.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const chatRoomId = rental.id;
+            const chatRef = doc(db, "chats", chatRoomId);
+            const chatSnap = await getDoc(chatRef);
+
+            if (!chatSnap.exists()) {
+                await setDoc(chatRef, {
+                    id: rental.id,
+                    rentalId: rental.id,
+                    propertyTitle: rental.propertyTitle,
+                    propertyImageUrl: rental.propertyImageUrl || "",
+                    renterUid: rental.renterUid,
+                    ownerUid: rental.ownerUid,
+                    renterDisplayName: borrowerName,
+                    ownerDisplayName: rental.ownerDisplayName || "Lender",
+                    participantUids: [rental.renterUid, rental.ownerUid],
+                    createdAt: new Date(),
+                    lastMessage: "Chat initiated",
+                    lastMessageText: "Chat initiated",
+                    lastMessageTimestamp: new Date(),
+                    unreadBy: [],
+                });
+            }
+
+            navigation.navigate("ChatRoom", {
+                rentalId: rental.id,
+                title: rental.propertyTitle,
+                recipientUid: rental.renterUid,
+                recipientName: borrowerName,
+            });
+        } catch (error) {
+            console.error("Error setting up chat initialization channel:", error);
+            Alert.alert("Error", "Unable to load messaging instance details.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const formatStampDate = (timestamp: any) => {
@@ -131,7 +174,6 @@ export default function LenderRequestDetailScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-            {/* Header Section */}
             <View style={styles.headerRow}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <Ionicons name="chevron-back" size={26} color="#000" />
@@ -140,7 +182,6 @@ export default function LenderRequestDetailScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* Item Context Overview Section */}
                 {rental && (
                     <View style={styles.itemOverviewContainer}>
                         <Image
@@ -153,7 +194,6 @@ export default function LenderRequestDetailScreen() {
                             </Text>
                             <Text style={styles.itemTitle}>{rental.propertyTitle || "Item Details"}</Text>
                             
-                            {/* Updated Status Pill Color Schemes */}
                             <View style={[
                                 styles.statusBadge, 
                                 currentStatus === "approved" ? styles.approvedBadge : isRejected ? styles.rejectedBadge : styles.pendingBadge
@@ -169,7 +209,6 @@ export default function LenderRequestDetailScreen() {
                     </View>
                 )}
 
-                {/* Section: Request From Profile Card */}
                 <Text style={styles.sectionLabel}>Request From</Text>
                 <View style={styles.profileCard}>
                     <View style={styles.profileHeader}>
@@ -187,12 +226,10 @@ export default function LenderRequestDetailScreen() {
                         </View>
                     </View>
 
-                    {/* Borrower Custom Leave Note */}
                     {rental?.message && rental.message.trim() !== "" && (
                         <Text style={styles.messageContentText}>{rental.message}</Text>
                     )}
 
-                    {/* Contextually Swapped Action Layout Buttons Inside the Card */}
                     <View style={styles.actionRow}>
                         <TouchableOpacity
                             style={[
@@ -252,7 +289,6 @@ export default function LenderRequestDetailScreen() {
                     )}
                 </View>
 
-                {/* Section: Meetup Map Container */}
                 <Text style={styles.sectionLabel}>Where to meet</Text>
                 <View style={styles.mapCardWrapper}>
                     <MapView
@@ -288,13 +324,11 @@ const styles = StyleSheet.create({
     backButton: { paddingVertical: 4, paddingRight: 8 },
     headerTitle: { fontSize: 24, fontWeight: "700", color: "#0F172A" },
     scrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
-
     itemOverviewContainer: { flexDirection: "row", marginBottom: 24, gap: 16, alignItems: "center" },
     itemImage: { width: 110, height: 100, borderRadius: 16, backgroundColor: "#F8FAFC", resizeMode: "cover" },
     itemDetailsText: { flex: 1, justifyContent: "center" },
     priceText: { fontSize: 20, fontWeight: "700", color: "#000000" },
     itemTitle: { fontSize: 15, color: "#64748B", marginTop: 2, marginBottom: 8 },
-    
     statusBadge: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
     approvedBadge: { backgroundColor: "#F0FDF4" },
     rejectedBadge: { backgroundColor: "#F1F5F9" },
@@ -303,22 +337,8 @@ const styles = StyleSheet.create({
     approvedText: { color: "#166534" },
     rejectedText: { color: "#475569" },
     pendingText: { color: "#475569" },
-
     sectionLabel: { fontSize: 22, fontWeight: "700", color: "#0F172A", marginBottom: 14, marginTop: 8 },
-
-    profileCard: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 24,
-        padding: 24,
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
-        marginBottom: 28,
-        shadowColor: "#0F172A",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.02,
-        shadowRadius: 8,
-        elevation: 1,
-    },
+    profileCard: { backgroundColor: "#FFFFFF", borderRadius: 24, padding: 24, borderWidth: 1, borderColor: "#F1F5F9", marginBottom: 28, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 8, elevation: 1 },
     profileHeader: { flexDirection: "row", gap: 14, alignItems: "center" },
     avatarImage: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#E2E8F0" },
     profileMeta: { flex: 1 },
@@ -327,9 +347,7 @@ const styles = StyleSheet.create({
     inlineDateContainer: { flexDirection: "row", alignItems: "center", marginTop: 6 },
     inlineCalendarIcon: { marginRight: 5 },
     timelineText: { fontSize: 13, color: "#475569", fontWeight: "500" },
-
     messageContentText: { fontSize: 15, color: "#1E293B", lineHeight: 22, marginTop: 16, marginBottom: 4 },
-
     actionRow: { flexDirection: "row", gap: 12, marginTop: 24 },
     denyButton: { flex: 1, height: 48, borderRadius: 24, backgroundColor: "#F1F5F9", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "#CBD5E1" },
     denyButtonText: { fontSize: 16, fontWeight: "600", color: "#475569" },
@@ -338,9 +356,7 @@ const styles = StyleSheet.create({
     decisionButtonDisabled: { opacity: 0.45 },
     paymentLockText: { color: "#64748B", fontSize: 13, marginTop: 10, textAlign: "center" },
     paymentLockError: { color: "#B91C1C", fontSize: 13, marginTop: 10, textAlign: "center" },
-
     messageButton: { width: "100%", height: 48, borderRadius: 24, backgroundColor: "#FF7A21", justifyContent: "center", alignItems: "center", marginTop: 24 },
     messageButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
-
     mapCardWrapper: { width: "100%", height: 165, borderRadius: 24, overflow: "hidden", backgroundColor: "#F1F5F9", borderWidth: 1, borderColor: "#E2E8F0" }
 });

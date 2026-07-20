@@ -9,7 +9,7 @@ type IconName = React.ComponentProps<typeof Feather>["name"];
 
 const icons: Record<keyof TabParamList, IconName> = {
   Home: "home",
-  Search: "search",
+  Inbox: "message-square",
   Post: "plus-square",
   Orders: "heart",
   Profile: "user",
