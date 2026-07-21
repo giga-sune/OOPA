@@ -10,8 +10,6 @@ export default function MapViewerScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const mapRef = useRef<MapView | null>(null);
-
-  // Unpack location configurations securely out from routing details
   const { latitude, longitude, address } = route.params;
 
   return (
