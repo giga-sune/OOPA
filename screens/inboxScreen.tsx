@@ -26,19 +26,33 @@ type InboxScreenNavProp = CompositeNavigationProp<
 export default function InboxScreen() {
   const [chats, setChats] = useState<ChatChannel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<InboxScreenNavProp>();
   
   const auth = getAuth();
   const currentUserUid = auth.currentUser?.uid;
 
   useEffect(() => {
-    if (!currentUserUid) return;
+    if (!currentUserUid) {
+      setLoading(false);
+      return;
+    }
+
+    setError(null);
 
     // Stream user chats in real-time
-    const unsubscribe = subscribeToUserChats(currentUserUid, (updatedChats) => {
-      setChats(updatedChats);
-      setLoading(false);
-    });
+    const unsubscribe = subscribeToUserChats(
+      currentUserUid,
+      (updatedChats) => {
+        setChats(updatedChats);
+        setLoading(false);
+      },
+      (listenerError) => {
+        console.error("Failed to load chats:", listenerError);
+        setError("Unable to load messages. Check your connection and try again.");
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [currentUserUid]);
@@ -77,7 +91,12 @@ export default function InboxScreen() {
         <Text style={styles.headerTitle}>Messages</Text>
       </View>
 
-      {chats.length === 0 ? (
+      {error ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyText}>Something went wrong</Text>
+          <Text style={styles.emptySubtitle}>{error}</Text>
+        </View>
+      ) : chats.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.emptyText}>No active chats yet.</Text>
           <Text style={styles.emptySubtitle}>Chats appear once a rental request is approved.</Text>
