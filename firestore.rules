@@ -159,6 +159,44 @@ service cloud.firestore {
       return !exists(paymentPath) || get(paymentPath).data.status == 'unpaid';
     }
 
+    function isRentalParticipant(rentalId) {
+      let rentalPath =
+        /databases/$(database)/documents/rentals/$(rentalId);
+
+      return exists(rentalPath) &&
+        (get(rentalPath).data.renterUid == request.auth.uid ||
+          get(rentalPath).data.ownerUid == request.auth.uid);
+    }
+
+    function canReadPayment(rentalId) {
+      let paymentPath =
+        /databases/$(database)/documents/payments/$(rentalId);
+
+      return isAuthenticated() &&
+        ((exists(paymentPath) &&
+            (resource.data.renterUid == request.auth.uid ||
+              resource.data.ownerUid == request.auth.uid)) ||
+          (!exists(paymentPath) && isRentalParticipant(rentalId)));
+    }
+
+    function canAccessChatForRental(chatId) {
+      let rentalPath =
+        /databases/$(database)/documents/rentals/$(chatId);
+
+      return exists(rentalPath) &&
+        get(rentalPath).data.status == 'approved' &&
+        isRentalParticipant(chatId);
+    }
+
+    function canReadChat(chatId) {
+      let chatPath =
+        /databases/$(database)/documents/chats/$(chatId);
+
+      return isAuthenticated() &&
+        ((exists(chatPath) && isChatParticipantData(resource.data)) ||
+          (!exists(chatPath) && canAccessChatForRental(chatId)));
+    }
+
     function isValidRentalDecisionUpdate(rentalId) {
       return isValidRental(request.resource.data) &&
         request.auth.uid == resource.data.ownerUid &&
@@ -257,6 +295,70 @@ service cloud.firestore {
               data.reviewerPhotoURL == profile.photoURL)));
     }
 
+    function isChatParticipantData(data) {
+      return isAuthenticated() &&
+        (data.renterUid == request.auth.uid ||
+          data.ownerUid == request.auth.uid);
+    }
+
+    function chatMatchesApprovedRental(chatId, data) {
+      let rentalPath =
+        /databases/$(database)/documents/rentals/$(chatId);
+      let rental = get(rentalPath).data;
+
+      return exists(rentalPath) &&
+        chatId == data.rentalId &&
+        rental.status == 'approved' &&
+        rental.renterUid == data.renterUid &&
+        rental.ownerUid == data.ownerUid;
+    }
+
+    function isValidChatCreate(chatId, data) {
+      return data.rentalId is string &&
+        data.rentalId == chatId &&
+        data.renterUid is string &&
+        data.renterUid.size() >= 1 &&
+        data.renterUid.size() <= 128 &&
+        data.ownerUid is string &&
+        data.ownerUid.size() >= 1 &&
+        data.ownerUid.size() <= 128 &&
+        data.renterUid != data.ownerUid &&
+        isChatParticipantData(data) &&
+        isValidNullableString(data.propertyTitle, 200) &&
+        isValidNullableUrl(data.propertyImageUrl) &&
+        isValidNullableString(data.renterDisplayName, 100) &&
+        isValidNullableString(data.ownerDisplayName, 100) &&
+        isValidNullableString(data.lastMessage, 2000) &&
+        chatMatchesApprovedRental(chatId, data);
+    }
+
+    function isValidChatMetadataUpdate() {
+      let affected = request.resource.data.diff(resource.data).affectedKeys();
+
+      return isChatParticipantData(resource.data) &&
+        request.resource.data.renterUid == resource.data.renterUid &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        affected.hasOnly([
+          'lastMessage',
+          'lastMessageTimestamp',
+          'unreadBy'
+        ]) &&
+        (!affected.hasAny(['lastMessage']) ||
+          isValidNullableString(request.resource.data.lastMessage, 2000)) &&
+        (!affected.hasAny(['lastMessageTimestamp']) ||
+          request.resource.data.lastMessageTimestamp == request.time ||
+          request.resource.data.lastMessageTimestamp == resource.data.lastMessageTimestamp) &&
+        (!affected.hasAny(['unreadBy']) ||
+          (request.resource.data.unreadBy is list &&
+            request.resource.data.unreadBy.size() <= 2));
+    }
+
+    function isValidChatMessage(text) {
+      return text is string &&
+        text.size() >= 1 &&
+        text.size() <= 2000;
+    }
+
     // Preserve current access for collections outside this payment change.
     match /users/{document=**} {
       allow read, write: if isAuthenticated();
@@ -286,7 +388,9 @@ service cloud.firestore {
     }
 
     match /payments/{rentalId} {
-      allow read: if isAuthenticated() &&
+      allow get: if canReadPayment(rentalId);
+
+      allow list: if isAuthenticated() &&
         (resource.data.renterUid == request.auth.uid ||
           resource.data.ownerUid == request.auth.uid);
 
@@ -310,6 +414,56 @@ service cloud.firestore {
         false;
 
       allow delete: if false;
+    }
+
+    match /chats/{chatId} {
+      allow get: if canReadChat(chatId);
+
+      allow list: if isAuthenticated() &&
+        (resource.data.renterUid == request.auth.uid ||
+          resource.data.ownerUid == request.auth.uid);
+
+      allow create: if isValidChatCreate(chatId, request.resource.data);
+
+      allow update: if isValidChatMetadataUpdate();
+
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if exists(/databases/$(database)/documents/chats/$(chatId)) &&
+          isChatParticipantData(
+            get(/databases/$(database)/documents/chats/$(chatId)).data
+          );
+
+        allow create: if exists(/databases/$(database)/documents/chats/$(chatId)) &&
+          isChatParticipantData(
+            get(/databases/$(database)/documents/chats/$(chatId)).data
+          ) &&
+          request.resource.data.senderUid == request.auth.uid &&
+          isValidChatMessage(request.resource.data.text) &&
+          request.resource.data.createdAt == request.time;
+
+        allow update, delete: if false;
+      }
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() &&
+        resource.data.recipientUid == request.auth.uid;
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.recipientUid is string &&
+        request.resource.data.recipientUid.size() >= 1 &&
+        request.resource.data.recipientUid.size() <= 128 &&
+        request.resource.data.type is string &&
+        request.resource.data.bodyText is string &&
+        request.resource.data.bodyText.size() >= 1 &&
+        request.resource.data.bodyText.size() <= 2000 &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.read == false;
+
+      allow update, delete: if isAuthenticated() &&
+        resource.data.recipientUid == request.auth.uid;
     }
   }
 }

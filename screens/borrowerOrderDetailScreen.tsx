@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
 
 import { db } from "../services/firebase/firebaseApp";
+import { ensureChatChannel } from "../services/chat/chatService";
 import usePaymentViewModel from "../viewModels/payment/usePaymentViewModel";
 
 type ParamList = {
@@ -126,28 +127,16 @@ export default function BorrowerOrderDetailScreen() {
 
         try {
             setLoading(true);
-            const chatRoomId = rental.id; 
-            const chatRef = doc(db, "chats", chatRoomId);
-            const chatSnap = await getDoc(chatRef);
-
-            if (!chatSnap.exists()) {
-                await setDoc(chatRef, {
-                    id: rental.id,
-                    rentalId: rental.id,
-                    propertyTitle: rental.propertyTitle,
-                    propertyImageUrl: rental.propertyImageUrl || "",
-                    renterUid: rental.renterUid,
-                    ownerUid: rental.ownerUid,
-                    renterDisplayName: rental.renterDisplayName || "Borrower",
-                    ownerDisplayName: lenderName,
-                    participantUids: [rental.renterUid, rental.ownerUid],
-                    createdAt: new Date(),
-                    lastMessage: "Chat initiated",
-                    lastMessageText: "Chat initiated",
-                    lastMessageTimestamp: new Date(),
-                    unreadBy: [],
-                });
-            }
+            await ensureChatChannel({
+                rentalId: rental.id,
+                propertyId: rental.propertyId,
+                propertyTitle: rental.propertyTitle,
+                propertyImageUrl: rental.propertyImageUrl || null,
+                renterUid: rental.renterUid,
+                ownerUid: rental.ownerUid,
+                renterDisplayName: rental.renterDisplayName || "Borrower",
+                ownerDisplayName: lenderName,
+            });
 
             navigation.navigate("ChatRoom", {
                 rentalId: rental.id,

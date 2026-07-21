@@ -3,6 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import { useAuth } from "../../context/AuthContext";
 import useProfileViewModel from "../user/useProfileViewModel"; // 👈 Import your profile hook here
+import { generateListingDescription } from "../../services/ai/listingDescriptionService";
 import { createProperty } from "../../services/firestore/propertyService";
 import { uploadImageToStorage } from "../../services/storage/storageService";
 import type {
@@ -50,7 +51,10 @@ export interface PropertyViewModelResult {
   setLocation: Dispatch<SetStateAction<LocationData | null>>;
   pickImage: () => Promise<boolean>;
   removeImage: (index: number) => void;
+  generateDescription: () => Promise<boolean>;
   submitProperty: () => Promise<boolean>;
+  aiLoading: boolean;
+  aiError: string;
   loading: boolean;
   error: string;
 }
@@ -94,6 +98,8 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
   const [ratePeriod, setRatePeriod] = useState<PropertyRatePeriod>("month");
   const [imagesList, setImagesList] = useState<SelectedImageItem[]>([]);
   const [location, setLocation] = useState<LocationData | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -131,6 +137,41 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
     } catch (pickerError) {
       setError(getErrorMessage(pickerError, "Could not open your photo library. Please try again."));
       return false;
+    }
+  };
+
+  const generateDescription = async (): Promise<boolean> => {
+    if (aiLoading) return false;
+
+    setAiError("");
+
+    if (condition === null) {
+      setAiError("Please choose the item's condition before using AI Assist.");
+      return false;
+    }
+
+    setAiLoading(true);
+
+    try {
+      const generatedDescription = await generateListingDescription({
+        title,
+        brand,
+        condition,
+        roughDescription: description,
+      });
+
+      setDescription(generatedDescription);
+      return true;
+    } catch (serviceError) {
+      setAiError(
+        getErrorMessage(
+          serviceError,
+          "Could not generate a description. Please try again.",
+        ),
+      );
+      return false;
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -228,7 +269,10 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
     setLocation,
     pickImage,
     removeImage,
+    generateDescription,
     submitProperty,
+    aiLoading,
+    aiError,
     loading,
     error,
   };

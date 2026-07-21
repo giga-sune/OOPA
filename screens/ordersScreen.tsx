@@ -9,6 +9,7 @@ import OrderListItem from "../components/order/orderListItem";
 import { db } from "../services/firebase/firebaseApp";
 import { approveRentalRequest, rejectRentalRequest } from "../services/firestore/rentalService";
 import { subscribeToOwnerPayments } from "../services/firestore/paymentService";
+import { ensureChatChannel } from "../services/chat/chatService";
 import type { Rental } from "../types/rental/rentalTypes";
 import type { PaymentStatus } from "../types/payment/paymentTypes";
 
@@ -129,19 +130,36 @@ export default function OrdersScreen() {
     }
   };
 
-  const handleMessagePress = (item: Rental) => {
+  const handleMessagePress = async (item: Rental) => {
     if (!currentUser) return;
+    if (item.status?.toLowerCase() !== "approved") return;
 
     const isOwner = item.ownerUid === currentUser.uid;
     const recipientUid = isOwner ? item.renterUid : item.ownerUid;
     const recipientName = (isOwner ? item.renterDisplayName : item.ownerDisplayName) || "User";
 
-    navigation.navigate("ChatRoom", {
-      rentalId: item.id,
-      title: item.propertyTitle,
-      recipientUid,
-      recipientName,
-    });
+    try {
+      await ensureChatChannel({
+        rentalId: item.id,
+        propertyId: item.propertyId,
+        propertyTitle: item.propertyTitle,
+        propertyImageUrl: item.propertyImageUrl || null,
+        renterUid: item.renterUid,
+        ownerUid: item.ownerUid,
+        renterDisplayName: item.renterDisplayName || "Borrower",
+        ownerDisplayName: item.ownerDisplayName || "Lender",
+      });
+
+      navigation.navigate("ChatRoom", {
+        rentalId: item.id,
+        title: item.propertyTitle,
+        recipientUid,
+        recipientName,
+      });
+    } catch (error) {
+      console.error("Failed to open chat:", error);
+      Alert.alert("Error", "Could not open the chat for this rental.");
+    }
   };
 
   const handleReport = (item: Rental) => {

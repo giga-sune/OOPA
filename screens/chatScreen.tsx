@@ -37,11 +37,19 @@ export default function ChatRoomScreen() {
     if (!currentUserUid) return;
 
     // Stream individual text exchanges
-    const unsubscribe = subscribeToMessages(rentalId, (incomingMessages) => {
-      setMessages(incomingMessages);
-      // Mark as read whenever a new message comes in while room is active
-      markChatAsRead(rentalId, currentUserUid);
-    });
+    const unsubscribe = subscribeToMessages(
+      rentalId,
+      (incomingMessages) => {
+        setMessages(incomingMessages);
+        // Mark as read whenever a new message comes in while room is active
+        markChatAsRead(rentalId, currentUserUid).catch((error) => {
+          console.error("Failed to mark chat as read:", error);
+        });
+      },
+      (error) => {
+        console.error("Failed to load messages:", error);
+      }
+    );
 
     return () => unsubscribe();
   }, [rentalId, currentUserUid, recipientName, navigation]);
