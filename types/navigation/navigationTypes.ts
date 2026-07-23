@@ -1,20 +1,14 @@
-import type { Rental, RentalRatePeriod } from "../rental/rentalTypes";
+import type { NavigatorScreenParams } from "@react-navigation/native";
+import type { Rental } from "../rental/rentalTypes";
 
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
-  MainApp: undefined;
+  MainApp: NavigatorScreenParams<TabParamList> | undefined;
   MyListings: undefined;
   Details: { propertyId: string };
   MapViewer: { latitude: number; longitude: number; address: string };
-  CheckoutScreen: {
-    propertyId: string;
-    title: string;
-    price: number;
-    ratePeriod: RentalRatePeriod;
-    image: string | null;
-    ownerDisplayName: string;
-  };
+  CheckoutScreen: { propertyId: string };
 
   LenderRequestDetailScreen: { rentalId: string };
   BorrowerOrderDetailScreen: { rentalId: string };

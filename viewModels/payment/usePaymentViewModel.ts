@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import { Alert } from "react-native";
+import { useEffect, useRef, useState } from "react";
 import { useStripe } from "@stripe/stripe-react-native";
 
 import {
@@ -7,6 +6,11 @@ import {
   createPaymentIntent,
 } from "../../services/stripe/stripeService";
 import usePaymentStatusViewModel from "./usePaymentStatusViewModel";
+
+export type PaymentAttemptOutcome =
+  | { status: "success" }
+  | { status: "cancelled" }
+  | { status: "failure"; message: string };
 
 export default function usePaymentViewModel(rentalId: string) {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -16,6 +20,13 @@ export default function usePaymentViewModel(rentalId: string) {
   const [didCompletePayment, setDidCompletePayment] = useState(false);
   const paymentState = usePaymentStatusViewModel(rentalId);
 
+  useEffect(() => {
+    paymentInFlightRef.current = false;
+    paymentCompletedRef.current = false;
+    setIsPaying(false);
+    setDidCompletePayment(false);
+  }, [rentalId]);
+
   const releasePaymentAttempt = async () => {
     try {
       await cancelPaymentAttempt(rentalId);
@@ -24,14 +35,13 @@ export default function usePaymentViewModel(rentalId: string) {
     }
   };
 
-  const pay = async () => {
-    if (
-      paymentInFlightRef.current ||
-      paymentCompletedRef.current ||
-      !rentalId.trim() ||
-      paymentState.paymentStatus === "paid"
-    ) {
-      return;
+  const pay = async (): Promise<PaymentAttemptOutcome> => {
+    if (!rentalId.trim()) return { status: "failure", message: "Rental ID is required." };
+    if (paymentInFlightRef.current) {
+      return { status: "failure", message: "A payment is already in progress." };
+    }
+    if (paymentCompletedRef.current || paymentState.paymentStatus === "paid") {
+      return { status: "failure", message: "This rental has already been paid." };
     }
 
     paymentInFlightRef.current = true;
@@ -39,7 +49,6 @@ export default function usePaymentViewModel(rentalId: string) {
 
     try {
       const { clientSecret } = await createPaymentIntent(rentalId);
-
       const { error: initializationError } = await initPaymentSheet({
         merchantDisplayName: "OOPA",
         paymentIntentClientSecret: clientSecret,
@@ -47,29 +56,25 @@ export default function usePaymentViewModel(rentalId: string) {
 
       if (initializationError) {
         await releasePaymentAttempt();
-        Alert.alert("Payment Error", initializationError.message);
-        return;
+        return { status: "failure", message: initializationError.message };
       }
 
       const { error: paymentError } = await presentPaymentSheet();
-
       if (paymentError) {
         await releasePaymentAttempt();
-
-        if (paymentError.code !== "Canceled") {
-          Alert.alert("Payment Error", paymentError.message);
-        }
-        return;
+        return paymentError.code === "Canceled"
+          ? { status: "cancelled" }
+          : { status: "failure", message: paymentError.message };
       }
 
       paymentCompletedRef.current = true;
       setDidCompletePayment(true);
-      Alert.alert("Payment Successful", "Your payment was completed.");
+      return { status: "success" };
     } catch (error) {
-      Alert.alert(
-        "Payment Error",
-        error instanceof Error ? error.message : "Unable to process payment."
-      );
+      return {
+        status: "failure",
+        message: error instanceof Error ? error.message : "Unable to process payment.",
+      };
     } finally {
       paymentInFlightRef.current = false;
       setIsPaying(false);
@@ -79,8 +84,7 @@ export default function usePaymentViewModel(rentalId: string) {
   return {
     ...paymentState,
     isPaying,
-    isPaymentComplete:
-      didCompletePayment || paymentState.paymentStatus === "paid",
+    isPaymentComplete: didCompletePayment || paymentState.paymentStatus === "paid",
     pay,
   };
 }

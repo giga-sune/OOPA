@@ -1,129 +1,74 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Modal, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
-import { getAuth } from "firebase/auth";
+import React from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { createRentalRequest } from "../services/firestore/rentalService";
-import { getPropertyById } from "../services/firestore/propertyService";
+import useCheckoutRentalViewModel from "../viewModels/rental/useCheckoutRentalViewModel";
+import type { RootStackParamList } from "../types/navigation/navigationTypes";
 
-type ParamList = {
-  CheckoutScreen: {
-    id: string;
-    ownerUid: string;
-  };
-};
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export default function CheckoutScreen() {
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<ParamList, "CheckoutScreen">>();
-  const { id: propertyId, ownerUid } = route.params || {};
-
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
-
-  const [property, setProperty] = useState<any>(null);
-  const [loadingProperty, setLoadingProperty] = useState(true);
-  const [totalPrice, setTotalPrice] = useState(0);
-
-  const [message, setMessage] = useState("");
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
-  
-  const [tempStartDate, setTempStartDate] = useState(new Date());
-  const [tempEndDate, setTempEndDate] = useState(new Date());
-  
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function loadItemData() {
-      if (!propertyId) {
-        Alert.alert("Error", "Missing property identification reference.");
-        setLoadingProperty(false);
-        return;
-      }
-      try {
-        setLoadingProperty(true);
-        const data = await getPropertyById(propertyId);
-        if (!data) {
-          Alert.alert("Error", "Could not find item details.");
-          navigation.goBack();
-          return;
-        }
-        setProperty(data);
-      } catch (err) {
-        console.error("Error fetching item details:", err);
-      } finally {
-        setLoadingProperty(false);
-      }
-    }
-    loadItemData();
-  }, [propertyId]);
-
-  useEffect(() => {
-    if (!property) return;
-
-    const diffTime = Math.max(0, endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    let units = 1;
-    if (property.ratePeriod === "week") {
-      units = Math.max(1, Math.ceil(diffDays / 7));
-    } else {
-      units = Math.max(1, Math.ceil(diffDays / 30));
-    }
-
-    setTotalPrice(units * (property.price || 0));
-  }, [startDate, endDate, property]);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, "CheckoutScreen">>();
+  const {
+    property,
+    loadingProperty,
+    message,
+    startDate,
+    endDate,
+    temporaryStartDate,
+    temporaryEndDate,
+    showStartPicker,
+    showEndPicker,
+    submitting,
+    errorMessage,
+    totalPrice,
+    setMessage,
+    openStartPicker,
+    openEndPicker,
+    cancelStartPicker,
+    cancelEndPicker,
+    setTemporaryStartDate,
+    setTemporaryEndDate,
+    confirmStartDate,
+    confirmEndDate,
+    submitRentalRequest,
+  } = useCheckoutRentalViewModel(route.params?.propertyId ?? "");
 
   const handleCheckout = async () => {
-    if (!currentUser) {
-      Alert.alert("Authentication Required", "Please log in to rent items.");
+    const outcome = await submitRentalRequest();
+    if (outcome.status === "failure") {
+      Alert.alert("Checkout Error", outcome.message);
       return;
     }
 
-    if (totalPrice <= 0) {
-      Alert.alert("Invalid Amount", "Rental total must be greater than $0.00.");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await createRentalRequest({
-        propertyId: propertyId,
-        renterUid: currentUser.uid,
-        startDate: startDate,
-        endDate: endDate,
-        message: message.trim() || null,
-      });
-
-      Alert.alert(
-        "Request submitted",
-        "Your rental request was sent to the owner. You can pay after they approve it.",
-        [
-          {
-            text: "Return",
-            onPress: () => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                (navigation as any).navigate("HomeTabs");
-              }
-            },
-          },
-        ]
-      );
-    } catch (error: any) {
-      console.error("Checkout error:", error);
-      Alert.alert("Checkout Error", error.message || "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    Alert.alert(
+      "Request submitted",
+      "Your rental request was sent to the owner. You can pay after they approve it.",
+      [{
+        text: "Return",
+        onPress: () => {
+          if (navigation.canGoBack()) navigation.goBack();
+          else navigation.navigate("MainApp", { screen: "Home" });
+        },
+      }]
+    );
   };
 
   if (loadingProperty) {
@@ -134,137 +79,119 @@ export default function CheckoutScreen() {
     );
   }
 
+  if (!property) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View style={styles.topNavBar}>
+          <TouchableOpacity style={styles.navButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={28} color="#000" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.centerLoading}>
+          <Text style={styles.errorText}>{errorMessage || "Could not find item details."}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.topNavBar}>
         <TouchableOpacity style={styles.navButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={28} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => (navigation as any).navigate("HomeTabs")}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("MainApp", { screen: "Home" })}
+        >
           <Ionicons name="home-outline" size={26} color="#000" />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        {property && (
-          <View style={styles.itemHeaderContainer}>
-            <Image 
-              source={{ uri: property.propertyImageUrl || property.images?.[0] || "https://placeholder.pics/svg/120" }} 
-              style={styles.itemImage} 
-            />
-            <View style={styles.itemDetailsTextContainer}>
-              <Text style={styles.itemPriceText}>${property.price}/{property.ratePeriod}</Text>
-              <Text style={styles.itemTitleText}>{property.title}</Text>
-              
-              <Text style={styles.lenderLabel}>Lender</Text>
-              <View style={styles.lenderBadge}>
-                <Text style={styles.lenderBadgeText}>{property.ownerDisplayName || "Lender"}</Text>
-              </View>
+        <View style={styles.itemHeaderContainer}>
+          <Image
+            source={{ uri: property.images[0] || "https://placeholder.pics/svg/120" }}
+            style={styles.itemImage}
+          />
+          <View style={styles.itemDetailsTextContainer}>
+            <Text style={styles.itemPriceText}>${property.price}/{property.ratePeriod}</Text>
+            <Text style={styles.itemTitleText}>{property.title}</Text>
+            <Text style={styles.lenderLabel}>Lender</Text>
+            <View style={styles.lenderBadge}>
+              <Text style={styles.lenderBadgeText}>{property.ownerDisplayName || "Lender"}</Text>
             </View>
           </View>
-        )}
+        </View>
 
         <Text style={styles.fieldSectionLabel}>Date</Text>
         <View style={styles.datePickerContainer}>
-          <TouchableOpacity 
-            style={styles.dateInputBlock} 
-            onPress={() => {
-              setTempStartDate(startDate);
-              setShowStartPicker(true);
-            }}
-          >
+          <TouchableOpacity style={styles.dateInputBlock} onPress={openStartPicker}>
             <Text style={styles.dateValuePlaceholder}>{startDate.toLocaleDateString("en-GB")}</Text>
             <Feather name="calendar" size={20} color="#FF7A21" />
           </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.dateInputBlock} 
-            onPress={() => {
-              setTempEndDate(endDate);
-              setShowEndPicker(true);
-            }}
-          >
+          <TouchableOpacity style={styles.dateInputBlock} onPress={openEndPicker}>
             <Text style={styles.dateValuePlaceholder}>{endDate.toLocaleDateString("en-GB")}</Text>
             <Feather name="calendar" size={20} color="#FF7A21" />
           </TouchableOpacity>
         </View>
 
-        {/* Start Date Pop-up Modal */}
         <Modal visible={showStartPicker} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
               <DateTimePicker
-                value={tempStartDate}
+                value={temporaryStartDate}
                 mode="date"
                 display={Platform.OS === "ios" ? "inline" : "default"}
                 minimumDate={new Date()}
                 style={styles.nativeCalendarInline}
-                onChange={(event, date) => {
+                onChange={(_, date) => {
                   if (Platform.OS === "android") {
-                    setShowStartPicker(false);
-                    if (date) {
-                      setStartDate(date);
-                      if (date.getTime() >= endDate.getTime()) {
-                        setEndDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
-                      }
-                    }
-                  } else if (date) {
-                    setTempStartDate(date);
-                  }
+                    if (date) confirmStartDate(date);
+                    else cancelStartPicker();
+                  } else if (date) setTemporaryStartDate(date);
                 }}
               />
-              {Platform.OS === "ios" && (
+              {Platform.OS === "ios" ? (
                 <View style={styles.modalActions}>
-                  <TouchableOpacity onPress={() => setShowStartPicker(false)}>
+                  <TouchableOpacity onPress={cancelStartPicker}>
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => {
-                    setStartDate(tempStartDate);
-                    if (tempStartDate.getTime() >= endDate.getTime()) {
-                      setEndDate(new Date(tempStartDate.getTime() + 24 * 60 * 60 * 1000));
-                    }
-                    setShowStartPicker(false);
-                  }}>
+                  <TouchableOpacity onPress={() => confirmStartDate()}>
                     <Text style={styles.modalConfirmText}>Confirm</Text>
                   </TouchableOpacity>
                 </View>
-              )}
+              ) : null}
             </View>
           </View>
         </Modal>
 
-        {/* End Date Pop-up Modal */}
         <Modal visible={showEndPicker} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
               <DateTimePicker
-                value={tempEndDate}
+                value={temporaryEndDate}
                 mode="date"
                 display={Platform.OS === "ios" ? "inline" : "default"}
-                minimumDate={startDate}
+                minimumDate={new Date(startDate.getTime() + DAY_IN_MS)}
                 style={styles.nativeCalendarInline}
-                onChange={(event, date) => {
+                onChange={(_, date) => {
                   if (Platform.OS === "android") {
-                    setShowEndPicker(false);
-                    if (date) setEndDate(date);
-                  } else if (date) {
-                    setTempEndDate(date);
-                  }
+                    if (date) confirmEndDate(date);
+                    else cancelEndPicker();
+                  } else if (date) setTemporaryEndDate(date);
                 }}
               />
-              {Platform.OS === "ios" && (
+              {Platform.OS === "ios" ? (
                 <View style={styles.modalActions}>
-                  <TouchableOpacity onPress={() => setShowEndPicker(false)}>
+                  <TouchableOpacity onPress={cancelEndPicker}>
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => {
-                    setEndDate(tempEndDate);
-                    setShowEndPicker(false);
-                  }}>
+                  <TouchableOpacity onPress={() => confirmEndDate()}>
                     <Text style={styles.modalConfirmText}>Confirm</Text>
                   </TouchableOpacity>
                 </View>
-              )}
+              ) : null}
             </View>
           </View>
         </Modal>
@@ -278,6 +205,7 @@ export default function CheckoutScreen() {
           value={message}
           onChangeText={setMessage}
         />
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       </ScrollView>
 
       <View style={styles.bottomStickyBar}>
@@ -285,17 +213,12 @@ export default function CheckoutScreen() {
           <Text style={styles.totalPriceValue}>${totalPrice.toFixed(2)}</Text>
           <Text style={styles.totalPriceLabel}>Total</Text>
         </View>
-        
-        <TouchableOpacity 
-          style={[styles.checkoutBtn, isSubmitting && styles.disabledBtn]} 
-          onPress={handleCheckout}
-          disabled={isSubmitting}
+        <TouchableOpacity
+          style={[styles.checkoutBtn, submitting && styles.disabledBtn]}
+          onPress={() => void handleCheckout()}
+          disabled={submitting}
         >
-          {isSubmitting ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.checkoutBtnText}>Submit Request</Text>
-          )}
+          {submitting ? <ActivityIndicator color="#FFF" /> : <Text style={styles.checkoutBtnText}>Submit Request</Text>}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -308,7 +231,6 @@ const styles = StyleSheet.create({
   topNavBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, height: 50, gap: 12 },
   navButton: { padding: 4 },
   scrollContainer: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 },
-  
   itemHeaderContainer: { flexDirection: "row", marginBottom: 28, gap: 16 },
   itemImage: { width: 120, height: 100, borderRadius: 16, backgroundColor: "#F1F5F9", resizeMode: "cover" },
   itemDetailsTextContainer: { flex: 1, justifyContent: "center" },
@@ -317,58 +239,23 @@ const styles = StyleSheet.create({
   lenderLabel: { fontSize: 12, color: "#999999", marginBottom: 4 },
   lenderBadge: { alignSelf: "flex-start", backgroundColor: "#F0F0F0", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
   lenderBadgeText: { fontSize: 13, color: "#333333", fontWeight: "500" },
-
   fieldSectionLabel: { fontSize: 16, fontWeight: "600", color: "#000000", marginBottom: 10, marginTop: 4 },
   datePickerContainer: { flexDirection: "row", gap: 12, marginBottom: 24 },
-  dateInputBlock: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#CCCCCC",
-    borderRadius: 12,
-    height: 50,
-    paddingHorizontal: 14,
-    backgroundColor: "#FFFFFF"
-  },
+  dateInputBlock: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: "#CCCCCC", borderRadius: 12, height: 50, paddingHorizontal: 14, backgroundColor: "#FFFFFF" },
   dateValuePlaceholder: { fontSize: 15, color: "#444" },
-
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: "rgba(0,0,0,0.5)", 
-    justifyContent: "center", 
-    alignItems: "center" 
-  },
-  modalCard: { 
-    backgroundColor: "#FFFFFF", 
-    borderRadius: 24, 
-    paddingHorizontal: 20,
-    paddingVertical: 24, 
-    width: "88%",
-    maxWidth: 360,
-    alignItems: "center"
-  },
-  nativeCalendarInline: {
-    width: "100%",
-    alignSelf: "center"
-  },
-  modalActions: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    width: "100%",
-    paddingHorizontal: 8, 
-    marginTop: 20 
-  },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
+  modalCard: { backgroundColor: "#FFFFFF", borderRadius: 24, paddingHorizontal: 20, paddingVertical: 24, width: "88%", maxWidth: 360, alignItems: "center" },
+  nativeCalendarInline: { width: "100%", alignSelf: "center" },
+  modalActions: { flexDirection: "row", justifyContent: "space-between", width: "100%", paddingHorizontal: 8, marginTop: 20 },
   modalCancelText: { color: "#64748B", fontSize: 16, fontWeight: "600" },
   modalConfirmText: { color: "#FF7A21", fontSize: 16, fontWeight: "700" },
-
   textArea: { borderWidth: 1, borderColor: "#CCCCCC", borderRadius: 14, padding: 16, minHeight: 130, textAlignVertical: "top", fontSize: 15, color: "#000000", backgroundColor: "#FFFFFF" },
+  errorText: { color: "#B91C1C", fontSize: 14, marginTop: 12, textAlign: "center", paddingHorizontal: 24 },
   bottomStickyBar: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#FFFFFF", paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   priceContainer: { flexDirection: "column-reverse" },
   totalPriceLabel: { fontSize: 12, color: "#888888", marginTop: 2 },
   totalPriceValue: { fontSize: 24, fontWeight: "700", color: "#000000" },
   checkoutBtn: { backgroundColor: "#FF7A21", height: 48, borderRadius: 12, justifyContent: "center", alignItems: "center", paddingHorizontal: 32 },
   disabledBtn: { opacity: 0.6 },
-  checkoutBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" }
+  checkoutBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 });

@@ -1,162 +1,238 @@
-import { useCallback, useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "../../context/AuthContext";
+import { ensureChatChannel, type PreparedRentalChat } from "../../services/chat/chatService";
+import { subscribeToOwnerPayments } from "../../services/firestore/paymentService";
 import {
   approveRentalRequest,
-  getRentalsByOwner,
-  getRentalsByRenter,
   rejectRentalRequest,
+  subscribeToRentalsByOwner,
+  subscribeToRentalsByRenter,
 } from "../../services/firestore/rentalService";
-import type { Rental, RentalStatus } from "../../types/rental/rentalTypes";
+import type { PaymentStatus } from "../../types/payment/paymentTypes";
+import type { Rental } from "../../types/rental/rentalTypes";
 
-export interface RentalOrderItem {
-  id: string;
-  title: string;
-  price: number;
-  ratePeriod: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  imageUrl?: string;
+export type OrdersTab = "My Orders" | "Requests";
+export type RentalDecisionProgress = "approving" | "rejecting" | null;
+export type RentalActionOutcome =
+  | { status: "success" }
+  | { status: "failure"; message: string };
+export type ChatPreparationOutcome =
+  | { status: "success"; chat: PreparedRentalChat }
+  | { status: "failure"; message: string };
+
+export interface DecisionControlState {
+  progress: RentalDecisionProgress;
+  acceptDisabled: boolean;
+  denyDisabled: boolean;
+  lockMessage: string;
 }
 
 export interface OrdersViewModelResult {
-  myOrders: RentalOrderItem[];
-  requests: RentalOrderItem[];
+  activeTab: OrdersTab;
+  setActiveTab: (tab: OrdersTab) => void;
+  myOrders: Rental[];
+  requests: Rental[];
+  activeRentals: Rental[];
+  isAuthenticated: boolean;
   loading: boolean;
   errorMessage: string;
-  updatingRentalId: string | null;
-  refreshOrders: () => Promise<void>;
-  approveRequest: (rentalId: string) => Promise<void>;
-  rejectRequest: (rentalId: string) => Promise<void>;
+  getDecisionControls: (rental: Rental) => DecisionControlState;
+  approveRequest: (rentalId: string) => Promise<RentalActionOutcome>;
+  rejectRequest: (rentalId: string) => Promise<RentalActionOutcome>;
+  prepareChat: (rental: Rental) => Promise<ChatPreparationOutcome>;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (typeof error === "object" && error !== null) {
-    const message = (error as { message?: unknown }).message;
-
-    if (typeof message === "string" && message) {
-      return message;
-    }
-  }
-
-  return fallback;
-}
-
-function formatDate(value: Date): string {
-  return value.toLocaleDateString("en-GB");
-}
-
-function formatStatus(status: RentalStatus): string {
-  switch (status) {
-    case "approved":
-      return "Approved";
-    case "rejected":
-      return "Rejected";
-    case "completed":
-      return "Completed";
-    case "cancelled":
-      return "Cancelled";
-    default:
-      return "Pending";
-  }
-}
-
-function mapRentalToOrderItem(rental: Rental): RentalOrderItem {
-  return {
-    id: rental.id,
-    title: rental.propertyTitle,
-    price: rental.propertyPrice,
-    ratePeriod: rental.propertyRatePeriod,
-    startDate: formatDate(rental.startDate),
-    endDate: formatDate(rental.endDate),
-    status: formatStatus(rental.status),
-    imageUrl: rental.propertyImageUrl ?? undefined,
-  };
+  return error instanceof Error && error.message ? error.message : fallback;
 }
 
 export default function useOrdersViewModel(): OrdersViewModelResult {
   const { user } = useAuth();
-  const [myOrders, setMyOrders] = useState<RentalOrderItem[]>([]);
-  const [requests, setRequests] = useState<RentalOrderItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<OrdersTab>("My Orders");
+  const [myOrders, setMyOrders] = useState<Rental[]>([]);
+  const [requests, setRequests] = useState<Rental[]>([]);
+  const [renterLoaded, setRenterLoaded] = useState(false);
+  const [ownerLoaded, setOwnerLoaded] = useState(false);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentStatusError, setPaymentStatusError] = useState("");
+  const [paymentStatuses, setPaymentStatuses] = useState<Record<string, PaymentStatus>>({});
   const [errorMessage, setErrorMessage] = useState("");
-  const [updatingRentalId, setUpdatingRentalId] = useState<string | null>(null);
+  const [decisionProgress, setDecisionProgress] = useState<
+    Record<string, Exclude<RentalDecisionProgress, null>>
+  >({});
+  const decisionsInFlightRef = useRef<Set<string>>(new Set());
 
-  const refreshOrders = useCallback(async () => {
+  useEffect(() => {
+    setMyOrders([]);
+    setRequests([]);
+    setPaymentStatuses({});
+    setDecisionProgress({});
+    setErrorMessage("");
+    setPaymentStatusError("");
+    decisionsInFlightRef.current.clear();
+
     if (!user?.uid) {
-      setMyOrders([]);
-      setRequests([]);
-      setLoading(false);
-      setErrorMessage("");
+      setRenterLoaded(true);
+      setOwnerLoaded(true);
+      setPaymentsLoading(false);
       return;
     }
 
-    setLoading(true);
+    setRenterLoaded(false);
+    setOwnerLoaded(false);
+    setPaymentsLoading(true);
+
+    const handleRentalError = (error: Error) => {
+      setErrorMessage(getErrorMessage(error, "Could not load your rental requests right now."));
+      setRenterLoaded(true);
+      setOwnerLoaded(true);
+    };
+
+    const unsubscribeRenter = subscribeToRentalsByRenter(
+      user.uid,
+      (rentals) => {
+        setMyOrders(rentals);
+        setRenterLoaded(true);
+      },
+      handleRentalError
+    );
+    const unsubscribeOwner = subscribeToRentalsByOwner(
+      user.uid,
+      (rentals) => {
+        setRequests(rentals);
+        setOwnerLoaded(true);
+      },
+      handleRentalError
+    );
+    const unsubscribePayments = subscribeToOwnerPayments(
+      user.uid,
+      (nextStatuses) => {
+        setPaymentStatuses(nextStatuses);
+        setPaymentsLoading(false);
+        setPaymentStatusError("");
+      },
+      () => {
+        setPaymentStatusError("Could not verify payment status. Rental decisions are temporarily locked.");
+        setPaymentsLoading(false);
+      }
+    );
+
+    return () => {
+      unsubscribeRenter();
+      unsubscribeOwner();
+      unsubscribePayments();
+    };
+  }, [user?.uid]);
+
+  const runDecision = useCallback(async (
+    rentalId: string,
+    action: "approving" | "rejecting"
+  ): Promise<RentalActionOutcome> => {
+    if (!rentalId.trim()) return { status: "failure", message: "Rental ID is required." };
+    if (decisionsInFlightRef.current.has(rentalId)) {
+      return { status: "failure", message: "This request is already being updated." };
+    }
+
+    const rental = requests.find((request) => request.id === rentalId);
+    const paymentStatus = paymentStatuses[rentalId] ?? "unpaid";
+    if (!rental) return { status: "failure", message: "Rental request could not be found." };
+    if (
+      paymentsLoading ||
+      paymentStatusError ||
+      paymentStatus === "processing" ||
+      paymentStatus === "paid"
+    ) {
+      return { status: "failure", message: "This decision is locked by the current payment state." };
+    }
+
+    decisionsInFlightRef.current.add(rentalId);
+    setDecisionProgress((current) => ({ ...current, [rentalId]: action }));
     setErrorMessage("");
 
     try {
-      const [renterRentals, ownerRentals] = await Promise.all([
-        getRentalsByRenter(user.uid),
-        getRentalsByOwner(user.uid),
-      ]);
-
-      setMyOrders(renterRentals.map(mapRentalToOrderItem));
-      setRequests(ownerRentals.map(mapRentalToOrderItem));
+      if (action === "approving") await approveRentalRequest(rentalId);
+      else await rejectRentalRequest(rentalId);
+      return { status: "success" };
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Could not load your rental requests right now."));
+      const message = getErrorMessage(
+        error,
+        action === "approving"
+          ? "Could not approve this rental request."
+          : "Could not reject this rental request."
+      );
+      setErrorMessage(message);
+      return { status: "failure", message };
     } finally {
-      setLoading(false);
+      decisionsInFlightRef.current.delete(rentalId);
+      setDecisionProgress((current) => {
+        const next = { ...current };
+        delete next[rentalId];
+        return next;
+      });
+    }
+  }, [paymentStatusError, paymentStatuses, paymentsLoading, requests]);
+
+  const approveRequest = useCallback(
+    (rentalId: string) => runDecision(rentalId, "approving"),
+    [runDecision]
+  );
+  const rejectRequest = useCallback(
+    (rentalId: string) => runDecision(rentalId, "rejecting"),
+    [runDecision]
+  );
+
+  const prepareChat = useCallback(async (rental: Rental): Promise<ChatPreparationOutcome> => {
+    if (!user?.uid) return { status: "failure", message: "You must be signed in to send messages." };
+    if (rental.status !== "approved") {
+      return { status: "failure", message: "Messaging is available after the rental is approved." };
+    }
+
+    try {
+      return { status: "success", chat: await ensureChatChannel(rental.id) };
+    } catch (error) {
+      return {
+        status: "failure",
+        message: getErrorMessage(error, "Could not open the chat for this rental."),
+      };
     }
   }, [user?.uid]);
 
-  useFocusEffect(
-    useCallback(() => {
-      void refreshOrders();
-    }, [refreshOrders])
+  const getDecisionControls = useCallback((rental: Rental): DecisionControlState => {
+    const progress = decisionProgress[rental.id] ?? null;
+    const paymentStatus = paymentStatuses[rental.id] ?? "unpaid";
+    const paymentLocked =
+      paymentsLoading || Boolean(paymentStatusError) || paymentStatus === "processing" || paymentStatus === "paid";
+    let lockMessage = "";
+    if (paymentStatus === "paid") lockMessage = "Decision locked after payment";
+    else if (paymentStatus === "processing") lockMessage = "Decision locked while payment is processing";
+    else if (paymentStatusError) lockMessage = paymentStatusError;
+
+    return {
+      progress,
+      acceptDisabled: progress !== null || paymentLocked || rental.status === "approved",
+      denyDisabled: progress !== null || paymentLocked || rental.status === "rejected",
+      lockMessage,
+    };
+  }, [decisionProgress, paymentStatusError, paymentStatuses, paymentsLoading]);
+
+  const activeRentals = useMemo(
+    () => activeTab === "My Orders" ? myOrders : requests,
+    [activeTab, myOrders, requests]
   );
 
-  const approveRequest = useCallback(async (rentalId: string) => {
-    setUpdatingRentalId(rentalId);
-    setErrorMessage("");
-
-    try {
-      await approveRentalRequest(rentalId);
-      await refreshOrders();
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Could not approve this rental request."));
-    } finally {
-      setUpdatingRentalId(null);
-    }
-  }, [refreshOrders]);
-
-  const rejectRequest = useCallback(async (rentalId: string) => {
-    setUpdatingRentalId(rentalId);
-    setErrorMessage("");
-
-    try {
-      await rejectRentalRequest(rentalId);
-      await refreshOrders();
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Could not reject this rental request."));
-    } finally {
-      setUpdatingRentalId(null);
-    }
-  }, [refreshOrders]);
-
   return {
+    activeTab,
+    setActiveTab,
     myOrders,
     requests,
-    loading,
+    activeRentals,
+    isAuthenticated: Boolean(user),
+    loading: !renterLoaded || !ownerLoaded,
     errorMessage,
-    updatingRentalId,
-    refreshOrders,
+    getDecisionControls,
     approveRequest,
     rejectRequest,
+    prepareChat,
   };
 }

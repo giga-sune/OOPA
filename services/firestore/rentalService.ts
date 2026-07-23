@@ -2,12 +2,13 @@ import {
   addDoc,
   collection,
   doc,
-  getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   updateDoc,
   where,
   type DocumentData,
+  type Unsubscribe,
 } from "firebase/firestore";
 
 import { db } from "../firebase/firebaseApp";
@@ -125,7 +126,17 @@ function calculateTotalUnits(
   endDate: Date,
   ratePeriod: RentalRatePeriod
 ): number {
-  const durationInDays = Math.ceil((endDate.getTime() - startDate.getTime()) / DAY_IN_MS);
+  const startDay = Date.UTC(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+  const endDay = Date.UTC(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate()
+  );
+  const durationInDays = Math.ceil((endDay - startDay) / DAY_IN_MS);
 
   if (ratePeriod === "week") {
     return Math.max(1, Math.ceil(durationInDays / 7));
@@ -201,7 +212,12 @@ export async function createRentalRequest(
     startDate: input.startDate,
     endDate: input.endDate,
     totalUnits,
-    totalPrice: property.price * totalUnits,
+    totalPrice: calculateRentalTotalPrice(
+      property.price,
+      property.ratePeriod,
+      input.startDate,
+      input.endDate
+    ),
     message: getTrimmedOrNull(input.message),
     status: "pending",
     createdAt: serverTimestamp(),
@@ -211,35 +227,76 @@ export async function createRentalRequest(
   return docRef.id;
 }
 
-export async function getRentalsByRenter(renterUid: string): Promise<Rental[]> {
+export function subscribeToRental(
+  rentalId: string,
+  onChange: (rental: Rental | null) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  if (!rentalId.trim()) {
+    onChange(null);
+    return () => undefined;
+  }
+
+  return onSnapshot(
+    doc(db, RENTALS_COLLECTION, rentalId),
+    (snapshot) => {
+      onChange(snapshot.exists() ? readRental(snapshot.data(), snapshot.id) : null);
+    },
+    (error) => onError?.(error)
+  );
+}
+
+export function subscribeToRentalsByRenter(
+  renterUid: string,
+  onChange: (rentals: Rental[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
   if (!renterUid.trim()) {
-    return [];
+    onChange([]);
+    return () => undefined;
   }
 
   const rentalsQuery = query(
     collection(db, RENTALS_COLLECTION),
     where("renterUid", "==", renterUid)
   );
-  const querySnapshot = await getDocs(rentalsQuery);
-
-  return sortRentalsByUpdatedAt(
-    querySnapshot.docs.map((docSnap) => readRental(docSnap.data(), docSnap.id))
+  return onSnapshot(
+    rentalsQuery,
+    (snapshot) => {
+      onChange(
+        sortRentalsByUpdatedAt(
+          snapshot.docs.map((document) => readRental(document.data(), document.id))
+        )
+      );
+    },
+    (error) => onError?.(error)
   );
 }
 
-export async function getRentalsByOwner(ownerUid: string): Promise<Rental[]> {
+export function subscribeToRentalsByOwner(
+  ownerUid: string,
+  onChange: (rentals: Rental[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
   if (!ownerUid.trim()) {
-    return [];
+    onChange([]);
+    return () => undefined;
   }
 
   const rentalsQuery = query(
     collection(db, RENTALS_COLLECTION),
     where("ownerUid", "==", ownerUid)
   );
-  const querySnapshot = await getDocs(rentalsQuery);
-
-  return sortRentalsByUpdatedAt(
-    querySnapshot.docs.map((docSnap) => readRental(docSnap.data(), docSnap.id))
+  return onSnapshot(
+    rentalsQuery,
+    (snapshot) => {
+      onChange(
+        sortRentalsByUpdatedAt(
+          snapshot.docs.map((document) => readRental(document.data(), document.id))
+        )
+      );
+    },
+    (error) => onError?.(error)
   );
 }
 
