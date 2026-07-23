@@ -1,15 +1,17 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
 import type { Rental } from "../../types/rental/rentalTypes";
-import type { PaymentStatus } from "../../types/payment/paymentTypes";
+import type { RentalDecisionProgress } from "../../viewModels/rental/useOrdersViewModel";
 
 interface OrderListItemProps {
   item: Rental;
   isIncomingRequest: boolean;
-  paymentStatus?: PaymentStatus;
-  isPaymentStatusLoading?: boolean;
-  onAcceptPress?: (id: string) => Promise<void>;
-  onDenyPress?: (id: string) => Promise<void>;
+  decisionProgress: RentalDecisionProgress;
+  acceptDisabled: boolean;
+  denyDisabled: boolean;
+  decisionLockMessage: string;
+  onAcceptPress?: (id: string) => void;
+  onDenyPress?: (id: string) => void;
   onReportPress: (id: string) => void;
   onReviewPress: (id: string) => void;
   onMessagePress: () => void;
@@ -18,37 +20,16 @@ interface OrderListItemProps {
 export default function OrderListItem({
   item,
   isIncomingRequest,
-  paymentStatus = "unpaid",
-  isPaymentStatusLoading = false,
+  decisionProgress,
+  acceptDisabled,
+  denyDisabled,
+  decisionLockMessage,
   onAcceptPress,
   onDenyPress,
   onReportPress,
   onReviewPress,
   onMessagePress,
 }: OrderListItemProps) {
-  const decisionInFlightRef = useRef(false);
-  const [decisionInFlight, setDecisionInFlight] = useState<
-    "approved" | "rejected" | null
-  >(null);
-
-  const handleDecisionPress = async (nextStatus: "approved" | "rejected") => {
-    const callback = nextStatus === "approved" ? onAcceptPress : onDenyPress;
-
-    if (decisionInFlightRef.current || !callback) {
-      return;
-    }
-
-    decisionInFlightRef.current = true;
-    setDecisionInFlight(nextStatus);
-
-    try {
-      await callback(item.id);
-    } finally {
-      decisionInFlightRef.current = false;
-      setDecisionInFlight(null);
-    }
-  };
-  
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved": return { bg: "#DCFCE7", text: "#15803D" };
@@ -59,14 +40,6 @@ export default function OrderListItem({
 
   const badgeStyle = getStatusColor(item.status);
   const normalizedStatus = item.status.toLowerCase();
-  const isPaymentLocked =
-    isPaymentStatusLoading ||
-    paymentStatus === "processing" ||
-    paymentStatus === "paid";
-  const isDenyDisabled =
-    decisionInFlight !== null || isPaymentLocked || normalizedStatus === "rejected";
-  const isAcceptDisabled =
-    decisionInFlight !== null || isPaymentLocked || normalizedStatus === "approved";
   const canLeaveReview =
     !isIncomingRequest &&
     item.status.toLowerCase() === "approved";
@@ -106,13 +79,13 @@ export default function OrderListItem({
                 style={[
                   styles.actionBtn,
                   styles.denyBtn,
-                  isDenyDisabled && styles.actionBtnDisabled,
+                  denyDisabled && styles.actionBtnDisabled,
                 ]}
-                onPress={() => void handleDecisionPress("rejected")}
-                disabled={isDenyDisabled}
+                onPress={() => onDenyPress?.(item.id)}
+                disabled={denyDisabled}
               >
                 <Text style={styles.denyBtnText}>
-                  {decisionInFlight === "rejected" ? "Declining..." : "Decline"}
+                  {decisionProgress === "rejecting" ? "Declining..." : "Decline"}
                 </Text>
               </TouchableOpacity>
 
@@ -120,13 +93,13 @@ export default function OrderListItem({
                 style={[
                   styles.actionBtn,
                   styles.acceptBtn,
-                  isAcceptDisabled && styles.actionBtnDisabled,
+                  acceptDisabled && styles.actionBtnDisabled,
                 ]}
-                onPress={() => void handleDecisionPress("approved")}
-                disabled={isAcceptDisabled}
+                onPress={() => onAcceptPress?.(item.id)}
+                disabled={acceptDisabled}
               >
                 <Text style={styles.acceptBtnText}>
-                  {decisionInFlight === "approved" ? "Accepting..." : "Accept"}
+                  {decisionProgress === "approving" ? "Accepting..." : "Accept"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -141,13 +114,11 @@ export default function OrderListItem({
             </View>
           )}
 
-          {isPaymentLocked && (
+          {decisionLockMessage ? (
             <Text style={styles.paymentLockText}>
-              {paymentStatus === "paid"
-                ? "Decision locked after payment"
-                : "Decision locked while payment is processing"}
+              {decisionLockMessage}
             </Text>
-          )}
+          ) : null}
         </>
       ) : (
         <View style={styles.actionButtonRow}>

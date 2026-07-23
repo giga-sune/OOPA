@@ -1,73 +1,66 @@
-import { useEffect, useState } from "react";
-import { Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../../context/AuthContext";
+import { getPropertyById } from "../../services/firestore/propertyService";
 import {
- 
+  calculateRentalTotalPrice,
   createRentalRequest,
 } from "../../services/firestore/rentalService";
-import { getUserProfile } from "../../services/firestore/userService";
-import type { RootStackParamList } from "../../types/navigation/navigationTypes";
+import type { Property } from "../../types/property/propertyTypes";
 
-type CheckoutRouteParams = RootStackParamList["CheckoutScreen"];
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const MAX_MESSAGE_LENGTH = 2_000;
+
+export type CheckoutSubmissionOutcome =
+  | { status: "success"; rentalId: string }
+  | { status: "failure"; message: string };
 
 export interface CheckoutRentalViewModelResult {
-  fullName: string;
-  email: string;
-  contactNumber: string;
+  property: Property | null;
+  loadingProperty: boolean;
   message: string;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: Date;
+  endDate: Date;
+  temporaryStartDate: Date;
+  temporaryEndDate: Date;
   showStartPicker: boolean;
   showEndPicker: boolean;
   submitting: boolean;
   errorMessage: string;
-  totalAmount: string;
-  setFullName: (value: string) => void;
-  setEmail: (value: string) => void;
-  setContactNumber: (value: string) => void;
+  totalPrice: number;
   setMessage: (value: string) => void;
-  setShowStartPicker: (value: boolean) => void;
-  setShowEndPicker: (value: boolean) => void;
-  onStartDateChange: (value: Date | null) => void;
-  onEndDateChange: (value: Date | null) => void;
-  submitRentalRequest: () => Promise<void>;
+  openStartPicker: () => void;
+  openEndPicker: () => void;
+  cancelStartPicker: () => void;
+  cancelEndPicker: () => void;
+  setTemporaryStartDate: (value: Date) => void;
+  setTemporaryEndDate: (value: Date) => void;
+  confirmStartDate: (value?: Date) => void;
+  confirmEndDate: (value?: Date) => void;
+  submitRentalRequest: () => Promise<CheckoutSubmissionOutcome>;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (typeof error === "object" && error !== null) {
-    const message = (error as { message?: unknown }).message;
-
-    if (typeof message === "string" && message) {
-      return message;
-    }
-  }
-
-  return fallback;
+  return error instanceof Error && error.message ? error.message : fallback;
 }
 
-function isValidEmail(value: string): boolean {
-  return /\S+@\S+\.\S+/.test(value.trim());
+function createInitialDates(): { startDate: Date; endDate: Date } {
+  const startDate = new Date();
+  return { startDate, endDate: new Date(startDate.getTime() + 7 * DAY_IN_MS) };
 }
 
 export default function useCheckoutRentalViewModel(
-  params: CheckoutRouteParams
+  propertyId: string
 ): CheckoutRentalViewModelResult {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useAuth();
-
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [message, setMessage] = useState("");
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const initialDates = useMemo(createInitialDates, []);
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loadingProperty, setLoadingProperty] = useState(true);
+  const [message, setMessageState] = useState("");
+  const [startDate, setStartDate] = useState(initialDates.startDate);
+  const [endDate, setEndDate] = useState(initialDates.endDate);
+  const [temporaryStartDate, setTemporaryStartDate] = useState(initialDates.startDate);
+  const [temporaryEndDate, setTemporaryEndDate] = useState(initialDates.endDate);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -75,159 +68,160 @@ export default function useCheckoutRentalViewModel(
 
   useEffect(() => {
     let isActive = true;
+    setLoadingProperty(true);
+    setProperty(null);
+    setErrorMessage("");
 
-    async function prefillContactDetails() {
-      if (!user?.uid) {
-        if (isActive) {
-          setFullName("");
-          setEmail("");
-          setContactNumber("");
-        }
-
-        return;
-      }
-
-      setEmail((currentValue) => currentValue || user.email || "");
-      setFullName((currentValue) => currentValue || user.displayName || "");
-
-      try {
-        const profile = await getUserProfile(user.uid);
-
-        if (!isActive || !profile) {
-          return;
-        }
-
-        setFullName((currentValue) => currentValue || profile.userName || user.displayName || "");
-        setEmail((currentValue) => currentValue || user.email || profile.email || "");
-        setContactNumber((currentValue) => currentValue || profile.phone || "");
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
-
-        setErrorMessage(getErrorMessage(error, "Could not prefill your contact details."));
-      }
+    if (!propertyId.trim()) {
+      setErrorMessage("Missing property identification reference.");
+      setLoadingProperty(false);
+      return () => {
+        isActive = false;
+      };
     }
 
-    void prefillContactDetails();
+    void getPropertyById(propertyId)
+      .then((nextProperty) => {
+        if (!isActive) return;
+        setProperty(nextProperty);
+        if (!nextProperty) {
+          setErrorMessage("Could not find item details.");
+        }
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setErrorMessage(getErrorMessage(error, "Could not load item details."));
+      })
+      .finally(() => {
+        if (isActive) setLoadingProperty(false);
+      });
 
     return () => {
       isActive = false;
     };
-  }, [user?.uid, user?.email, user?.displayName]);
+  }, [propertyId]);
 
-  const totalAmount = startDate && endDate
-    ? calculateRentalTotalPrice(
-        params.price,
-        params.ratePeriod,
-        startDate,
-        endDate
-      ).toFixed(2)
-    : "0.00";
+  const totalPrice = property
+    ? calculateRentalTotalPrice(property.price, property.ratePeriod, startDate, endDate)
+    : 0;
 
-  const onStartDateChange = (value: Date | null) => {
+  const setMessage = (value: string) => {
+    setErrorMessage("");
+    setMessageState(value);
+  };
+
+  const openStartPicker = () => {
+    setTemporaryStartDate(startDate);
+    setShowStartPicker(true);
+  };
+
+  const openEndPicker = () => {
+    setTemporaryEndDate(endDate);
+    setShowEndPicker(true);
+  };
+
+  const cancelStartPicker = () => {
+    setTemporaryStartDate(startDate);
+    setShowStartPicker(false);
+  };
+
+  const cancelEndPicker = () => {
+    setTemporaryEndDate(endDate);
+    setShowEndPicker(false);
+  };
+
+  const confirmStartDate = (value = temporaryStartDate) => {
     setErrorMessage("");
     setStartDate(value);
+    setTemporaryStartDate(value);
 
-    if (value && endDate && endDate.getTime() <= value.getTime()) {
-      setEndDate(null);
+    if (value.getTime() >= endDate.getTime()) {
+      const nextEndDate = new Date(value.getTime() + DAY_IN_MS);
+      setEndDate(nextEndDate);
+      setTemporaryEndDate(nextEndDate);
     }
+
+    setShowStartPicker(false);
   };
 
-  const onEndDateChange = (value: Date | null) => {
-    setErrorMessage("");
-    setEndDate(value);
-  };
-
-  const submitRentalRequest = async () => {
+  const confirmEndDate = (value = temporaryEndDate) => {
     setErrorMessage("");
 
-    if (!user?.uid) {
-      setErrorMessage("You must be signed in to submit a rental request.");
-      return;
-    }
-
-    if (!fullName.trim()) {
-      setErrorMessage("Please enter your full name.");
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      setErrorMessage("Please enter a valid email address.");
-      return;
-    }
-
-    if (!contactNumber.trim()) {
-      setErrorMessage("Please enter your contact number.");
-      return;
-    }
-
-    if (!startDate) {
-      setErrorMessage("Please choose a rental start date.");
-      return;
-    }
-
-    if (!endDate) {
-      setErrorMessage("Please choose a rental end date.");
-      return;
-    }
-
-    if (endDate.getTime() <= startDate.getTime()) {
+    if (value.getTime() <= startDate.getTime()) {
       setErrorMessage("End date must be after the start date.");
       return;
     }
 
+    setEndDate(value);
+    setTemporaryEndDate(value);
+    setShowEndPicker(false);
+  };
+
+  const submitRentalRequest = async (): Promise<CheckoutSubmissionOutcome> => {
+    if (submitting) {
+      return { status: "failure", message: "Your rental request is already being submitted." };
+    }
+
+    let validationError = "";
+    if (!user?.uid) validationError = "You must be signed in to submit a rental request.";
+    else if (!property) validationError = "The requested property could not be found.";
+    else if (property.ownerUid === user.uid) validationError = "You cannot rent your own listing.";
+    else if (endDate.getTime() <= startDate.getTime()) validationError = "End date must be after the start date.";
+    else if (message.trim().length > MAX_MESSAGE_LENGTH) validationError = `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer.`;
+    else if (!Number.isFinite(totalPrice) || totalPrice <= 0) validationError = "Rental total must be greater than $0.00.";
+
+    if (validationError || !user) {
+      const nextMessage = validationError || "You must be signed in to submit a rental request.";
+      setErrorMessage(nextMessage);
+      return { status: "failure", message: nextMessage };
+    }
+
     setSubmitting(true);
+    setErrorMessage("");
 
     try {
-      await createRentalRequest({
-        propertyId: params.propertyId,
+      const rentalId = await createRentalRequest({
+        propertyId,
         renterUid: user.uid,
         startDate,
         endDate,
-        contactName: fullName,
-        contactEmail: email,
-        contactPhone: contactNumber,
-        message,
+        message: message.trim() || null,
       });
-
-      Alert.alert("Request Sent", "Your rental request has been submitted.", [
-        {
-          text: "OK",
-          onPress: () => {
-            navigation.navigate("MainApp", { screen: "Home" });
-          },
-        },
-      ]);
+      return { status: "success", rentalId };
     } catch (error) {
-      setErrorMessage(
-        getErrorMessage(error, "Could not submit your rental request. Please try again.")
+      const nextMessage = getErrorMessage(
+        error,
+        "Could not submit your rental request. Please try again."
       );
+      setErrorMessage(nextMessage);
+      return { status: "failure", message: nextMessage };
     } finally {
       setSubmitting(false);
     }
   };
 
   return {
-    fullName,
-    email,
-    contactNumber,
+    property,
+    loadingProperty,
     message,
     startDate,
     endDate,
+    temporaryStartDate,
+    temporaryEndDate,
     showStartPicker,
     showEndPicker,
     submitting,
     errorMessage,
-    totalAmount,
-    setFullName,
-    setEmail,
-    setContactNumber,
+    totalPrice,
     setMessage,
-    setShowStartPicker,
-    setShowEndPicker,
-    onStartDateChange,
-    onEndDateChange,
+    openStartPicker,
+    openEndPicker,
+    cancelStartPicker,
+    cancelEndPicker,
+    setTemporaryStartDate,
+    setTemporaryEndDate,
+    confirmStartDate,
+    confirmEndDate,
     submitRentalRequest,
   };
 }
