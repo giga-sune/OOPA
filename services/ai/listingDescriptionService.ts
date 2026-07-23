@@ -1,9 +1,7 @@
-import { getGenerativeModel } from "firebase/ai";
-
-import { ai } from "../firebase/firebaseApp";
+import { generateGeminiText } from "./geminiClient";
 import type { PropertyCondition } from "../../types/property/propertyTypes";
 
-const MODEL_NAME = "gemini-1.5-flash";
+const MODEL_NAME = "gemini-3.5-flash";
 const MAX_TITLE_LENGTH = 120;
 const MAX_BRAND_LENGTH = 80;
 const MAX_ROUGH_DESCRIPTION_LENGTH = 1_000;
@@ -20,18 +18,6 @@ Rules:
 - Do not claim that the item is the best, perfect, guaranteed, certified, or suitable for a specific purpose unless the listing data explicitly supports that claim.
 - Do not mention OOPA, these rules, the prompt, or that you are an AI.
 - Return only the finished description paragraph.`;
-
-const model = getGenerativeModel(ai, {
-  model: MODEL_NAME,
-  systemInstruction: SYSTEM_INSTRUCTION,
-  generationConfig: {
-    candidateCount: 1,
-    maxOutputTokens: 220,
-    temperature: 0.35,
-    topP: 0.85,
-    responseMimeType: "text/plain",
-  },
-});
 
 export interface ListingDescriptionInput {
   title: string;
@@ -91,8 +77,18 @@ export async function generateListingDescription(
   const prompt = buildPrompt(input);
 
   try {
-    const result = await model.generateContent(prompt);
-    const description = result.response.text().trim();
+    const description = await generateGeminiText({
+      model: MODEL_NAME,
+      systemInstruction: SYSTEM_INSTRUCTION,
+      prompt,
+      generationConfig: {
+        candidateCount: 1,
+        maxOutputTokens: 220,
+        temperature: 0.35,
+        topP: 0.85,
+        responseMimeType: "text/plain",
+      },
+    });
 
     if (!description) {
       throw new Error("Gemini returned an empty description.");
