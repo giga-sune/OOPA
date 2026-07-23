@@ -1,4 +1,4 @@
-import type { Rental } from "../rental/rentalTypes";
+import type { Rental, RentalRatePeriod } from "../rental/rentalTypes";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -11,7 +11,7 @@ export type RootStackParamList = {
     propertyId: string;
     title: string;
     price: number;
-    ratePeriod: string;
+    ratePeriod: RentalRatePeriod;
     image: string | null;
     ownerDisplayName: string;
   };

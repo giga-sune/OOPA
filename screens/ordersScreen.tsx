@@ -134,27 +134,14 @@ export default function OrdersScreen() {
     if (!currentUser) return;
     if (item.status?.toLowerCase() !== "approved") return;
 
-    const isOwner = item.ownerUid === currentUser.uid;
-    const recipientUid = isOwner ? item.renterUid : item.ownerUid;
-    const recipientName = (isOwner ? item.renterDisplayName : item.ownerDisplayName) || "User";
-
     try {
-      await ensureChatChannel({
-        rentalId: item.id,
-        propertyId: item.propertyId,
-        propertyTitle: item.propertyTitle,
-        propertyImageUrl: item.propertyImageUrl || null,
-        renterUid: item.renterUid,
-        ownerUid: item.ownerUid,
-        renterDisplayName: item.renterDisplayName || "Borrower",
-        ownerDisplayName: item.ownerDisplayName || "Lender",
-      });
+      const preparedChat = await ensureChatChannel(item.id);
 
       navigation.navigate("ChatRoom", {
-        rentalId: item.id,
-        title: item.propertyTitle,
-        recipientUid,
-        recipientName,
+        rentalId: preparedChat.rentalId,
+        title: preparedChat.title,
+        recipientUid: preparedChat.recipientUid,
+        recipientName: preparedChat.recipientName,
       });
     } catch (error) {
       console.error("Failed to open chat:", error);

@@ -31,7 +31,7 @@ import { Colors, Typography, Radius, Spacing, Shadows } from '../styles/globalDe
 export interface NotificationItem {
   id: string;
   recipientUid: string;
-  type: 'request_approved' | 'new_request';
+  type: 'request_approved' | 'request_rejected' | 'new_request';
   categoryLabel: string;                   
   bodyText: string;                        
   propertyImageUrl: string | null;
@@ -115,11 +115,18 @@ export default function NotificationsScreen() {
   };
 
   // Helper: Renders the appropriate dynamic icon based on type
-  const renderNotificationIcon = (type: 'request_approved' | 'new_request') => {
+  const renderNotificationIcon = (type: NotificationItem['type']) => {
     if (type === 'request_approved') {
       return (
         <View style={[styles.iconCircle, { backgroundColor: '#DCFCE7' }]}>
           <Ionicons name="checkmark-circle" size={18} color="#15803D" />
+        </View>
+      );
+    }
+    if (type === 'request_rejected') {
+      return (
+        <View style={[styles.iconCircle, { backgroundColor: '#FEE2E2' }]}>
+          <Ionicons name="close-circle" size={18} color="#B91C1C" />
         </View>
       );
     }

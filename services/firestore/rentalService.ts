@@ -2,12 +2,10 @@ import {
   addDoc,
   collection,
   doc,
-  getDoc,
   getDocs,
   query,
   serverTimestamp,
   updateDoc,
-  setDoc,
   where,
   type DocumentData,
 } from "firebase/firestore";
@@ -15,7 +13,6 @@ import {
 import { db } from "../firebase/firebaseApp";
 import { getPropertyById } from "./propertyService";
 import { getUserProfile } from "./userService";
-import { sendNativePush } from "../notification/pushNotificationService";
 import type {
   CreateRentalRequestInput,
   Rental,
@@ -24,7 +21,6 @@ import type {
 } from "../../types/rental/rentalTypes";
 
 const RENTALS_COLLECTION = "rentals";
-const NOTIFICATIONS_COLLECTION = "notifications";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 function toDate(value: unknown): Date {
@@ -138,6 +134,15 @@ function calculateTotalUnits(
   return Math.max(1, Math.ceil(durationInDays / 30));
 }
 
+export function calculateRentalTotalPrice(
+  price: number,
+  ratePeriod: RentalRatePeriod,
+  startDate: Date,
+  endDate: Date
+): number {
+  return price * calculateTotalUnits(startDate, endDate, ratePeriod);
+}
+
 function sortRentalsByUpdatedAt(rentals: Rental[]): Rental[] {
   return [...rentals].sort((firstRental, secondRental) => {
     return secondRental.updatedAt.getTime() - firstRental.updatedAt.getTime();
@@ -155,7 +160,7 @@ async function updateRentalStatus(rentalId: string, status: RentalStatus): Promi
   });
 }
 
-// CREATE RENTAL REQUEST (Creates a Pending Request & Notifies the Lender/Owner)
+// CREATE RENTAL REQUEST (trusted Functions create notifications after this write)
 export async function createRentalRequest(
   input: CreateRentalRequestInput
 ): Promise<string> {
@@ -203,39 +208,6 @@ export async function createRentalRequest(
     updatedAt: serverTimestamp(),
   });
 
-  // In-App Notification (Real-time center fetch)
-  const callerName = renterDisplayName || "A borrower";
-  try {
-    await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
-      recipientUid: property.ownerUid,
-      type: "new_request",
-      categoryLabel: "New Request",
-      bodyText: `${callerName} requested to borrow your "${propertyTitle}".`,
-      propertyImageUrl,
-      createdAt: serverTimestamp(),
-      read: false,
-    });
-  } catch (error) {
-    console.error("Failed to generate checkout notification:", error);
-  }
-
-  // Lock-screen System Native Push Notification
-  try {
-    const ownerDoc = await getDoc(doc(db, "users", property.ownerUid));
-    if (ownerDoc.exists()) {
-      const ownerData = ownerDoc.data();
-      if (ownerData?.expoPushToken) {
-        await sendNativePush(
-          ownerData.expoPushToken,
-          "🎁 New Rental Request!",
-          `${callerName} wants to borrow your "${propertyTitle}".`
-        );
-      }
-    }
-  } catch (pushError) {
-    console.error("Failed to deliver native push request:", pushError);
-  }
-
   return docRef.id;
 }
 
@@ -271,99 +243,12 @@ export async function getRentalsByOwner(ownerUid: string): Promise<Rental[]> {
   );
 }
 
-// APPROVE RENTAL REQUEST (Approves, Notifies the Borrower, & Inits Chat Channel)
+// APPROVE RENTAL REQUEST (trusted Functions create notification and chat)
 export async function approveRentalRequest(rentalId: string): Promise<void> {
-  // Update status to approved in the rentals collection
   await updateRentalStatus(rentalId, "approved");
-
-  try {
-    const rentalSnap = await getDoc(doc(db, RENTALS_COLLECTION, rentalId));
-    if (rentalSnap.exists()) {
-      const rentalData = rentalSnap.data();
-      const targetItemTitle = rentalData.propertyTitle || "your requested item";
-      
-      // In-App Notification Write
-      await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
-        recipientUid: rentalData.renterUid,
-        type: "request_approved",
-        categoryLabel: "Rental Approved",
-        bodyText: `Great news! Your request to borrow "${targetItemTitle}" has been approved.`,
-        propertyImageUrl: rentalData.propertyImageUrl || null,
-        createdAt: serverTimestamp(),
-        read: false,
-      });
-
-      //Lock-screen System Native Push Notification
-      const renterDoc = await getDoc(doc(db, "users", rentalData.renterUid));
-      if (renterDoc.exists()) {
-        const renterProfileData = renterDoc.data();
-        if (renterProfileData?.expoPushToken) {
-          await sendNativePush(
-            renterProfileData.expoPushToken,
-            "✅ Rental Approved!",
-            `Great news! Your request for "${targetItemTitle}" has been approved.`
-          );
-        }
-      }
-
-      //AUTOMATICALLY INITIALIZE CHAT CHANNEL
-      // Use setDoc with { merge: true } so it creates the document if it's missing,
-      const CHATS_COLLECTION = "chats";
-      await setDoc(doc(db, CHATS_COLLECTION, rentalId), {
-        rentalId: rentalId,
-        propertyId: rentalData.propertyId || "",
-        propertyTitle: targetItemTitle,
-        propertyImageUrl: rentalData.propertyImageUrl || null,
-        renterUid: rentalData.renterUid,
-        renterDisplayName: rentalData.renterDisplayName || "Borrower",
-        ownerUid: rentalData.ownerUid,
-        ownerDisplayName: rentalData.ownerDisplayName || "Lender",
-        lastMessage: "System: Rental request approved! You can now message each other.",
-        lastMessageTimestamp: serverTimestamp(),
-        unreadBy: [rentalData.renterUid], // Alerts the borrower there's a new channel open
-      }, { merge: true }); 
-      
-    }
-  } catch (error) {
-    console.error("Failed to generate approval notification or chat channels:", error);
-  }
 }
 
-// REJECT RENTAL REQUEST (Rejects & Notifies the Borrower/Renter)
+// REJECT RENTAL REQUEST (trusted Functions create the notification)
 export async function rejectRentalRequest(rentalId: string): Promise<void> {
   await updateRentalStatus(rentalId, "rejected");
-
-  try {
-    const rentalSnap = await getDoc(doc(db, RENTALS_COLLECTION, rentalId));
-    if (rentalSnap.exists()) {
-      const rentalData = rentalSnap.data();
-      const targetItemTitle = rentalData.propertyTitle || "your requested item";
-      
-      // In-App Notification Write
-      await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
-        recipientUid: rentalData.renterUid,
-        type: "request_rejected",
-        categoryLabel: "Rental Declined",
-        bodyText: `Sorry, your request to borrow "${targetItemTitle}" was declined by the owner.`,
-        propertyImageUrl: rentalData.propertyImageUrl || null,
-        createdAt: serverTimestamp(),
-        read: false,
-      });
-
-      // Lock-screen System Native Push Notification
-      const renterDoc = await getDoc(doc(db, "users", rentalData.renterUid));
-      if (renterDoc.exists()) {
-        const renterProfileData = renterDoc.data();
-        if (renterProfileData?.expoPushToken) {
-          await sendNativePush(
-            renterProfileData.expoPushToken,
-            "❌ Rental Request Update",
-            `Your request for "${targetItemTitle}" was declined.`
-          );
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Failed to generate rejection notification routes:", error);
-  }
 }

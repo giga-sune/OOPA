@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { useAuth } from "../../context/AuthContext";
 import {
-  calculateRentalTotalPrice,
+ 
   createRentalRequest,
 } from "../../services/firestore/rentalService";
 import { getUserProfile } from "../../services/firestore/userService";
