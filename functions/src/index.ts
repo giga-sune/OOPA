@@ -1,6 +1,16 @@
 import {getApps, initializeApp} from "firebase-admin/app";
-import {FieldValue, getFirestore} from "firebase-admin/firestore";
+import {
+  type DocumentData,
+  FieldValue,
+  getFirestore,
+  Timestamp,
+} from "firebase-admin/firestore";
 import {defineSecret} from "firebase-functions/params";
+import {logger} from "firebase-functions";
+import {
+  onDocumentCreated,
+  onDocumentUpdated,
+} from "firebase-functions/v2/firestore";
 import {HttpsError, onCall, onRequest} from "firebase-functions/v2/https";
 import Stripe from "stripe";
 
@@ -13,7 +23,22 @@ const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 
 const RENTALS_COLLECTION = "rentals";
 const PAYMENTS_COLLECTION = "payments";
+const CHATS_COLLECTION = "chats";
+const NOTIFICATIONS_COLLECTION = "notifications";
+const PUSH_TOKENS_COLLECTION = "pushTokens";
 const CURRENCY = "cad";
+
+type RentalEventType =
+  | "new_request"
+  | "request_approved"
+  | "request_rejected";
+
+interface PreparedRentalChat {
+  rentalId: string;
+  title: string;
+  recipientUid: string;
+  recipientName: string;
+}
 
 type StoredPaymentStatus = "unpaid" | "processing" | "paid";
 
@@ -29,6 +54,287 @@ interface StoredPayment {
   attemptNumber: number;
   status: StoredPaymentStatus;
 }
+
+/* eslint-disable valid-jsdoc */
+/** Returns a trimmed required string field or null. */
+function readRequiredString(
+  data: DocumentData,
+  field: string
+): string | null {
+  const value = data[field];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/** Builds trusted chat metadata from a rental document. */
+function buildChatData(
+  rentalId: string,
+  rental: DocumentData,
+  existing?: DocumentData
+) {
+  const renterUid = readRequiredString(rental, "renterUid") ?? "";
+  const ownerUid = readRequiredString(rental, "ownerUid") ?? "";
+  const existingLastMessage = existing?.lastMessage;
+  const lastMessage = typeof existingLastMessage === "string" &&
+    existingLastMessage.length >= 1 &&
+    existingLastMessage.length <= 2000 ?
+    existingLastMessage :
+    "Rental request approved. You can now message each other.";
+  const lastMessageTimestamp = existing?.lastMessageTimestamp instanceof
+    Timestamp ?
+    existing.lastMessageTimestamp :
+    FieldValue.serverTimestamp();
+  const unreadBy = Array.isArray(existing?.unreadBy) ?
+    [...new Set(existing.unreadBy.filter(
+      (uid): uid is string => uid === renterUid || uid === ownerUid
+    ))].slice(0, 2) :
+    [renterUid];
+
+  return {
+    rentalId,
+    propertyId: readRequiredString(rental, "propertyId") ?? "",
+    propertyTitle: readRequiredString(rental, "propertyTitle") ?? "Rental",
+    propertyImageUrl: typeof rental.propertyImageUrl === "string" ?
+      rental.propertyImageUrl :
+      null,
+    renterUid,
+    renterDisplayName:
+      readRequiredString(rental, "renterDisplayName") ?? "Borrower",
+    ownerUid,
+    ownerDisplayName:
+      readRequiredString(rental, "ownerDisplayName") ?? "Lender",
+    lastMessage,
+    lastMessageTimestamp,
+    unreadBy,
+  };
+}
+
+/** Creates a rental chat once without overwriting an existing channel. */
+async function ensureRentalChat(
+  rentalId: string,
+  rental: DocumentData
+): Promise<void> {
+  const db = getFirestore();
+  const chatRef = db.collection(CHATS_COLLECTION).doc(rentalId);
+
+  await db.runTransaction(async (transaction) => {
+    const chatSnapshot = await transaction.get(chatRef);
+
+    transaction.set(
+      chatRef,
+      buildChatData(rentalId, rental, chatSnapshot.data())
+    );
+  });
+}
+
+/** Writes an idempotent in-app rental notification. */
+async function writeRentalNotification(
+  rentalId: string,
+  type: RentalEventType,
+  recipientUid: string,
+  categoryLabel: string,
+  bodyText: string,
+  propertyImageUrl: string | null
+): Promise<void> {
+  await getFirestore()
+    .collection(NOTIFICATIONS_COLLECTION)
+    .doc(`${rentalId}_${type}`)
+    .set({
+      rentalId,
+      recipientUid,
+      type,
+      categoryLabel,
+      bodyText,
+      propertyImageUrl,
+      createdAt: FieldValue.serverTimestamp(),
+      read: false,
+    });
+}
+
+/** Sends a native push using a server-readable private token. */
+async function sendRentalPush(
+  recipientUid: string,
+  title: string,
+  body: string,
+  rentalId: string
+): Promise<void> {
+  const tokenSnapshot = await getFirestore()
+    .collection(PUSH_TOKENS_COLLECTION)
+    .doc(recipientUid)
+    .get();
+  const token = tokenSnapshot.data()?.token;
+
+  if (typeof token !== "string" || !token) {
+    return;
+  }
+
+  const response = await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      to: token,
+      sound: "default",
+      title,
+      body,
+      data: {rentalId},
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Expo push request failed with status ${response.status}.`);
+  }
+}
+
+/** Persists and delivers a rental lifecycle notification. */
+async function deliverRentalEvent(
+  rentalId: string,
+  rental: DocumentData,
+  type: RentalEventType
+): Promise<void> {
+  const propertyTitle =
+    readRequiredString(rental, "propertyTitle") ?? "Rental";
+  const propertyImageUrl = typeof rental.propertyImageUrl === "string" ?
+    rental.propertyImageUrl :
+    null;
+  const isNewRequest = type === "new_request";
+  const recipientUid = readRequiredString(
+    rental,
+    isNewRequest ? "ownerUid" : "renterUid"
+  );
+
+  if (!recipientUid) {
+    logger.error("Rental event has no recipient", {rentalId, type});
+    return;
+  }
+
+  const renterName =
+    readRequiredString(rental, "renterDisplayName") ?? "A borrower";
+  const notification = isNewRequest ?
+    {
+      category: "New Request",
+      body: `${renterName} requested to borrow your "${propertyTitle}".`,
+      pushTitle: "New Rental Request",
+    } :
+    type === "request_approved" ?
+      {
+        category: "Rental Approved",
+        body: `Your request to borrow "${propertyTitle}" was approved.`,
+        pushTitle: "Rental Approved",
+      } :
+      {
+        category: "Rental Declined",
+        body: `Your request to borrow "${propertyTitle}" was declined.`,
+        pushTitle: "Rental Request Update",
+      };
+
+  await writeRentalNotification(
+    rentalId,
+    type,
+    recipientUid,
+    notification.category,
+    notification.body,
+    propertyImageUrl
+  );
+
+  try {
+    await sendRentalPush(
+      recipientUid,
+      notification.pushTitle,
+      notification.body,
+      rentalId
+    );
+  } catch (error) {
+    logger.error("Failed to deliver rental push", {rentalId, type, error});
+  }
+}
+
+export const notifyRentalCreated = onDocumentCreated(
+  `${RENTALS_COLLECTION}/{rentalId}`,
+  async (event) => {
+    const rental = event.data?.data();
+
+    if (rental) {
+      await deliverRentalEvent(event.params.rentalId, rental, "new_request");
+    }
+  }
+);
+
+export const notifyRentalDecision = onDocumentUpdated(
+  `${RENTALS_COLLECTION}/{rentalId}`,
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+
+    if (!before || !after || before.status === after.status) {
+      return;
+    }
+
+    const rentalId = event.params.rentalId;
+
+    if (after.status === "approved") {
+      await ensureRentalChat(rentalId, after);
+      await deliverRentalEvent(rentalId, after, "request_approved");
+    } else if (after.status === "rejected") {
+      await deliverRentalEvent(rentalId, after, "request_rejected");
+    }
+  }
+);
+
+export const prepareRentalChat = onCall(
+  {invoker: "public"},
+  async (request): Promise<PreparedRentalChat> => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be signed in to chat.");
+    }
+
+    const rentalId = requireRentalId(request.data?.rentalId);
+    const rentalSnapshot = await getFirestore()
+      .collection(RENTALS_COLLECTION)
+      .doc(rentalId)
+      .get();
+    const rental = rentalSnapshot.data();
+
+    if (!rentalSnapshot.exists || !rental) {
+      throw new HttpsError("not-found", "This rental could not be found.");
+    }
+
+    const renterUid = readRequiredString(rental, "renterUid");
+    const ownerUid = readRequiredString(rental, "ownerUid");
+
+    if (!renterUid || !ownerUid) {
+      throw new HttpsError(
+        "failed-precondition",
+        "This rental is missing participant information."
+      );
+    }
+
+    if (request.auth.uid !== renterUid && request.auth.uid !== ownerUid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only rental participants can open this chat."
+      );
+    }
+
+    if (rental.status !== "approved") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Chat becomes available after approval."
+      );
+    }
+
+    await ensureRentalChat(rentalId, rental);
+
+    const isOwner = request.auth.uid === ownerUid;
+    return {
+      rentalId,
+      title: readRequiredString(rental, "propertyTitle") ?? "Rental",
+      recipientUid: isOwner ? renterUid : ownerUid,
+      recipientName: isOwner ?
+        readRequiredString(rental, "renterDisplayName") ?? "Borrower" :
+        readRequiredString(rental, "ownerDisplayName") ?? "Lender",
+    };
+  }
+);
+/* eslint-enable valid-jsdoc */
 
 /**
  * Validates and normalizes a callable rental identifier.
@@ -146,10 +452,6 @@ async function markPaymentFromWebhook(
       paidAt: status === "paid" ? FieldValue.serverTimestamp() : null,
     });
   });
-}
-
-interface PaymentIntentData {
-  amount: number;
 }
 
 export const createPaymentIntent = onCall(

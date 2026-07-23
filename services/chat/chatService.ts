@@ -2,12 +2,10 @@ import {
   addDoc,
   collection,
   doc,
-  getDoc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   where,
   arrayUnion,
@@ -15,7 +13,8 @@ import {
   type DocumentData,
   type QuerySnapshot,
 } from "firebase/firestore";
-import { db } from "../firebase/firebaseApp";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "../firebase/firebaseApp";
 
 const CHATS_COLLECTION = "chats";
 const MESSAGES_SUBCOLLECTION = "messages";
@@ -41,38 +40,22 @@ export interface ChatMessage {
   createdAt: any;
 }
 
-export interface EnsureChatChannelInput {
+export interface PreparedRentalChat {
   rentalId: string;
-  propertyId?: string;
-  propertyTitle: string;
-  propertyImageUrl?: string | null;
-  renterUid: string;
-  ownerUid: string;
-  renterDisplayName: string;
-  ownerDisplayName: string;
+  title: string;
+  recipientUid: string;
+  recipientName: string;
 }
 
-export async function ensureChatChannel(input: EnsureChatChannelInput): Promise<void> {
-  const chatRef = doc(db, CHATS_COLLECTION, input.rentalId);
-  const chatSnap = await getDoc(chatRef);
-
-  if (chatSnap.exists()) {
-    return;
-  }
-
-  await setDoc(chatRef, {
-    rentalId: input.rentalId,
-    propertyId: input.propertyId ?? "",
-    propertyTitle: input.propertyTitle,
-    propertyImageUrl: input.propertyImageUrl ?? null,
-    renterUid: input.renterUid,
-    ownerUid: input.ownerUid,
-    renterDisplayName: input.renterDisplayName,
-    ownerDisplayName: input.ownerDisplayName,
-    lastMessage: "Chat initiated",
-    lastMessageTimestamp: serverTimestamp(),
-    unreadBy: [],
-  });
+export async function ensureChatChannel(
+  rentalId: string
+): Promise<PreparedRentalChat> {
+  const prepareRentalChat = httpsCallable<
+    { rentalId: string },
+    PreparedRentalChat
+  >(functions, "prepareRentalChat");
+  const result = await prepareRentalChat({ rentalId });
+  return result.data;
 }
 
 function mapChatChannel(docSnap: { id: string; data: () => DocumentData }): ChatChannel {

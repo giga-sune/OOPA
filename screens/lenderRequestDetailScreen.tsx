@@ -109,22 +109,13 @@ export default function LenderRequestDetailScreen() {
 
         try {
             setLoading(true);
-            await ensureChatChannel({
-                rentalId: rental.id,
-                propertyId: rental.propertyId,
-                propertyTitle: rental.propertyTitle,
-                propertyImageUrl: rental.propertyImageUrl || null,
-                renterUid: rental.renterUid,
-                ownerUid: rental.ownerUid,
-                renterDisplayName: borrowerName,
-                ownerDisplayName: rental.ownerDisplayName || "Lender",
-            });
+            const preparedChat = await ensureChatChannel(rental.id);
 
             navigation.navigate("ChatRoom", {
-                rentalId: rental.id,
-                title: rental.propertyTitle,
-                recipientUid: rental.renterUid,
-                recipientName: borrowerName,
+                rentalId: preparedChat.rentalId,
+                title: preparedChat.title,
+                recipientUid: preparedChat.recipientUid,
+                recipientName: preparedChat.recipientName,
             });
         } catch (error) {
             console.error("Error setting up chat initialization channel:", error);
