@@ -14,9 +14,6 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Circle } from 'react-native-maps';
-import { doc, getDoc } from 'firebase/firestore';
-
-import { db } from '../services/firebase/firebaseApp';
 import { Colors, Typography, Radius, Spacing, Shadows } from '../styles/globalDesignSystem';
 import { getPropertyById, getUserProperties } from '../services/firestore/propertyService';
 import { getPropertyReviewSummary, type Review } from '../services/firestore/reviewService';
@@ -60,21 +57,10 @@ export default function DetailsScreen() {
             const userListings = await getUserProperties(data.ownerUid);
             setOwnerListingsCount(userListings.length);
 
-            const userDocRef = doc(db, "users", data.ownerUid);
-            const userSnapshot = await getDoc(userDocRef);
-
-            if (userSnapshot.exists()) {
-              const userData = userSnapshot.data();
-              setOwnerProfile({
-                displayName: userData?.userName || userData?.displayName || "OOPA User",
-                photoURL: userData?.profilePictureUrl || null,
-              });
-            } else {
-              setOwnerProfile({
-                displayName: data.ownerDisplayName || "OOPA User",
-                photoURL: data.ownerPhotoURL || null,
-              });
-            }
+            setOwnerProfile({
+              displayName: data.ownerDisplayName || "OOPA User",
+              photoURL: data.ownerPhotoURL || null,
+            });
           }
         }
       } catch (err) {

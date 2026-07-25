@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,17 +11,19 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../services/firebase/firebaseApp";
 
 import { uploadImageToStorage } from "../services/storage/storageService";
+import { getListingAllowance, updateProperty } from "../services/firestore/propertyService";
 
 import InputField from "../components/InputField";
 import { Colors, Typography, Radius, Spacing, Shadows } from "../styles/globalDesignSystem";
 import usePropertyViewModel from "../viewModels/property/usePropertyViewModel";
 
 import { MapLocationModal } from "../components/location/MapLocationModal";
+import type { ListingAllowance } from "../types/property/propertyTypes";
 
 type ConditionType = "Like new" | "Good" | "Used";
 type RatePeriodType = "week" | "month";
@@ -47,6 +49,9 @@ export default function PostScreen() {
   const [showRateDropdown, setShowRateDropdown] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [allowance, setAllowance] = useState<ListingAllowance | null>(null);
+  const [allowanceLoading, setAllowanceLoading] = useState(!isEditing);
+  const [allowanceError, setAllowanceError] = useState("");
 
   const [editModeImages, setEditModeImages] = useState<string[]>([]);
 
@@ -80,6 +85,35 @@ export default function PostScreen() {
     loading,
     error,
   } = usePropertyViewModel();
+
+  const refreshAllowance = useCallback(async () => {
+    if (isEditing) {
+      setAllowanceLoading(false);
+      return;
+    }
+
+    setAllowanceLoading(true);
+    setAllowanceError("");
+
+    try {
+      setAllowance(await getListingAllowance());
+    } catch (allowanceCheckError) {
+      setAllowance(null);
+      setAllowanceError(
+        allowanceCheckError instanceof Error && allowanceCheckError.message
+          ? allowanceCheckError.message
+          : "Unable to check your listing allowance."
+      );
+    } finally {
+      setAllowanceLoading(false);
+    }
+  }, [isEditing]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshAllowance();
+    }, [refreshAllowance])
+  );
 
   useEffect(() => {
     if (isEditing && propertyId) {
@@ -166,22 +200,16 @@ export default function PostScreen() {
           uploadedImageUrls.push(downloadUrl);
         }
 
-        const propertyDocRef = doc(db, "properties", propertyId);
-        
-        await updateDoc(propertyDocRef, {
+        await updateProperty(propertyId, {
           title: title.trim(),
           description: description.trim(),
           brand: brand.trim(),
-          condition,
+          condition: condition ?? undefined,
           priceType,
           price: Number(price),
           ratePeriod,
           location,
           images: uploadedImageUrls,
-          ownerUid: currentUser.uid,
-          ownerDisplayName: currentUser.displayName || "Anonymous User",
-          ownerPhotoURL: currentUser.photoURL || null,
-          updatedAt: serverTimestamp(),
         });
 
         Alert.alert("Success!", "Your listing has been successfully updated.", [
@@ -200,8 +228,8 @@ export default function PostScreen() {
         setLocalLoading(false);
       }
     } else {
-      const wasSuccessful = await submitProperty();
-      if (wasSuccessful) {
+      const outcome = await submitProperty();
+      if (outcome === "success") {
         Alert.alert("Success!", "Your item has been successfully published.", [
           {
             text: "OK",
@@ -210,6 +238,13 @@ export default function PostScreen() {
             },
           },
         ]);
+      } else if (outcome === "listing-limit") {
+        setAllowance({
+          activeCount: allowance?.limit ?? 3,
+          limit: allowance?.limit ?? 3,
+          canCreate: false,
+          isPro: false,
+        });
       }
     }
   };
@@ -221,6 +256,59 @@ export default function PostScreen() {
       <View style={[styles.container, styles.centerLoader]}>
         <ActivityIndicator size="small" color={Colors.primary} />
         <Text style={styles.loadingText}>Loading listing details...</Text>
+      </View>
+    );
+  }
+
+  if (!isEditing && allowanceLoading) {
+    return (
+      <View style={[styles.container, styles.centerLoader]}>
+        <ActivityIndicator size="small" color={Colors.primary} />
+        <Text style={styles.loadingText}>Checking your listing allowance...</Text>
+      </View>
+    );
+  }
+
+  if (!isEditing && allowanceError) {
+    return (
+      <View style={[styles.container, styles.allowanceState]}>
+        <View style={styles.allowanceIcon}>
+          <Feather name="wifi-off" size={28} color={Colors.primary} />
+        </View>
+        <Text style={styles.allowanceTitle}>We couldn&apos;t check your listing access</Text>
+        <Text style={styles.allowanceDescription}>{allowanceError}</Text>
+        <TouchableOpacity style={styles.gatePrimaryButton} onPress={() => void refreshAllowance()}>
+          <Text style={styles.gatePrimaryButtonText}>Try again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!isEditing && allowance && !allowance.canCreate) {
+    return (
+      <View style={[styles.container, styles.allowanceState]}>
+        <View style={styles.allowanceIcon}>
+          <Feather name="lock" size={28} color={Colors.primary} />
+        </View>
+        <Text style={styles.allowanceTitle}>You&apos;ve reached your free listing limit</Text>
+        <Text style={styles.allowanceUsage}>
+          {allowance.activeCount} of {allowance.limit ?? 3} active listings
+        </Text>
+        <Text style={styles.allowanceDescription}>
+          Upgrade to OOPA Pro for unlimited active listings, or remove an existing listing to create a new one.
+        </Text>
+        <TouchableOpacity
+          style={styles.gatePrimaryButton}
+          onPress={() => navigation.navigate("Subscription", {origin: "postLimit"})}
+        >
+          <Text style={styles.gatePrimaryButtonText}>View plans</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.gateSecondaryButton}
+          onPress={() => navigation.navigate("MyListings")}
+        >
+          <Text style={styles.gateSecondaryButtonText}>Manage listings</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -498,6 +586,69 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: "#64748B",
+  },
+  allowanceState: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 80,
+  },
+  allowanceIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.primaryTertiary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
+  },
+  allowanceTitle: {
+    ...Typography.h2,
+    color: Colors.text,
+    textAlign: "center",
+  },
+  allowanceUsage: {
+    ...Typography.label,
+    color: Colors.primary,
+    fontWeight: "700",
+    marginTop: Spacing.sm,
+  },
+  allowanceDescription: {
+    ...Typography.body,
+    color: Colors.subText,
+    textAlign: "center",
+    marginTop: Spacing.md,
+    maxWidth: 360,
+  },
+  gatePrimaryButton: {
+    width: "100%",
+    maxWidth: 360,
+    minHeight: 56,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.xl,
+    ...Shadows.primary,
+  },
+  gatePrimaryButtonText: {
+    ...Typography.button,
+    color: Colors.white,
+  },
+  gateSecondaryButton: {
+    width: "100%",
+    maxWidth: 360,
+    minHeight: 56,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.md,
+  },
+  gateSecondaryButtonText: {
+    ...Typography.button,
+    color: Colors.primary,
   },
   content: {
     paddingHorizontal: CONTAINER_PADDING,

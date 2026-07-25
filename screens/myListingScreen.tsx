@@ -10,10 +10,11 @@ import {
   TouchableOpacity
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { collection, query, where, onSnapshot, doc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 
 import { db, auth } from "../services/firebase/firebaseApp";
+import { deleteProperty } from "../services/firestore/propertyService";
 import PropertyCard from "../components/property/PropertyCard";
 import { Colors, Spacing } from "../styles/globalDesignSystem";
 
@@ -106,7 +107,7 @@ export default function MyListingsScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, "properties", id));
+              await deleteProperty(id);
             } catch (err) {
               console.error("Error deleting document from Firestore: ", err);
               Alert.alert("Error", "Could not remove listing. Please try again.");

@@ -4,7 +4,19 @@ rules_version = '2';
 // Assumed Data Model
 // ===============================================================
 //
-// Existing authenticated access for users and properties is preserved.
+// users/{uid}
+//   Private profile with an immutable uid/createdAt and bounded profile fields.
+//   Only the matching user may get or update it; collection listing is denied.
+//
+// properties/{propertyId}
+//   Authenticated catalog read. Creation, editing, and deletion are performed by
+//   callable Functions so listing limits and listingStats change atomically.
+//
+// entitlements/{uid}, listingStats/{uid}
+//   Owner-readable, server-writable subscription and listing-limit state.
+//
+// stripeCustomers/{uid}, stripeCustomerLinks/{customerId}, stripeEvents/{eventId}
+//   Server-only Stripe identity and webhook-idempotency data.
 //
 // rentals/{rentalId}
 //   Immutable rental, participant, item, pricing, and creation fields.
@@ -66,6 +78,47 @@ service cloud.firestore {
           value.size() >= 10 &&
           value.size() <= 2048 &&
           value.matches('^https?://.*'));
+    }
+
+    function hasValidUserFields(data) {
+      return data.keys().hasAll([
+          'uid',
+          'email',
+          'userName',
+          'photoURL',
+          'profilePictureUrl',
+          'phone',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'uid',
+          'email',
+          'userName',
+          'photoURL',
+          'profilePictureUrl',
+          'phone',
+          'createdAt',
+          'updatedAt'
+        ]);
+    }
+
+    function isValidUser(data, userId) {
+      return hasValidUserFields(data) &&
+        data.uid == userId &&
+        data.uid is string &&
+        data.uid.size() >= 1 &&
+        data.uid.size() <= 128 &&
+        data.email is string &&
+        data.email.size() >= 3 &&
+        data.email.size() <= 254 &&
+        data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$') &&
+        isValidNullableString(data.userName, 100) &&
+        isValidNullableUrl(data.photoURL) &&
+        isValidNullableUrl(data.profilePictureUrl) &&
+        isValidNullableString(data.phone, 32) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
     }
 
     function hasValidRentalFields(data) {
@@ -412,13 +465,47 @@ service cloud.firestore {
         data.updatedAt == request.time;
     }
 
-    // Preserve current access for collections outside this payment change.
-    match /users/{document=**} {
-      allow read, write: if isAuthenticated();
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list, delete: if false;
+
+      allow create: if isOwner(userId) &&
+        isValidUser(request.resource.data, userId) &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time;
+
+      allow update: if isOwner(userId) &&
+        isValidUser(request.resource.data, userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedAt == request.time;
     }
 
-    match /properties/{document=**} {
-      allow read, write: if isAuthenticated();
+    match /properties/{propertyId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if false;
+    }
+
+    match /entitlements/{userId} {
+      allow get: if isOwner(userId);
+      allow list, create, update, delete: if false;
+    }
+
+    match /listingStats/{userId} {
+      allow get: if isOwner(userId);
+      allow list, create, update, delete: if false;
+    }
+
+    match /stripeCustomers/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /stripeCustomerLinks/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /stripeEvents/{document=**} {
+      allow read, write: if false;
     }
 
     match /rentals/{rentalId} {

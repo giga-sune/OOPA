@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../../context/AuthContext";
 import useProfileViewModel from "../user/useProfileViewModel"; // 👈 Import your profile hook here
 import { generateListingDescription } from "../../services/ai/listingDescriptionService";
-import { createProperty } from "../../services/firestore/propertyService";
+import { createProperty, getListingAllowance } from "../../services/firestore/propertyService";
 import { uploadImageToStorage } from "../../services/storage/storageService";
 import type {
   CreatePropertyInput,
@@ -52,16 +52,24 @@ export interface PropertyViewModelResult {
   pickImage: () => Promise<boolean>;
   removeImage: (index: number) => void;
   generateDescription: () => Promise<boolean>;
-  submitProperty: () => Promise<boolean>;
+  submitProperty: () => Promise<PublishPropertyOutcome>;
   aiLoading: boolean;
   aiError: string;
   loading: boolean;
   error: string;
 }
 
+export type PublishPropertyOutcome = "success" | "listing-limit" | "failure";
+
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) return error.message;
   return fallback;
+}
+
+function isListingLimitError(error: unknown): boolean {
+  if (!error || typeof error !== "object" || !("code" in error)) return false;
+  const code = (error as {code?: unknown}).code;
+  return code === "resource-exhausted" || code === "functions/resource-exhausted";
 }
 
 function validatePublishInput(input: PublishPropertyInput): string {
@@ -175,7 +183,7 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
     }
   };
 
-  const submitProperty = async (): Promise<boolean> => {
+  const submitProperty = async (): Promise<PublishPropertyOutcome> => {
     const input: PublishPropertyInput = {
       ownerUid: user?.uid ?? "",
       ownerEmail: user?.email ?? null,
@@ -195,17 +203,24 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
 
     const validationError = validatePublishInput(input);
     setError(validationError);
-    if (validationError) return false;
+    if (validationError) return "failure";
 
     if (imagesList.length === 0) {
       setError("Please choose at least one image before publishing.");
-      return false;
+      return "failure";
     }
 
     setError("");
     setLoading(true);
 
     try {
+      const allowance = await getListingAllowance();
+
+      if (!allowance.canCreate) {
+        setError("Free accounts are limited to three active listings.");
+        return "listing-limit";
+      }
+
       const uploadedImageUrls: string[] = [];
       for (let i = 0; i < imagesList.length; i++) {
         const item = imagesList[i];
@@ -240,10 +255,15 @@ export default function usePropertyViewModel(): PropertyViewModelResult {
       setRatePeriod("month");
       setLocation(null);
       setImagesList([]);
-      return true;
+      return "success";
     } catch (serviceError) {
+      if (isListingLimitError(serviceError)) {
+        setError("Free accounts are limited to three active listings.");
+        return "listing-limit";
+      }
+
       setError(getErrorMessage(serviceError, "Could not publish this listing. Please try again."));
-      return false;
+      return "failure";
     } finally {
       setLoading(false);
     }

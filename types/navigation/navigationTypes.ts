@@ -9,6 +9,7 @@ export type RootStackParamList = {
   Details: { propertyId: string };
   MapViewer: { latitude: number; longitude: number; address: string };
   CheckoutScreen: { propertyId: string };
+  Subscription: { origin?: "profile" | "postLimit" } | undefined;
 
   LenderRequestDetailScreen: { rentalId: string };
   BorrowerOrderDetailScreen: { rentalId: string };

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getPropertyById } from "../../services/firestore/propertyService";
 import { subscribeToRental } from "../../services/firestore/rentalService";
-import { getUserProfile } from "../../services/firestore/userService";
 import type { LocationData } from "../../types/property/propertyTypes";
 import type { Rental } from "../../types/rental/rentalTypes";
 import type { AppUserProfile } from "../../types/user/userTypes";
@@ -91,20 +90,16 @@ export default function useRentalDetailData(
         setIsAuthorized(true);
         setErrorMessage("");
 
-        const counterpartyUid = viewerRole === "owner" ? nextRental.renterUid : nextRental.ownerUid;
-        void Promise.allSettled([
-          getUserProfile(counterpartyUid),
-          getPropertyById(nextRental.propertyId),
-        ]).then(([profileResult, propertyResult]) => {
+        void getPropertyById(nextRental.propertyId).then((property) => {
           if (!isActive || currentVersion !== detailVersion) return;
-          setCounterpartyProfile(profileResult.status === "fulfilled" ? profileResult.value : null);
-          setPropertyLocation(
-            propertyResult.status === "fulfilled" ? propertyResult.value?.location ?? null : null
-          );
-
-          if (profileResult.status === "rejected" || propertyResult.status === "rejected") {
-            setErrorMessage("Some current profile or location details are unavailable.");
-          }
+          setCounterpartyProfile(null);
+          setPropertyLocation(property?.location ?? null);
+          setLoading(false);
+        }).catch(() => {
+          if (!isActive || currentVersion !== detailVersion) return;
+          setCounterpartyProfile(null);
+          setPropertyLocation(null);
+          setErrorMessage("The listing location is currently unavailable.");
           setLoading(false);
         });
       },

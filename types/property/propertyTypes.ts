@@ -63,3 +63,10 @@ export interface UpdatePropertyInput {
   ratePeriod?: PropertyRatePeriod;
   location?: LocationData;
 }
+
+export interface ListingAllowance {
+  activeCount: number;
+  limit: number | null;
+  canCreate: boolean;
+  isPro: boolean;
+}

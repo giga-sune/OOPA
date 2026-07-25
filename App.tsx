@@ -17,7 +17,7 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, type LinkingOptions } from "@react-navigation/native";
 import { StripeProvider } from "@stripe/stripe-react-native";
 
 import AppNavigator from "./navigation/appNavigator";
@@ -28,6 +28,16 @@ import useAuthSessionViewModel, {
 
 import { AuthProvider } from "./context/AuthContext";
 import { registerForPushNotificationsAsync } from "./services/notification/pushNotificationService";
+import type { RootStackParamList } from "./types/navigation/navigationTypes";
+
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ["oopa://"],
+  config: {
+    screens: {
+      Subscription: "subscription",
+    },
+  },
+};
 
 export default function App() {
   const {
@@ -87,7 +97,7 @@ export default function App() {
               style={{ flex: 1 }}
               behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-              <NavigationContainer>
+              <NavigationContainer linking={linking}>
                 <AppNavigator />
               </NavigationContainer>
             </KeyboardAvoidingView>

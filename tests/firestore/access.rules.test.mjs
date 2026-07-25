@@ -73,6 +73,19 @@ function validChat() {
   };
 }
 
+function validUser(uid) {
+  return {
+    uid,
+    email: `${uid}@example.com`,
+    userName: "OOPA User",
+    photoURL: null,
+    profilePictureUrl: "https://example.com/avatar.jpg",
+    phone: null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+}
+
 before(async () => {
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
@@ -95,6 +108,23 @@ before(async () => {
       createdAt: Timestamp.fromDate(new Date("2026-06-01T00:00:00Z")),
       read: false,
     });
+    await setDoc(doc(db, "properties", "property-one"), {
+      ownerUid: OWNER_UID,
+      title: "Camera",
+      price: 50,
+      ratePeriod: "week",
+    });
+    await setDoc(doc(db, "entitlements", OWNER_UID), {
+      tier: "pro",
+      active: true,
+      provider: "stripe",
+    });
+    await setDoc(doc(db, "listingStats", OWNER_UID), {activeCount: 4});
+    await setDoc(doc(db, "stripeCustomers", OWNER_UID), {
+      customerId: "cus_test",
+    });
+    await setDoc(doc(db, "stripeCustomerLinks", "cus_test"), {uid: OWNER_UID});
+    await setDoc(doc(db, "stripeEvents", "evt_test"), {processed: true});
   });
 });
 
@@ -232,5 +262,79 @@ test("server-owned chat, notification, and push-token rules", async (t) => {
     await assertSucceeds(getDoc(doc(renterDb, "payments", RENTAL_ID)));
     await assertSucceeds(getDoc(doc(ownerDb, "payments", RENTAL_ID)));
     await assertFails(getDoc(doc(outsiderDb, "payments", RENTAL_ID)));
+  });
+});
+
+test("private profiles and server-owned subscription state", async (t) => {
+  const ownerDb = testEnv.authenticatedContext(OWNER_UID).firestore();
+  const renterDb = testEnv.authenticatedContext(RENTER_UID).firestore();
+  const outsiderDb = testEnv.authenticatedContext(OUTSIDER_UID).firestore();
+  const anonymousDb = testEnv.unauthenticatedContext().firestore();
+
+  await t.test("users can create and maintain only their own validated profile", async () => {
+    const renterProfile = doc(renterDb, "users", RENTER_UID);
+    await assertSucceeds(setDoc(renterProfile, validUser(RENTER_UID)));
+    await assertSucceeds(getDoc(renterProfile));
+    await assertFails(getDoc(doc(outsiderDb, "users", RENTER_UID)));
+    await assertFails(getDoc(doc(anonymousDb, "users", RENTER_UID)));
+    await assertFails(getDocs(collection(renterDb, "users")));
+    await assertFails(setDoc(doc(outsiderDb, "users", RENTER_UID), validUser(RENTER_UID)));
+    await assertFails(setDoc(doc(ownerDb, "users", OWNER_UID), {
+      ...validUser(OWNER_UID),
+      role: "admin",
+    }));
+    await assertFails(setDoc(doc(ownerDb, "users", OWNER_UID), {
+      ...validUser(OUTSIDER_UID),
+      uid: OUTSIDER_UID,
+    }));
+    await assertSucceeds(updateDoc(renterProfile, {
+      userName: "Updated User",
+      updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(renterProfile, {role: "admin"}));
+    await assertFails(updateDoc(renterProfile, {
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }));
+    await assertFails(deleteDoc(renterProfile));
+  });
+
+  await t.test("property catalog is readable but all client writes are denied", async () => {
+    const property = doc(ownerDb, "properties", "property-one");
+    await assertSucceeds(getDoc(property));
+    await assertSucceeds(getDocs(collection(renterDb, "properties")));
+    await assertFails(getDoc(doc(anonymousDb, "properties", "property-one")));
+    await assertFails(setDoc(doc(ownerDb, "properties", "forged"), {
+      ownerUid: OWNER_UID,
+      title: "Forged",
+    }));
+    await assertFails(updateDoc(property, {ownerUid: OUTSIDER_UID}));
+    await assertFails(deleteDoc(property));
+  });
+
+  await t.test("owners can get, but never write, entitlement and listing state", async () => {
+    const entitlement = doc(ownerDb, "entitlements", OWNER_UID);
+    const stats = doc(ownerDb, "listingStats", OWNER_UID);
+    await assertSucceeds(getDoc(entitlement));
+    await assertSucceeds(getDoc(stats));
+    await assertFails(getDoc(doc(outsiderDb, "entitlements", OWNER_UID)));
+    await assertFails(getDoc(doc(anonymousDb, "listingStats", OWNER_UID)));
+    await assertFails(getDocs(collection(ownerDb, "entitlements")));
+    await assertFails(updateDoc(entitlement, {active: false}));
+    await assertFails(setDoc(stats, {activeCount: 0}));
+    await assertFails(deleteDoc(stats));
+  });
+
+  await t.test("Stripe mappings and event records are completely server-only", async () => {
+    for (const [collectionName, documentId] of [
+      ["stripeCustomers", OWNER_UID],
+      ["stripeCustomerLinks", "cus_test"],
+      ["stripeEvents", "evt_test"],
+    ]) {
+      const reference = doc(ownerDb, collectionName, documentId);
+      await assertFails(getDoc(reference));
+      await assertFails(setDoc(reference, {tampered: true}));
+      await assertFails(deleteDoc(reference));
+    }
   });
 });

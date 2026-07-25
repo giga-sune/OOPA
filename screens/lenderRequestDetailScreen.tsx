@@ -75,7 +75,6 @@ export default function LenderRequestDetailScreen() {
 
   const isRejected = currentStatus === "rejected";
   const renterName = renterProfile?.userName || rental.renterDisplayName || "Renter";
-  const renterEmail = renterProfile?.email || "No email available";
   const avatar = renterProfile?.profilePictureUrl || renterProfile?.photoURL ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(renterName)}&background=E2E8F0&color=64748B`;
 
@@ -108,7 +107,6 @@ export default function LenderRequestDetailScreen() {
             <Image source={{ uri: avatar }} style={styles.avatarImage} />
             <View style={styles.profileMeta}>
               <Text style={styles.renterName}>{renterName}</Text>
-              <Text style={styles.renterEmail}>{renterEmail}</Text>
               <View style={styles.inlineDateContainer}>
                 <Feather name="calendar" size={14} color="#64748B" style={styles.inlineCalendarIcon} />
                 <Text style={styles.timelineText}>{formatDate(rental.startDate)} to {formatDate(rental.endDate)}</Text>

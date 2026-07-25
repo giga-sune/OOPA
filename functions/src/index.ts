@@ -13,6 +13,19 @@ import {
 } from "firebase-functions/v2/firestore";
 import {HttpsError, onCall, onRequest} from "firebase-functions/v2/https";
 import Stripe from "stripe";
+import {handleSubscriptionWebhook} from "./billing";
+
+export {
+  createBillingPortalSession,
+  createSubscription,
+  getSubscriptionPlans,
+} from "./billing";
+export {
+  createListing,
+  deleteListing,
+  getListingAllowance,
+  updateListing,
+} from "./listings";
 
 if (getApps().length === 0) {
   initializeApp();
@@ -722,19 +735,26 @@ export const stripePaymentWebhook = onRequest(
       return;
     }
 
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-
     if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
       await markPaymentFromWebhook(paymentIntent, "paid");
     } else if (event.type === "payment_intent.processing") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
       await markPaymentFromWebhook(paymentIntent, "processing");
     } else if (event.type === "payment_intent.payment_failed") {
-      if (paymentIntent.status !== "canceled") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      if (
+        paymentIntent.metadata.rentalId &&
+        paymentIntent.status !== "canceled"
+      ) {
         await stripe.paymentIntents.cancel(paymentIntent.id);
       }
       await markPaymentFromWebhook(paymentIntent, "unpaid");
     } else if (event.type === "payment_intent.canceled") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
       await markPaymentFromWebhook(paymentIntent, "unpaid");
+    } else {
+      await handleSubscriptionWebhook(event, stripe);
     }
 
     response.sendStatus(200);
