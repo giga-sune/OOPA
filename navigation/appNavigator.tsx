@@ -14,6 +14,7 @@ import ReviewItemScreen from "../screens/reviewItemScreen";
 import ReportItemScreen from "../screens/reportItemScreen";
 import AllReviewsScreen from "../screens/allReviewScreen";
 import ChatRoomScreen from "../screens/chatScreen";
+import SubscriptionScreen from "../screens/subscriptionScreen";
 
 import { useAuth } from "../context/AuthContext";
 import type { RootStackParamList } from "../types/navigation/navigationTypes";
@@ -37,6 +38,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Details" component={DetailsScreen} />
           <Stack.Screen name="MapViewer" component={MapViewerScreen} />
           <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
+          <Stack.Screen name="Subscription" component={SubscriptionScreen} />
           <Stack.Screen name="LenderRequestDetailScreen" component={LenderRequestDetailScreen} />
           <Stack.Screen name="BorrowerOrderDetailScreen" component={BorrowerOrderDetailScreen} />
           <Stack.Screen name="ReviewItemScreen" component={ReviewItemScreen} />

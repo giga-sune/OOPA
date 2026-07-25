@@ -79,7 +79,6 @@ export default function BorrowerOrderDetailScreen() {
   }
 
   const lenderName = lenderProfile?.userName || rental.ownerDisplayName || "Lender";
-  const lenderEmail = lenderProfile?.email || "No email available";
   const avatar = lenderProfile?.profilePictureUrl || lenderProfile?.photoURL ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(lenderName)}&background=E2E8F0&color=64748B`;
 
@@ -111,7 +110,6 @@ export default function BorrowerOrderDetailScreen() {
             <Image source={{ uri: avatar }} style={styles.avatarImage} />
             <View style={styles.profileMeta}>
               <Text style={styles.lenderName}>{lenderName}</Text>
-              <Text style={styles.lenderEmail}>{lenderEmail}</Text>
               <View style={styles.inlineDateContainer}>
                 <Feather name="calendar" size={14} color="#64748B" style={styles.inlineCalendarIcon} />
                 <Text style={styles.timelineText}>{formatLongDate(rental.startDate)} to {formatLongDate(rental.endDate)}</Text>

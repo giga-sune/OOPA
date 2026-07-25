@@ -3,12 +3,17 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
+    "test": "npm run build && node --test test/*.test.js",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "backfill:listings": "node scripts/backfillListingStats.mjs",
+    "migrate:users": "node scripts/migrateUserProfiles.mjs",
+    "smoke:subscription": "node scripts/smokeSubscription.mjs",
+    "smoke:listings": "node scripts/smokeListings.mjs"
   },
   "engines": {
     "node": "24"

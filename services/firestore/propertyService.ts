@@ -1,21 +1,19 @@
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
   limit,
   query,
-  serverTimestamp,
-  updateDoc,
   where,
   type DocumentData,
   type QueryConstraint,
 } from "firebase/firestore";
-import { db } from "../firebase/firebaseApp";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "../firebase/firebaseApp";
 import type {
   CreatePropertyInput,
+  ListingAllowance,
   LocationData,
   Property,
   PropertyFilters,
@@ -23,6 +21,26 @@ import type {
 } from "../../types/property/propertyTypes";
 
 const PROPERTIES_COLLECTION = "properties";
+
+const createListingCallable = httpsCallable<
+  { listing: CreatePropertyInput },
+  { propertyId: string }
+>(functions, "createListing");
+
+const deleteListingCallable = httpsCallable<
+  { propertyId: string },
+  { deleted: boolean }
+>(functions, "deleteListing");
+
+const updateListingCallable = httpsCallable<
+  { propertyId: string; listing: CreatePropertyInput },
+  { updated: boolean }
+>(functions, "updateListing");
+
+const getListingAllowanceCallable = httpsCallable<
+  Record<string, never>,
+  ListingAllowance
+>(functions, "getListingAllowance");
 
 type SearchKeywordSource = {
   title?: string;
@@ -233,13 +251,8 @@ function readProperty(data: DocumentData, id: string): Property {
 }
 
 export async function createProperty(input: CreatePropertyInput): Promise<string> {
-  const docRef = await addDoc(collection(db, PROPERTIES_COLLECTION), {
-    ...input,
-    searchKeywords: buildSearchKeywords(input),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
+  const result = await createListingCallable({ listing: input });
+  return result.data.propertyId;
 }
 
 export async function getAllProperties(): Promise<Property[]> {
@@ -329,20 +342,39 @@ export async function getPropertyById(id: string): Promise<Property | null> {
 }
 
 export async function updateProperty(id: string, input: UpdatePropertyInput): Promise<void> {
-  const docRef = doc(db, PROPERTIES_COLLECTION, id);
-  const existingDocSnap = await getDoc(docRef);
-  const mergedData = existingDocSnap.exists() ? { ...existingDocSnap.data(), ...input } : { ...input };
+  const existing = await getPropertyById(id);
 
-  await updateDoc(docRef, {
-    ...input,
-    searchKeywords: buildSearchKeywords(mergedData as SearchKeywordSource),
-    updatedAt: serverTimestamp(),
+  if (!existing) {
+    throw new Error("This listing could not be found.");
+  }
+
+  await updateListingCallable({
+    propertyId: id,
+    listing: {
+      ownerUid: existing.ownerUid,
+      ownerEmail: existing.ownerEmail,
+      ownerDisplayName: existing.ownerDisplayName,
+      ownerPhotoURL: existing.ownerPhotoURL,
+      images: input.images ?? existing.images,
+      title: input.title ?? existing.title,
+      description: input.description ?? existing.description,
+      brand: input.brand ?? existing.brand,
+      condition: input.condition ?? existing.condition,
+      priceType: input.priceType ?? existing.priceType,
+      price: input.price ?? existing.price,
+      ratePeriod: input.ratePeriod ?? existing.ratePeriod,
+      location: input.location ?? existing.location,
+    },
   });
 }
 
 export async function deleteProperty(id: string): Promise<void> {
-  const docRef = doc(db, PROPERTIES_COLLECTION, id);
-  await deleteDoc(docRef);
+  await deleteListingCallable({ propertyId: id });
+}
+
+export async function getListingAllowance(): Promise<ListingAllowance> {
+  const result = await getListingAllowanceCallable({});
+  return result.data;
 }
 
 export async function getUserProperties(ownerUid: string): Promise<Property[]> {
