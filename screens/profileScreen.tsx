@@ -109,7 +109,7 @@ export default function ProfileScreen() {
   ))}
 </View>
 
-      <TouchableOpacity style={styles.secondary}>
+      <TouchableOpacity style={styles.secondary} onPress={() => navigation.navigate("GetHelp")}>
         <Feather name="help-circle" size={20} />
         <Text style={styles.secondaryText}>Get help</Text>
       </TouchableOpacity>
