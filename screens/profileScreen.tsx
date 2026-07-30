@@ -93,6 +93,8 @@ export default function ProfileScreen() {
       onPress={() => {
         if (item.label === "My Listing") {
           navigation.navigate("MyListings");
+        } else if (item.label === "Account setting") {
+          navigation.navigate("AccountSettings");
         } else if (item.label === "Subscriptions") {
           navigation.navigate("Subscription", { origin: "profile" });
         } else if (item.label === "All Saved") {

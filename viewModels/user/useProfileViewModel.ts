@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 
 import { useAuth } from "../../context/AuthContext";
 import {
   getUserProfile,
+  updateUserProfile,
   updateUserProfilePicture,
 } from "../../services/firestore/userService";
 import { uploadImageToStorage } from "../../services/storage/storageService";
@@ -54,6 +56,7 @@ export interface ProfileViewModelResult {
   uploadingProfilePicture: boolean;
   error: string;
   onPickAndUploadProfilePicture: (userId: string) => Promise<boolean>;
+  onUpdateProfile: (patch: Partial<AppUserProfile>) => Promise<boolean>;
 }
 
 export default function useProfileViewModel(): ProfileViewModelResult {
@@ -68,7 +71,8 @@ export default function useProfileViewModel(): ProfileViewModelResult {
   const avatarImageUri =
     avatarPreviewUri ?? profileData?.profilePictureUrl ?? PLACEHOLDER_AVATAR_URL;
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     let isActive = true;
 
     async function loadProfile() {
@@ -79,7 +83,6 @@ export default function useProfileViewModel(): ProfileViewModelResult {
           setLoadingProfile(false);
           setError("");
         }
-
         return;
       }
 
@@ -89,9 +92,7 @@ export default function useProfileViewModel(): ProfileViewModelResult {
       try {
         const data = await getUserProfile(user.uid);
 
-        if (!isActive) {
-          return;
-        }
+        if (!isActive) return;
 
         setProfileData(
           data
@@ -102,13 +103,14 @@ export default function useProfileViewModel(): ProfileViewModelResult {
             : createLocalProfile(user.uid, user.email ?? "", null)
         );
       } catch (loadError) {
-        if (!isActive) {
-          return;
-        }
+        if (!isActive) return;
 
         setProfileData(null);
         setError(
-          getErrorMessage(loadError, "Could not load your profile details. Please try again.")
+          getErrorMessage(
+            loadError,
+            "Could not load your profile details. Please try again."
+          )
         );
       } finally {
         if (isActive) {
@@ -122,7 +124,8 @@ export default function useProfileViewModel(): ProfileViewModelResult {
     return () => {
       isActive = false;
     };
-  }, [user?.uid]);
+  }, [user?.uid, user?.email])
+);
 
   const onPickAndUploadProfilePicture = async (userId: string): Promise<boolean> => {
     setError("");
@@ -187,6 +190,34 @@ export default function useProfileViewModel(): ProfileViewModelResult {
     }
   };
 
+  const onUpdateProfile = async (patch: Partial<AppUserProfile>): Promise<boolean> => {
+    if (!user?.uid) {
+      setError("You must be signed in to update your profile.");
+      return false;
+    }
+
+    try {
+      setError("");
+
+      await updateUserProfile(user.uid, patch);
+
+      setProfileData((currentProfile) => {
+        if (!currentProfile) return null;
+        return {
+          ...currentProfile,
+          ...patch,
+        };
+      });
+
+      return true;
+    } catch (updateError) {
+      setError(
+        getErrorMessage(updateError, "Could not update profile details. Please try again.")
+      );
+      return false;
+    }
+  };
+
   return {
     profileData,
     currentUserId,
@@ -196,5 +227,6 @@ export default function useProfileViewModel(): ProfileViewModelResult {
     uploadingProfilePicture,
     error,
     onPickAndUploadProfilePicture,
+    onUpdateProfile,
   };
 }

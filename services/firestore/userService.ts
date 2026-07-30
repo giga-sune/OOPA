@@ -48,20 +48,35 @@ export async function getUserProfile(uid: string): Promise<AppUserProfile | null
 }
 
 export async function updateUserProfile(uid: string, patch: AppUserProfilePatch): Promise<void> {
-  const updatePayload = {
-    ...patch,
+  const userRef = getUserDocRef(uid);
+  const snapshot = await getDoc(userRef);
+
+  if (!snapshot.exists()) {
+    await createUserProfile({
+      uid,
+      email: patch.email || "",
+      userName: patch.userName,
+      photoURL: patch.photoURL,
+      profilePictureUrl: patch.profilePictureUrl,
+      phone: patch.phone,
+    });
+    return;
+  }
+  const updatePayload: Record<string, any> = {
     updatedAt: serverTimestamp(),
   };
 
-  await updateDoc(getUserDocRef(uid), updatePayload);
+  if (patch.userName !== undefined) updatePayload.userName = patch.userName ?? null;
+  if (patch.phone !== undefined) updatePayload.phone = patch.phone ?? null;
+  if (patch.photoURL !== undefined) updatePayload.photoURL = patch.photoURL ?? null;
+  if (patch.profilePictureUrl !== undefined) updatePayload.profilePictureUrl = patch.profilePictureUrl ?? null;
+
+  await updateDoc(userRef, updatePayload);
 }
 
 export async function updateUserProfilePicture(
   uid: string,
   profilePictureUrl: string
 ): Promise<void> {
-  await updateDoc(getUserDocRef(uid), {
-    profilePictureUrl,
-    updatedAt: serverTimestamp(),
-  });
+  await updateUserProfile(uid, { profilePictureUrl });
 }
