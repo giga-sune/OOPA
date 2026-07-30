@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Colors, Radius, Spacing } from "../../styles/globalDesignSystem";
+import { Ionicons } from "@expo/vector-icons";
 
 interface PropertyCardProps {
   property: {
@@ -15,6 +16,8 @@ interface PropertyCardProps {
   showActions?: boolean;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+  isFavorited?: boolean;
+  onToggleFavorite?: (propertyId: string) => void;
 }
 
 const { width } = Dimensions.get("window");
@@ -27,10 +30,10 @@ export default function PropertyCard({
   onPress, 
   showActions = false, 
   onEdit, 
-  onDelete 
+  onDelete,
+  isFavorited = false,
+  onToggleFavorite 
 }: PropertyCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
-  
   const hasRemoteImage = (property.images?.length ?? 0) > 0;
   
   const [imageLoading, setImageLoading] = useState(hasRemoteImage);
@@ -65,13 +68,13 @@ export default function PropertyCard({
           <TouchableOpacity 
             style={styles.heartOverlayButton} 
             activeOpacity={0.8}
-            onPress={() => setIsLiked(!isLiked)}
+            onPress={() => onToggleFavorite && onToggleFavorite(property.id)}
           >
-            <Feather 
-              name="heart" 
+            <Ionicons 
+              name={isFavorited ? "heart" : "heart-outline"} 
               size={24} 
-              color={isLiked ? "#FF3B30" : "#FFFFFF"} 
-              style={isLiked ? styles.activeHeartShadow : styles.heartShadow}
+              color={isFavorited ? "#FF7A21" : "#FFFFFF"} 
+              style={isFavorited ? styles.activeHeartShadow : styles.heartShadow}
             />
           </TouchableOpacity>
         )}
