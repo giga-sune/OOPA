@@ -12,6 +12,7 @@ export type RootStackParamList = {
   CheckoutScreen: { propertyId: string };
   Subscription: { origin?: "profile" | "postLimit" } | undefined;
   GetHelp: undefined;
+  InviteFriend: undefined;
   LenderRequestDetailScreen: { rentalId: string };
   BorrowerOrderDetailScreen: { rentalId: string };
   ReviewItemScreen: { rental: Rental };
