@@ -97,7 +97,10 @@ export default function ProfileScreen() {
           navigation.navigate("Subscription", { origin: "profile" });
         } else if (item.label === "All Saved") {
           navigation.navigate("SavedItemsScreen");
-        } else {
+        } else if (item.label === "Invite Friends") {
+          navigation.navigate("InviteFriend");
+        }
+        else {
           console.log(`Clicked on ${item.label}`);
         }
       }}
