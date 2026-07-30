@@ -13,11 +13,11 @@ import {
   SafeAreaView,
   Platform,
 } from "react-native";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc } from "firebase/firestore";
 import Feather from "@expo/vector-icons/Feather";
 
 import PropertyCard from "../components/property/PropertyCard";
-import { db } from "../services/firebase/firebaseApp";
+import { db, auth } from "../services/firebase/firebaseApp";
 import { Colors, Radius, Spacing } from "../styles/globalDesignSystem";
 import type {
   Property,
@@ -63,11 +63,11 @@ function getNormalizedImages(data: Record<string, unknown>): string[] {
   return typeof data.imageUri === "string" && data.imageUri.length > 0 ? [data.imageUri] : [];
 }
 
-function mapSnapshotDocToListingItem(doc: { id: string; data: () => Record<string, unknown> }): ListingItem {
-  const data = doc.data();
+function mapSnapshotDocToListingItem(docSnap: { id: string; data: () => Record<string, unknown> }): ListingItem {
+  const data = docSnap.data();
 
   return {
-    id: doc.id,
+    id: docSnap.id,
     title: typeof data.title === "string" ? data.title : "Untitled Item",
     price: typeof data.price === "number" ? data.price : Number(data.price) || 0,
     ratePeriod: data.ratePeriod === "week" || data.ratePeriod === "month" ? data.ratePeriod : "week",
@@ -93,8 +93,11 @@ export default function HomeScreen() {
   const [items, setItems] = useState<ListingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState<boolean>(false);
+  const [savedPropertyIds, setSavedPropertyIds] = useState<Set<string>>(new Set());
   
   const navigation = useNavigation<any>();
+  const currentUser = auth.currentUser;
+
   const {
     searchQuery,
     setSearchQuery,
@@ -113,7 +116,7 @@ export default function HomeScreen() {
     const itemsRef = collection(db, "properties");
     const itemsQuery = query(itemsRef, orderBy("updatedAt", "desc"));
 
-    const unsubscribe = onSnapshot(
+    const unsubscribeProperties = onSnapshot(
       itemsQuery,
       (snapshot) => {
         setItems(snapshot.docs.map((docSnap) => mapSnapshotDocToListingItem(docSnap)));
@@ -125,8 +128,64 @@ export default function HomeScreen() {
       }
     );
 
-    return () => unsubscribe();
-  }, []);
+    let unsubscribeSaved = () => {};
+    if (currentUser) {
+      const savedRef = collection(db, "users", currentUser.uid, "savedItems");
+      unsubscribeSaved = onSnapshot(
+        savedRef,
+        (snapshot) => {
+          const ids = new Set<string>();
+          snapshot.docs.forEach((d) => ids.add(d.id));
+          setSavedPropertyIds(ids);
+        },
+        (error) => {
+          console.error("Error fetching saved items stream: ", error);
+        }
+      );
+    }
+
+    return () => {
+      unsubscribeProperties();
+      unsubscribeSaved();
+    };
+  }, [currentUser]);
+
+  const handleToggleFavorite = async (propertyId: string) => {
+    if (!currentUser) return;
+    const favRef = doc(db, "users", currentUser.uid, "savedItems", propertyId);
+    const isCurrentlySaved = savedPropertyIds.has(propertyId);
+
+    // Optimistic UI state update
+    setSavedPropertyIds((prev) => {
+      const next = new Set(prev);
+      if (isCurrentlySaved) {
+        next.delete(propertyId);
+      } else {
+        next.add(propertyId);
+      }
+      return next;
+    });
+
+    try {
+      if (isCurrentlySaved) {
+        await deleteDoc(favRef);
+      } else {
+        await setDoc(favRef, { propertyId, createdAt: new Date() });
+      }
+    } catch (err) {
+      console.error("Failed to sync favorite state with Firestore:", err);
+      // Revert if write fails
+      setSavedPropertyIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlySaved) {
+          next.add(propertyId);
+        } else {
+          next.delete(propertyId);
+        }
+        return next;
+      });
+    }
+  };
 
   const filtersActive = hasActiveFilters(filters);
   const isSearching = activeMode === "search";
@@ -277,7 +336,6 @@ export default function HomeScreen() {
               </View>
             </ScrollView>
 
-            
             <SafeAreaView style={styles.modalFooter}>
               <TouchableOpacity
                 style={styles.doneButton}
@@ -336,6 +394,8 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <PropertyCard
               property={item}
+              isFavorited={savedPropertyIds.has(item.id)}
+              onToggleFavorite={handleToggleFavorite}
               onPress={() => {
                 navigation.navigate("Details", { propertyId: item.id });
               }}

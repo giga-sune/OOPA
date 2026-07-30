@@ -6,6 +6,7 @@ export type RootStackParamList = {
   Signup: undefined;
   MainApp: NavigatorScreenParams<TabParamList> | undefined;
   MyListings: undefined;
+  SavedItemsScreen: undefined;
   Details: { propertyId: string };
   MapViewer: { latitude: number; longitude: number; address: string };
   CheckoutScreen: { propertyId: string };

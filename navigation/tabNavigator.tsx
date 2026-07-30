@@ -6,7 +6,6 @@ import InboxScreen from "../screens/inboxScreen";
 import PostScreen from "../screens/postScreen";
 import OrdersScreen from "../screens/ordersScreen";
 import ProfileScreen from "../screens/profileScreen";
-
 import CustomTabBar from "../components/navigation/customTabBar";
 import type { TabParamList } from "../types/navigation/navigationTypes";
 

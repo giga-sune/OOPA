@@ -95,6 +95,8 @@ export default function ProfileScreen() {
           navigation.navigate("MyListings");
         } else if (item.label === "Subscriptions") {
           navigation.navigate("Subscription", { origin: "profile" });
+        } else if (item.label === "All Saved") {
+          navigation.navigate("SavedItemsScreen");
         } else {
           console.log(`Clicked on ${item.label}`);
         }
