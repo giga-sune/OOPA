@@ -13,6 +13,7 @@ export type RootStackParamList = {
   Subscription: { origin?: "profile" | "postLimit" } | undefined;
   GetHelp: undefined;
   InviteFriend: undefined;
+  AccountSettings: undefined;
   LenderRequestDetailScreen: { rentalId: string };
   BorrowerOrderDetailScreen: { rentalId: string };
   ReviewItemScreen: { rental: Rental };
