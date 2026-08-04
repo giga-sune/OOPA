@@ -15,7 +15,7 @@ import type { Rental } from "../../types/rental/rentalTypes";
 export type OrdersTab = "My Orders" | "Requests";
 export type RentalDecisionProgress = "approving" | "rejecting" | null;
 export type RentalActionOutcome =
-  | { status: "success" }
+  | { status: "success"; autoRejectedCount: number }
   | { status: "failure"; message: string };
 export type ChatPreparationOutcome =
   | { status: "success"; chat: PreparedRentalChat }
@@ -151,9 +151,13 @@ export default function useOrdersViewModel(): OrdersViewModelResult {
     setErrorMessage("");
 
     try {
-      if (action === "approving") await approveRentalRequest(rentalId);
-      else await rejectRentalRequest(rentalId);
-      return { status: "success" };
+      if (action === "approving") {
+        const result = await approveRentalRequest(rentalId);
+        return { status: "success", autoRejectedCount: result.autoRejectedCount };
+      }
+
+      await rejectRentalRequest(rentalId);
+      return { status: "success", autoRejectedCount: 0 };
     } catch (error) {
       const message = getErrorMessage(
         error,

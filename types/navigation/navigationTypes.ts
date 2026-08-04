@@ -4,6 +4,7 @@ import type { Rental } from "../rental/rentalTypes";
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
+  ForgotPassword: { email?: string } | undefined;
   MainApp: NavigatorScreenParams<TabParamList> | undefined;
   MyListings: undefined;
   SavedItemsScreen: undefined;

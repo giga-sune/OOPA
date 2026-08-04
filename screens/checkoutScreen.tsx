@@ -38,6 +38,8 @@ export default function CheckoutScreen() {
     showEndPicker,
     submitting,
     errorMessage,
+    availabilityStatus,
+    availabilityMessage,
     totalPrice,
     setMessage,
     openStartPicker,
@@ -50,6 +52,11 @@ export default function CheckoutScreen() {
     confirmEndDate,
     submitRentalRequest,
   } = useCheckoutRentalViewModel(route.params?.propertyId ?? "");
+
+  const checkoutDisabled =
+    submitting ||
+    availabilityStatus === "checking" ||
+    availabilityStatus === "unavailable";
 
   const handleCheckout = async () => {
     const outcome = await submitRentalRequest();
@@ -136,6 +143,30 @@ export default function CheckoutScreen() {
           </TouchableOpacity>
         </View>
 
+        {availabilityStatus !== "idle" ? (
+          <View style={styles.availabilityRow}>
+            {availabilityStatus === "checking" ? (
+              <ActivityIndicator size="small" color="#64748B" />
+            ) : (
+              <Ionicons
+                name={availabilityStatus === "available" ? "checkmark-circle" : "alert-circle"}
+                size={18}
+                color={availabilityStatus === "available" ? "#15803D" : "#B91C1C"}
+              />
+            )}
+            <Text
+              style={[
+                styles.availabilityText,
+                availabilityStatus === "available" && styles.availabilitySuccess,
+                (availabilityStatus === "unavailable" || availabilityStatus === "error") &&
+                  styles.availabilityError,
+              ]}
+            >
+              {availabilityMessage}
+            </Text>
+          </View>
+        ) : null}
+
         <Modal visible={showStartPicker} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
@@ -214,9 +245,9 @@ export default function CheckoutScreen() {
           <Text style={styles.totalPriceLabel}>Total</Text>
         </View>
         <TouchableOpacity
-          style={[styles.checkoutBtn, submitting && styles.disabledBtn]}
+          style={[styles.checkoutBtn, checkoutDisabled && styles.disabledBtn]}
           onPress={() => void handleCheckout()}
-          disabled={submitting}
+          disabled={checkoutDisabled}
         >
           {submitting ? <ActivityIndicator color="#FFF" /> : <Text style={styles.checkoutBtnText}>Submit Request</Text>}
         </TouchableOpacity>
@@ -241,6 +272,10 @@ const styles = StyleSheet.create({
   lenderBadgeText: { fontSize: 13, color: "#333333", fontWeight: "500" },
   fieldSectionLabel: { fontSize: 16, fontWeight: "600", color: "#000000", marginBottom: 10, marginTop: 4 },
   datePickerContainer: { flexDirection: "row", gap: 12, marginBottom: 24 },
+  availabilityRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: -12, marginBottom: 20, paddingHorizontal: 8 },
+  availabilityText: { color: "#64748B", fontSize: 13, flexShrink: 1 },
+  availabilitySuccess: { color: "#15803D" },
+  availabilityError: { color: "#B91C1C" },
   dateInputBlock: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: "#CCCCCC", borderRadius: 12, height: 50, paddingHorizontal: 14, backgroundColor: "#FFFFFF" },
   dateValuePlaceholder: { fontSize: 15, color: "#444" },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },

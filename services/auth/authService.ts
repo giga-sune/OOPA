@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   type User,
@@ -65,6 +66,21 @@ export async function signInWithEmail(credentials: AuthCredentials): Promise<Aut
     return { user: userCredential.user };
   } catch (error) {
     throw mapAuthError(error);
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    const serviceError = mapAuthError(error);
+
+    // Keep the response private when Firebase email-enumeration protection is disabled.
+    if (serviceError.code === "auth/user-not-found") {
+      return;
+    }
+
+    throw serviceError;
   }
 }
 

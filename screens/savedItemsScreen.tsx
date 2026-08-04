@@ -8,7 +8,7 @@ import {
   TouchableOpacity
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { collection, query, onSnapshot, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, onSnapshot, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 
 import { db, auth } from "../services/firebase/firebaseApp";
@@ -113,7 +113,7 @@ export default function SavedItemsScreen() {
       if (isCurrentlySaved) {
         await deleteDoc(favRef);
       } else {
-        await setDoc(favRef, { propertyId, createdAt: new Date() });
+        await setDoc(favRef, { propertyId, createdAt: serverTimestamp() });
       }
     } catch (err) {
       console.error("Failed to sync favorite state with Firestore:", err);

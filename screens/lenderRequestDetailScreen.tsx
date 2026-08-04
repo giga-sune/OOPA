@@ -35,9 +35,12 @@ export default function LenderRequestDetailScreen() {
 
   const handleStatusUpdate = async (nextStatus: "approved" | "rejected") => {
     const outcome = await updateStatus(nextStatus);
+    const rejectionNote = outcome.status === "success" && outcome.autoRejectedCount > 0
+      ? ` ${outcome.autoRejectedCount} overlapping pending request${outcome.autoRejectedCount === 1 ? " was" : "s were"} automatically declined.`
+      : "";
     Alert.alert(
       outcome.status === "success" ? "Success" : "Error",
-      outcome.status === "success" ? `Request has been ${nextStatus}.` : outcome.message
+      outcome.status === "success" ? `Request has been ${nextStatus}.${rejectionNote}` : outcome.message
     );
   };
 

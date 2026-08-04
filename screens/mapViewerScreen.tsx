@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from "react-native";
-import MapView, { Circle } from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 
@@ -27,11 +27,9 @@ export default function MapViewerScreen() {
         }}
         showsUserLocation
       >
-        <Circle
-          center={{ latitude, longitude }}
-          radius={450} 
-          strokeColor="rgba(255, 122, 33, 0.45)"
-          fillColor="rgba(255, 122, 33, 0.14)"
+        <Marker
+          coordinate={{ latitude, longitude }}
+          title={address}
         />
       </MapView>
 
@@ -45,15 +43,15 @@ export default function MapViewerScreen() {
       {/* Address Details Bottom Card Sheet */}
       <View style={styles.infoFooter}>
         <View style={styles.indicatorBar} />
-        <Text style={styles.titleText}>Approximate Meetup Location</Text>
+        <Text style={styles.titleText}>Meetup Location</Text>
         <View style={styles.addressRow}>
           <Feather name="map-pin" size={16} color={Colors.primary || "#FF7A21"} />
           <Text style={styles.addressBody} numberOfLines={2}>
-            {address || "Near Toronto, ON"}
+            {address}
           </Text>
         </View>
         <Text style={styles.disclaimerText}>
-          Exact landmark address instructions are shared securely once a rental request has been officially approved.
+          Meetup location provided by the listing owner.
         </Text>
       </View>
     </View>

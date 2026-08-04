@@ -71,7 +71,7 @@ export default function ChatRoomScreen() {
     <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {/* Dynamic Context Header Banner */}
@@ -86,6 +86,8 @@ export default function ChatRoomScreen() {
           data={messages}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           renderItem={({ item }) => {
             const isMe = item.senderUid === currentUserUid;

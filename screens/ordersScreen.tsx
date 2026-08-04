@@ -24,7 +24,12 @@ export default function OrdersScreen() {
 
   const handleAcceptRequest = async (rentalId: string) => {
     const outcome = await approveRequest(rentalId);
-    if (outcome.status === "success") Alert.alert("Success", "Rental request has been approved.");
+    if (outcome.status === "success") {
+      const rejectionNote = outcome.autoRejectedCount > 0
+        ? ` ${outcome.autoRejectedCount} overlapping pending request${outcome.autoRejectedCount === 1 ? " was" : "s were"} automatically declined.`
+        : "";
+      Alert.alert("Success", `Rental request has been approved.${rejectionNote}`);
+    }
     else Alert.alert("Error", outcome.message);
   };
 

@@ -1,6 +1,7 @@
 import "react-native-gesture-handler";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
+import Constants from "expo-constants";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import {
@@ -27,7 +28,6 @@ import useAuthSessionViewModel, {
 } from "./viewModels/auth/useAuthSessionViewModel";
 
 import { AuthProvider } from "./context/AuthContext";
-import { registerForPushNotificationsAsync } from "./services/notification/pushNotificationService";
 import type { RootStackParamList } from "./types/navigation/navigationTypes";
 
 const linking: LinkingOptions<RootStackParamList> = {
@@ -55,9 +55,27 @@ export default function App() {
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        registerForPushNotificationsAsync(user.uid);
+      if (!user) {
+        return;
       }
+
+      const isAndroidExpoGo =
+        Platform.OS === "android" && Constants.expoGoConfig != null;
+
+      if (isAndroidExpoGo) {
+        console.info(
+          "Remote push registration is unavailable in Android Expo Go. Use a development build to test push notifications."
+        );
+        return;
+      }
+
+      void import("./services/notification/pushNotificationService")
+        .then(({ registerForPushNotificationsAsync }) =>
+          registerForPushNotificationsAsync(user.uid)
+        )
+        .catch((error) => {
+          console.error("Failed to initialize push notifications:", error);
+        });
     });
     return unsubscribe;
   }, []);

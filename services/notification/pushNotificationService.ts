@@ -1,4 +1,5 @@
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseApp";
 
@@ -28,7 +29,17 @@ export async function registerForPushNotificationsAsync(userUid: string) {
   }
 
   try {
-    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
+
+    if (!projectId) {
+      throw new Error("Missing EAS project ID for Expo push-token registration.");
+    }
+
+    const token = (
+      await Notifications.getExpoPushTokenAsync({ projectId })
+    ).data;
     
     // Tokens are private and server-readable for trusted push delivery.
     await setDoc(doc(db, "pushTokens", userUid), {

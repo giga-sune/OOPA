@@ -1,5 +1,12 @@
 export type RentalRatePeriod = "week" | "month";
 
+export type RentalAvailabilityStatus =
+  | "idle"
+  | "checking"
+  | "available"
+  | "unavailable"
+  | "error";
+
 export type RentalStatus =
   | "pending"
   | "approved"
@@ -40,4 +47,8 @@ export interface CreateRentalRequestInput {
   startDate: Date;
   endDate: Date;
   message: string | null;
+}
+
+export interface RentalApprovalResult {
+  autoRejectedCount: number;
 }
