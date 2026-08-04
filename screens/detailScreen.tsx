@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Circle } from 'react-native-maps';
-import { doc, getDoc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import MapView, { Marker } from 'react-native-maps';
+import { doc, getDoc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../services/firebase/firebaseApp';
 import { Colors, Typography, Radius, Spacing, Shadows } from '../styles/globalDesignSystem';
 import { getPropertyById, getUserProperties } from '../services/firestore/propertyService';
@@ -93,7 +93,7 @@ export default function DetailsScreen() {
     setIsFavorited(nextState); // Optimistic UI update
     try {
       if (nextState) {
-        await setDoc(favRef, { propertyId, createdAt: new Date() });
+        await setDoc(favRef, { propertyId, createdAt: serverTimestamp() });
       } else {
         await deleteDoc(favRef);
       }
@@ -141,11 +141,14 @@ export default function DetailsScreen() {
     );
   }
 
-  const latitude = property.location?.latitude ?? 43.6532;
-  const longitude = property.location?.longitude ?? -79.3832;
-
   const handleMapPress = () => {
-    navigation.navigate("MapViewer", { latitude, longitude });
+    if (!property.location) return;
+
+    navigation.navigate("MapViewer", {
+      latitude: property.location.latitude,
+      longitude: property.location.longitude,
+      address: property.location.address,
+    });
   };
 
   return (
@@ -221,10 +224,6 @@ export default function DetailsScreen() {
             <Text style={styles.ratePeriodText}>/{property.ratePeriod === 'week' ? 'week' : 'mth'}</Text>
           </Text>
 
-          <Text style={styles.metaLabelRow}>
-            {property.priceType}  •  32 views  •  30min ago
-          </Text>
-
           <Text style={styles.descriptionText}>{property.description}</Text>
 
           <View style={styles.attributeItemRow}>
@@ -292,30 +291,34 @@ export default function DetailsScreen() {
             )}
           </View>
 
-          {/* Where to Meet Static Map Area Preview */}
-          <Text style={styles.blockSectionHeading}>Where to meet</Text>
-          <TouchableOpacity activeOpacity={0.9} onPress={handleMapPress} style={styles.staticMapCard}>
-            <MapView
-              style={styles.mapCanvas}
-              scrollEnabled={false}
-              zoomEnabled={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
-              initialRegion={{
-                latitude: latitude,
-                longitude: longitude,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-              }}
-            >
-              <Circle
-                center={{ latitude, longitude }}
-                radius={450}
-                strokeColor="rgba(255, 122, 33, 0.4)"
-                fillColor="rgba(255, 122, 33, 0.12)"
-              />
-            </MapView>
-          </TouchableOpacity>
+          {property.location && (
+            <>
+              <Text style={styles.blockSectionHeading}>Where to meet</Text>
+              <TouchableOpacity activeOpacity={0.9} onPress={handleMapPress} style={styles.staticMapCard}>
+                <MapView
+                  style={styles.mapCanvas}
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                  initialRegion={{
+                    latitude: property.location.latitude,
+                    longitude: property.location.longitude,
+                    latitudeDelta: 0.02,
+                    longitudeDelta: 0.02,
+                  }}
+                >
+                  <Marker
+                    coordinate={{
+                      latitude: property.location.latitude,
+                      longitude: property.location.longitude,
+                    }}
+                    title={property.location.address}
+                  />
+                </MapView>
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Owner Profile Row Widget */}
           <View style={styles.ownerProfileWidget}>
@@ -423,7 +426,6 @@ const styles = StyleSheet.create({
   mainTitle: { ...Typography.h2, color: Colors.grayPrimary || '#0F172A', marginBottom: 6, fontWeight: '700' },
   ratePrice: { fontSize: 22, fontWeight: '700', color: Colors.grayPrimary || '#0F172A' },
   ratePeriodText: { fontSize: 14, fontWeight: '400', color: '#64748B' },
-  metaLabelRow: { ...Typography.bodySmall, color: '#94A3B8', marginTop: 6, marginBottom: 16 },
   descriptionText: { ...Typography.body, color: '#334155', lineHeight: 22, marginBottom: 20 },
   attributeItemRow: { flexDirection: 'row', paddingVertical: 10 },
   attributeItemLabel: { fontSize: 15, fontWeight: '600', width: 110, color: Colors.grayPrimary || '#0F172A' },

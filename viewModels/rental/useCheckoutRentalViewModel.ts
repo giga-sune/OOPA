@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "../../context/AuthContext";
 import { getPropertyById } from "../../services/firestore/propertyService";
 import {
   calculateRentalTotalPrice,
+  checkRentalAvailability,
   createRentalRequest,
 } from "../../services/firestore/rentalService";
 import type { Property } from "../../types/property/propertyTypes";
+import type { RentalAvailabilityStatus } from "../../types/rental/rentalTypes";
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const MAX_MESSAGE_LENGTH = 2_000;
+const UNAVAILABLE_MESSAGE = "These dates are no longer available.";
 
 export type CheckoutSubmissionOutcome =
   | { status: "success"; rentalId: string }
@@ -27,6 +29,8 @@ export interface CheckoutRentalViewModelResult {
   showEndPicker: boolean;
   submitting: boolean;
   errorMessage: string;
+  availabilityStatus: RentalAvailabilityStatus;
+  availabilityMessage: string;
   totalPrice: number;
   setMessage: (value: string) => void;
   openStartPicker: () => void;
@@ -44,9 +48,21 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function normalizeRentalDate(value: Date): Date {
+  const normalized = new Date(value);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+function addCalendarDays(value: Date, numberOfDays: number): Date {
+  const nextDate = new Date(value);
+  nextDate.setDate(nextDate.getDate() + numberOfDays);
+  return normalizeRentalDate(nextDate);
+}
+
 function createInitialDates(): { startDate: Date; endDate: Date } {
-  const startDate = new Date();
-  return { startDate, endDate: new Date(startDate.getTime() + 7 * DAY_IN_MS) };
+  const startDate = normalizeRentalDate(new Date());
+  return { startDate, endDate: addCalendarDays(startDate, 7) };
 }
 
 export default function useCheckoutRentalViewModel(
@@ -65,6 +81,10 @@ export default function useCheckoutRentalViewModel(
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [availabilityStatus, setAvailabilityStatus] =
+    useState<RentalAvailabilityStatus>("idle");
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
+  const availabilityRequestRef = useRef(0);
 
   useEffect(() => {
     let isActive = true;
@@ -101,6 +121,39 @@ export default function useCheckoutRentalViewModel(
     };
   }, [propertyId]);
 
+  useEffect(() => {
+    if (!user?.uid || !property || endDate.getTime() <= startDate.getTime()) {
+      availabilityRequestRef.current += 1;
+      setAvailabilityStatus("idle");
+      setAvailabilityMessage("");
+      return;
+    }
+
+    const requestId = availabilityRequestRef.current + 1;
+    availabilityRequestRef.current = requestId;
+    let isActive = true;
+    setAvailabilityStatus("checking");
+    setAvailabilityMessage("Checking availability...");
+
+    void checkRentalAvailability(property.id, startDate, endDate)
+      .then((available) => {
+        if (!isActive || availabilityRequestRef.current !== requestId) return;
+
+        setAvailabilityStatus(available ? "available" : "unavailable");
+        setAvailabilityMessage(available ? "Dates are available." : UNAVAILABLE_MESSAGE);
+      })
+      .catch(() => {
+        if (!isActive || availabilityRequestRef.current !== requestId) return;
+
+        setAvailabilityStatus("error");
+        setAvailabilityMessage("Could not verify availability. Submit to try again.");
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [endDate, property, startDate, user?.uid]);
+
   const totalPrice = property
     ? calculateRentalTotalPrice(property.price, property.ratePeriod, startDate, endDate)
     : 0;
@@ -130,13 +183,21 @@ export default function useCheckoutRentalViewModel(
     setShowEndPicker(false);
   };
 
-  const confirmStartDate = (value = temporaryStartDate) => {
-    setErrorMessage("");
-    setStartDate(value);
-    setTemporaryStartDate(value);
+  const invalidateAvailability = () => {
+    availabilityRequestRef.current += 1;
+    setAvailabilityStatus("idle");
+    setAvailabilityMessage("");
+  };
 
-    if (value.getTime() >= endDate.getTime()) {
-      const nextEndDate = new Date(value.getTime() + DAY_IN_MS);
+  const confirmStartDate = (value = temporaryStartDate) => {
+    const nextStartDate = normalizeRentalDate(value);
+    setErrorMessage("");
+    invalidateAvailability();
+    setStartDate(nextStartDate);
+    setTemporaryStartDate(nextStartDate);
+
+    if (nextStartDate.getTime() >= endDate.getTime()) {
+      const nextEndDate = addCalendarDays(nextStartDate, 1);
       setEndDate(nextEndDate);
       setTemporaryEndDate(nextEndDate);
     }
@@ -145,15 +206,17 @@ export default function useCheckoutRentalViewModel(
   };
 
   const confirmEndDate = (value = temporaryEndDate) => {
+    const nextEndDate = normalizeRentalDate(value);
     setErrorMessage("");
 
-    if (value.getTime() <= startDate.getTime()) {
+    if (nextEndDate.getTime() <= startDate.getTime()) {
       setErrorMessage("End date must be after the start date.");
       return;
     }
 
-    setEndDate(value);
-    setTemporaryEndDate(value);
+    invalidateAvailability();
+    setEndDate(nextEndDate);
+    setTemporaryEndDate(nextEndDate);
     setShowEndPicker(false);
   };
 
@@ -178,8 +241,31 @@ export default function useCheckoutRentalViewModel(
 
     setSubmitting(true);
     setErrorMessage("");
+    let availabilityVerified = false;
 
     try {
+      const requestId = availabilityRequestRef.current + 1;
+      availabilityRequestRef.current = requestId;
+      setAvailabilityStatus("checking");
+      setAvailabilityMessage("Checking availability...");
+
+      const available = await checkRentalAvailability(propertyId, startDate, endDate);
+
+      if (availabilityRequestRef.current !== requestId) {
+        const changedMessage = "Dates changed. Check availability again.";
+        return { status: "failure", message: changedMessage };
+      }
+
+      if (!available) {
+        setAvailabilityStatus("unavailable");
+        setAvailabilityMessage(UNAVAILABLE_MESSAGE);
+        setErrorMessage(UNAVAILABLE_MESSAGE);
+        return { status: "failure", message: UNAVAILABLE_MESSAGE };
+      }
+
+      availabilityVerified = true;
+      setAvailabilityStatus("available");
+      setAvailabilityMessage("Dates are available.");
       const rentalId = await createRentalRequest({
         propertyId,
         renterUid: user.uid,
@@ -193,6 +279,10 @@ export default function useCheckoutRentalViewModel(
         error,
         "Could not submit your rental request. Please try again."
       );
+      if (!availabilityVerified) {
+        setAvailabilityStatus("error");
+        setAvailabilityMessage("Could not verify availability. Submit to try again.");
+      }
       setErrorMessage(nextMessage);
       return { status: "failure", message: nextMessage };
     } finally {
@@ -212,6 +302,8 @@ export default function useCheckoutRentalViewModel(
     showEndPicker,
     submitting,
     errorMessage,
+    availabilityStatus,
+    availabilityMessage,
     totalPrice,
     setMessage,
     openStartPicker,

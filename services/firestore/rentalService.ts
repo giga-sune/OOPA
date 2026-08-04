@@ -10,19 +10,43 @@ import {
   type DocumentData,
   type Unsubscribe,
 } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 
-import { db } from "../firebase/firebaseApp";
+import { db, functions } from "../firebase/firebaseApp";
 import { getPropertyById } from "./propertyService";
 import { getUserProfile } from "./userService";
 import type {
   CreateRentalRequestInput,
   Rental,
+  RentalApprovalResult,
   RentalRatePeriod,
   RentalStatus,
 } from "../../types/rental/rentalTypes";
 
 const RENTALS_COLLECTION = "rentals";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const checkRentalAvailabilityCallable = httpsCallable<
+  { propertyId: string; startDate: string; endDate: string },
+  { available: boolean }
+>(functions, "checkRentalAvailability");
+
+const approveRentalRequestCallable = httpsCallable<
+  { rentalId: string },
+  RentalApprovalResult
+>(functions, "approveRentalRequest");
+
+function getCallableErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+
+    if (typeof message === "string" && message && message !== "internal") {
+      return message;
+    }
+  }
+
+  return fallback;
+}
 
 function toDate(value: unknown): Date {
   if (
@@ -152,6 +176,26 @@ export function calculateRentalTotalPrice(
   endDate: Date
 ): number {
   return price * calculateTotalUnits(startDate, endDate, ratePeriod);
+}
+
+export async function checkRentalAvailability(
+  propertyId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<boolean> {
+  try {
+    const result = await checkRentalAvailabilityCallable({
+      propertyId: propertyId.trim(),
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+
+    return result.data.available;
+  } catch (error) {
+    throw new Error(
+      getCallableErrorMessage(error, "Could not verify rental availability.")
+    );
+  }
 }
 
 function sortRentalsByUpdatedAt(rentals: Rental[]): Rental[] {
@@ -301,8 +345,20 @@ export function subscribeToRentalsByOwner(
 }
 
 // APPROVE RENTAL REQUEST (trusted Functions create notification and chat)
-export async function approveRentalRequest(rentalId: string): Promise<void> {
-  await updateRentalStatus(rentalId, "approved");
+export async function approveRentalRequest(
+  rentalId: string
+): Promise<RentalApprovalResult> {
+  try {
+    const result = await approveRentalRequestCallable({
+      rentalId: rentalId.trim(),
+    });
+
+    return result.data;
+  } catch (error) {
+    throw new Error(
+      getCallableErrorMessage(error, "Could not approve this rental request.")
+    );
+  }
 }
 
 // REJECT RENTAL REQUEST (trusted Functions create the notification)

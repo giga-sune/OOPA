@@ -69,7 +69,13 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <Text style={styles.primaryButtonText}>{loading ? "Logging in..." : "Log in"}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("ForgotPassword", {
+              email: email.trim() || undefined,
+            })
+          }
+        >
           <Text
             style={{
               textAlign: "center",

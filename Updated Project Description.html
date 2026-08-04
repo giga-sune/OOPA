@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Updated OOPA Project Description</title>
+  <style>
+    @page { margin: 0.8in; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.35; color: #111; }
+    h1 { font-size: 16pt; text-align: center; margin: 0 0 18pt; }
+    h2 { font-size: 12pt; margin: 16pt 0 6pt; }
+    p { margin: 0 0 8pt; }
+    ul { margin: 4pt 0 8pt 20pt; padding: 0; }
+    li { margin: 0 0 4pt; }
+    .details p { margin-bottom: 3pt; }
+    .note { background: #fff4e8; border-left: 4px solid #ff7a21; padding: 8pt 10pt; }
+  </style>
+</head>
+<body>
+  <h1>Project Description</h1>
+
+  <div class="details">
+    <p><strong>Project Title:</strong> OOPA Peer-to-Peer Rental Mobile App</p>
+    <p><strong>Group Team Details:</strong> Group#: ___</p>
+    <p>Student ID: __________ - Student Name: Jose Labayen</p>
+    <p>Student ID: __________ - Student Name: Sune Gelata</p>
+    <p>Student ID: __________ - Student Name: Bibek Gurung</p>
+  </div>
+
+  <h2>Project Idea or Definition:</h2>
+  <p>OOPA is a peer-to-peer rental marketplace that helps people access useful items for a limited time instead of buying them. It connects borrowers with owners who want to earn income from underused belongings such as tools, camping gear, household equipment, electronics, and event supplies.</p>
+  <p>The app is designed to reduce unnecessary purchases, save money, reduce household clutter, and encourage local resource sharing. Its current core experience supports accounts, item listings, search, saved items, rental requests, owner approval or rejection, Stripe payments, messaging, notifications, ratings, reviews, and paid OOPA Pro subscriptions.</p>
+
+  <h2>Brief Description of the Project:</h2>
+  <p>OOPA is being developed as one cross-platform mobile application for Android and iOS using Expo, React Native, and TypeScript. A user can act as both a borrower and a lender from the same account. Firebase Authentication provides email-and-password signup and login, while Cloud Firestore stores application data and Firebase Storage stores uploaded listing and profile images.</p>
+  <p>Borrowers can browse and search listings, apply filters, save items, view item details and meetup locations, choose rental dates, calculate the rental total, submit a request, pay after approval, message the lender, and leave a review. Lenders can create, edit, and delete listings, upload up to eight images, set weekly or monthly pricing, choose a meetup location, use AI assistance to draft a description during development, and manage incoming rental requests.</p>
+  <p>The backend uses Firebase Cloud Functions to protect listing limits, create Stripe payment intents, manage OOPA Pro subscriptions, synchronize subscription entitlements through webhooks, create rental chats, and generate rental notifications. Free accounts are limited to three active listings, while an active OOPA Pro subscription allows unlimited active listings.</p>
+  <p>The main target users remain students, urban residents, DIY users, hobbyists, occasional users, and people who want to earn income from items they already own.</p>
+  <p class="note"><strong>Current scope note:</strong> Full KYC identity verification, insurance claims, refundable deposits, true escrow, and a complete stored dispute-resolution workflow are not implemented in the current codebase. The app contains a report form, but its submission is currently a user-interface confirmation only. These features are future production work and should not be described as completed.</p>
+
+  <h2>Tools and Technologies:</h2>
+  <ul>
+    <li><strong>Mobile Application:</strong> Expo SDK 54, React Native 0.81, React 19, and TypeScript</li>
+    <li><strong>Platforms:</strong> Android and iOS from one shared React Native codebase; basic Expo web support is also configured</li>
+    <li><strong>Navigation:</strong> React Navigation with native-stack and bottom-tab navigation</li>
+    <li><strong>Backend:</strong> Firebase Cloud Functions v2 using Node.js and TypeScript</li>
+    <li><strong>Database:</strong> Firebase Cloud Firestore with security rules and indexes</li>
+    <li><strong>Authentication:</strong> Firebase Authentication using email and password</li>
+    <li><strong>File Storage:</strong> Firebase Storage for listing and profile images</li>
+    <li><strong>Payments and Subscriptions:</strong> Stripe PaymentSheet, Payment Intents, recurring subscriptions, billing portal, and webhooks; currency is CAD</li>
+    <li><strong>Maps and Location:</strong> Expo Location and React Native Maps</li>
+    <li><strong>Notifications:</strong> Expo Notifications, Firestore notification records, and Cloud Functions</li>
+    <li><strong>AI Assistance:</strong> Gemini API for draft listing descriptions in development mode</li>
+    <li><strong>Testing:</strong> Node test runner, Firebase Emulator Suite rule tests, and Cloud Function tests</li>
+    <li><strong>Version Control:</strong> Git and GitHub</li>
+  </ul>
+
+  <h2>Database Structures or Database Design:</h2>
+  <ul>
+    <li><strong>Users:</strong> Stores the Firebase user ID, email, username, profile image links, phone number, and timestamps.</li>
+    <li><strong>Properties:</strong> Stores owner information, listing images, title, description, brand, condition, fixed or flexible price type, weekly or monthly price, meetup address and coordinates, search keywords, and timestamps.</li>
+    <li><strong>Saved Items:</strong> Stored as a subcollection under each user and used to manage favourite listings.</li>
+    <li><strong>Rentals:</strong> Stores the property, borrower and owner, rental dates, number of rental units, calculated total, optional message, status, and timestamps. Supported statuses are pending, approved, rejected, completed, and cancelled.</li>
+    <li><strong>Payments:</strong> Stores one Stripe payment record per rental, including the amount in cents, CAD currency, Payment Intent ID, attempt number, payment status, and timestamps.</li>
+    <li><strong>Reviews:</strong> Stores one borrower review per eligible rental, including the property, reviewer, rating from 1 to 5, review text, and creation time.</li>
+    <li><strong>Chats and Messages:</strong> Stores chat metadata for approved rentals and a messages subcollection containing the sender, text, and timestamp.</li>
+    <li><strong>Notifications and Push Tokens:</strong> Stores rental request updates and registered Expo push tokens for users.</li>
+    <li><strong>Entitlements and Listing Statistics:</strong> Stores OOPA Pro access and each user's active-listing count.</li>
+    <li><strong>Stripe Support Collections:</strong> Stores customer mappings and processed webhook event IDs on the trusted backend.</li>
+  </ul>
+
+  <h2>Screens Design:</h2>
+  <ul>
+    <li><strong>Login and Signup:</strong> Creates accounts and signs users in with Firebase Authentication.</li>
+    <li><strong>Home and Search:</strong> Displays available listings and supports keyword search, condition, price-range, and price-type filters.</li>
+    <li><strong>Item Details and Map:</strong> Shows images, pricing, condition, brand, description, reviews, owner information, and meetup location.</li>
+    <li><strong>Create/Edit Listing:</strong> Uploads images, collects listing information and location, provides AI description assistance, and enforces the free listing limit.</li>
+    <li><strong>My Listings and Saved Items:</strong> Lets users manage their own listings and revisit favourites.</li>
+    <li><strong>Rental Checkout:</strong> Selects dates, adds a message for the lender, calculates the total, and submits a rental request.</li>
+    <li><strong>Orders and Request Details:</strong> Separates borrower orders from lender requests and lets a lender accept or reject a pending request.</li>
+    <li><strong>Payment:</strong> Lets the borrower securely pay an approved rental using Stripe PaymentSheet and displays payment status.</li>
+    <li><strong>Inbox and Chat:</strong> Enables real-time messaging between the borrower and lender after a rental is approved.</li>
+    <li><strong>Reviews:</strong> Allows an eligible borrower to submit a rating and written review and displays all reviews for a listing.</li>
+    <li><strong>Notifications:</strong> Displays rental request, approval, and rejection updates; final navigation integration still needs completion.</li>
+    <li><strong>Profile and Account Settings:</strong> Displays and updates username, email, phone, and profile image, with links to saved items, listings, help, invitations, and subscription management.</li>
+    <li><strong>OOPA Pro Subscription:</strong> Displays monthly and yearly Stripe plans, completes subscription payment, shows entitlement status, and opens the Stripe billing portal.</li>
+    <li><strong>Report, Help, and Invite Friends:</strong> Provides supporting user-interface flows. Persistent report handling and production referral tracking remain future work.</li>
+  </ul>
+
+  <h2>Work Plan Based on SCRUM: 12 Sprints</h2>
+  <p><strong>Sprint 1:</strong> Project planning, requirements, team roles, target users, and final app concept.</p>
+  <p><strong>Sprint 2:</strong> UI/UX design, navigation flow, reusable styles, and screen prototypes.</p>
+  <p><strong>Sprint 3:</strong> Set up Expo, React Native, TypeScript, Firebase, GitHub, and the application structure.</p>
+  <p><strong>Sprint 4:</strong> Implement Firebase email/password authentication, user profiles, profile images, and account settings.</p>
+  <p><strong>Sprint 5:</strong> Implement listing creation, editing, deletion, image uploads, location selection, and AI-assisted descriptions.</p>
+  <p><strong>Sprint 6:</strong> Implement home browsing, keyword search, filters, item details, maps, saved items, and listing management.</p>
+  <p><strong>Sprint 7:</strong> Implement rental date selection, total-price calculation, request creation, order tracking, and lender approval or rejection.</p>
+  <p><strong>Sprint 8:</strong> Implement Stripe rental payments, payment status handling, secure Cloud Functions, and webhook processing.</p>
+  <p><strong>Sprint 9:</strong> Implement approved-rental chat, inbox, Firestore notifications, push token registration, and rental event alerts.</p>
+  <p><strong>Sprint 10:</strong> Implement reviews and OOPA Pro monthly/yearly subscriptions, subscription entitlements, billing management, and listing limits.</p>
+  <p><strong>Sprint 11:</strong> Complete notification navigation, persist reports/disputes, improve referral and support flows, strengthen testing, and fix integration issues.</p>
+  <p><strong>Sprint 12:</strong> Final security review, emulator and payment testing, bug fixing, UI polishing, documentation, deployment preparation, and final submission. KYC, escrow, deposits, and insurance may be considered later as production extensions.</p>
+
+  <h2>References:</h2>
+  <ul>
+    <li>Expo Documentation: https://docs.expo.dev/</li>
+    <li>React Native Documentation: https://reactnative.dev/docs/getting-started</li>
+    <li>Firebase Documentation: https://firebase.google.com/docs</li>
+    <li>Stripe Documentation: https://docs.stripe.com/</li>
+    <li>React Navigation Documentation: https://reactnavigation.org/docs/getting-started</li>
+    <li>Google Maps Platform Documentation: https://developers.google.com/maps/documentation</li>
+    <li>Gemini API Documentation: https://ai.google.dev/gemini-api/docs</li>
+    <li>Scrum Methodology: https://www.scrum.org/resources/what-is-scrum</li>
+  </ul>
+</body>
+</html>

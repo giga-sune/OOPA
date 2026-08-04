@@ -10,7 +10,7 @@ import useRentalDetailData from "./useRentalDetailData";
 
 export type OwnerDecisionProgress = "approving" | "rejecting" | null;
 export type OwnerDecisionOutcome =
-  | { status: "success" }
+  | { status: "success"; autoRejectedCount: number }
   | { status: "failure"; message: string };
 export type OwnerChatOutcome =
   | { status: "success"; chat: PreparedRentalChat }
@@ -48,9 +48,13 @@ export default function useOwnerRentalDetailViewModel(rentalId: string) {
     decisionInFlightRef.current = true;
     setDecisionProgress(nextStatus === "approved" ? "approving" : "rejecting");
     try {
-      if (nextStatus === "approved") await approveRentalRequest(rentalId);
-      else await rejectRentalRequest(rentalId);
-      return { status: "success" };
+      if (nextStatus === "approved") {
+        const result = await approveRentalRequest(rentalId);
+        return { status: "success", autoRejectedCount: result.autoRejectedCount };
+      }
+
+      await rejectRentalRequest(rentalId);
+      return { status: "success", autoRejectedCount: 0 };
     } catch (error) {
       return {
         status: "failure",

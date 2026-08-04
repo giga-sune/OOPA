@@ -13,7 +13,6 @@ const MENU_ITEMS: Array<{ icon: FeatherIconName; label: string }> = [
   { icon: "user", label: "Account setting" },
   { icon: "list", label: "My Listing" },
   { icon: "heart", label: "All Saved" },
-  { icon: "star", label: "Ratings & Reviews" },
   { icon: "tag", label: "Subscriptions" },
   { icon: "user-plus", label: "Invite Friends" },
 ];

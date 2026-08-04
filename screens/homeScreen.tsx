@@ -13,7 +13,7 @@ import {
   SafeAreaView,
   Platform,
 } from "react-native";
-import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import Feather from "@expo/vector-icons/Feather";
 
 import PropertyCard from "../components/property/PropertyCard";
@@ -170,7 +170,7 @@ export default function HomeScreen() {
       if (isCurrentlySaved) {
         await deleteDoc(favRef);
       } else {
-        await setDoc(favRef, { propertyId, createdAt: new Date() });
+        await setDoc(favRef, { propertyId, createdAt: serverTimestamp() });
       }
     } catch (err) {
       console.error("Failed to sync favorite state with Firestore:", err);

@@ -26,6 +26,10 @@ export {
   getListingAllowance,
   updateListing,
 } from "./listings";
+export {
+  approveRentalRequest,
+  checkRentalAvailability,
+} from "./rentals";
 
 if (getApps().length === 0) {
   initializeApp();

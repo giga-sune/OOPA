@@ -8,6 +8,10 @@ rules_version = '2';
 //   Private profile with an immutable uid/createdAt and bounded profile fields.
 //   Only the matching user may get or update it; collection listing is denied.
 //
+// users/{uid}/savedItems/{propertyId}
+//   Owner-private immutable references containing propertyId and createdAt.
+//   Owners may read, create, and delete; updates and cross-user access are denied.
+//
 // properties/{propertyId}
 //   Authenticated catalog read. Creation, editing, and deletion are performed by
 //   callable Functions so listing limits and listingStats change atomically.
@@ -20,7 +24,7 @@ rules_version = '2';
 //
 // rentals/{rentalId}
 //   Immutable rental, participant, item, pricing, and creation fields.
-//   The trusted owner may update only status and updatedAt while unpaid.
+//   Functions perform approval; owners may only reject while unpaid.
 //
 // payments/{rentalId}
 //   rentalId, propertyId, renterUid, ownerUid: bounded strings
@@ -31,7 +35,7 @@ rules_version = '2';
 //   All writes are performed by Firebase Functions through the Admin SDK.
 //
 // reviews/{rentalId}
-//   One immutable renter-to-property review after an approved rental ends.
+//   One immutable renter-to-property review after a rental is approved.
 //
 // chats/{rentalId}
 //   Server-created metadata for an approved rental. Participants may update
@@ -255,12 +259,12 @@ service cloud.firestore {
         isRentalParticipant(chatId);
     }
 
-    function isValidRentalDecisionUpdate(rentalId) {
+    function isValidRentalRejectionUpdate(rentalId) {
       return isValidRental(request.resource.data) &&
         request.auth.uid == resource.data.ownerUid &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
         request.resource.data.renterUid == resource.data.renterUid &&
-        request.resource.data.status in ['approved', 'rejected'] &&
+        request.resource.data.status == 'rejected' &&
         request.resource.data.updatedAt == request.time &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'status',
@@ -326,8 +330,7 @@ service cloud.firestore {
         rental.renterUid == data.reviewerUid &&
         rental.propertyId == data.propertyId &&
         rental.status == 'approved' &&
-        rental.endDate is timestamp &&
-        rental.endDate <= request.time;
+        rental.endDate is timestamp;
     }
 
     function matchesReviewerProfile(data) {
@@ -465,6 +468,18 @@ service cloud.firestore {
         data.updatedAt == request.time;
     }
 
+    function isValidSavedItem(propertyId, data) {
+      return data.keys().hasAll(['propertyId', 'createdAt']) &&
+        data.keys().hasOnly(['propertyId', 'createdAt']) &&
+        data.propertyId is string &&
+        data.propertyId == propertyId &&
+        data.propertyId.size() >= 1 &&
+        data.propertyId.size() <= 1500 &&
+        data.createdAt is timestamp &&
+        data.createdAt == request.time &&
+        exists(/databases/$(database)/documents/properties/$(propertyId));
+    }
+
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list, delete: if false;
@@ -479,6 +494,16 @@ service cloud.firestore {
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.updatedAt == request.time;
+    }
+
+    match /users/{userId}/savedItems/{propertyId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+        isValidSavedItem(propertyId, request.resource.data);
+
+      allow update: if false;
+      allow delete: if isOwner(userId);
     }
 
     match /properties/{propertyId} {
@@ -522,7 +547,7 @@ service cloud.firestore {
         matchesTrustedProperty(request.resource.data);
 
       allow update: if isAuthenticated() &&
-        isValidRentalDecisionUpdate(rentalId);
+        isValidRentalRejectionUpdate(rentalId);
 
       allow delete: if false;
     }
