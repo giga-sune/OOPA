@@ -57,25 +57,26 @@ export default function InboxScreen() {
     return () => unsubscribe();
   }, [currentUserUid]);
 
-  const handleChatPress = async (chat: ChatChannel) => {
-    if (!currentUserUid) return;
+const handleChatPress = async (chat: ChatChannel) => {
+  if (!currentUserUid) return;
 
-    // Mark as read locally/remotely
-    await markChatAsRead(chat.id, currentUserUid);
+  // Mark as read locally/remotely
+  await markChatAsRead(chat.id, currentUserUid);
 
-    // Determine other participant details
-    const isOwner = chat.ownerUid === currentUserUid;
-    const recipientUid = isOwner ? chat.renterUid : chat.ownerUid;
-    const recipientName = isOwner ? chat.renterDisplayName : chat.ownerDisplayName;
+  // Determine other participant details
+  const isOwner = chat.ownerUid === currentUserUid;
+  const recipientUid = isOwner ? chat.renterUid : chat.ownerUid;
+  const recipientName = isOwner ? chat.renterDisplayName : chat.ownerDisplayName;
 
-    // This now resolves safely because ChatRoom belongs to the parent RootStackParamList
-    navigation.navigate("ChatRoom", {
-      rentalId: chat.id,
-      title: chat.propertyTitle,
-      recipientUid,
-      recipientName,
-    });
-  };
+  // Pass propertyImageUrl along with the other params!
+  navigation.navigate("ChatRoom", {
+    rentalId: chat.id,
+    title: chat.propertyTitle,
+    recipientUid,
+    recipientName,
+    propertyImageUrl: chat.propertyImageUrl,
+  });
+};
 
   if (loading) {
     return (

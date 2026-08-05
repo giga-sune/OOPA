@@ -14,6 +14,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { getAuth } from "firebase/auth";
 import { subscribeToMessages, sendMessage, markChatAsRead, type ChatMessage } from "../services/chat/chatService";
 import type { RootStackParamList } from "../types/navigation/navigationTypes";
+// Import your unified notification helper if needed locally, or rely on chatService
+import { sendAppNotification } from "../services/notification/pushNotificationService"; 
 
 type ChatRoomScreenRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 type ChatRoomScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "ChatRoom">;
@@ -21,7 +23,15 @@ type ChatRoomScreenNavigationProp = NativeStackNavigationProp<RootStackParamList
 export default function ChatRoomScreen() {
   const route = useRoute<ChatRoomScreenRouteProp>();
   const navigation = useNavigation<ChatRoomScreenNavigationProp>();
-  const { rentalId, title, recipientUid, recipientName } = route.params;
+  
+  // Make sure you pass propertyImageUrl alongside these in your route params when opening the chat room
+  const { rentalId, title, recipientUid, recipientName, propertyImageUrl } = route.params as {
+    rentalId: string;
+    title: string;
+    recipientUid: string;
+    recipientName: string;
+    propertyImageUrl?: string | null;
+  };
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -31,17 +41,14 @@ export default function ChatRoomScreen() {
   const currentUserUid = auth.currentUser?.uid;
 
   useEffect(() => {
-    // Set screen header dynamically to match recipient identity
     navigation.setOptions({ title: recipientName });
 
     if (!currentUserUid) return;
 
-    // Stream individual text exchanges
     const unsubscribe = subscribeToMessages(
       rentalId,
       (incomingMessages) => {
         setMessages(incomingMessages);
-        // Mark as read whenever a new message comes in while room is active
         markChatAsRead(rentalId, currentUserUid).catch((error) => {
           console.error("Failed to mark chat as read:", error);
         });
@@ -58,10 +65,22 @@ export default function ChatRoomScreen() {
     if (!inputText.trim() || !currentUserUid) return;
 
     const messageContent = inputText.trim();
-    setInputText(""); // Clear promptly for UI responsiveness
+    setInputText(""); 
 
     try {
-      await sendMessage(rentalId, currentUserUid, recipientUid, messageContent);
+      // 1. Pass the property image and title context here!
+      await sendMessage(rentalId, currentUserUid, recipientUid, messageContent, propertyImageUrl);
+
+      // 2. Also trigger the local push banner alert using your push notification service
+      // so it pops up immediately on the recipient's device if they are active/testing
+      await sendAppNotification({
+        recipientUid: recipientUid,
+        type: "new_message",
+        categoryLabel: title || "New Message", // Shows item title instead of generic text
+        bodyText: messageContent,
+        propertyImageUrl: propertyImageUrl || null,
+        dataPayload: { rentalId },
+      });
     } catch (error) {
       console.error("Failed to transmit text content:", error);
     }
@@ -74,7 +93,6 @@ export default function ChatRoomScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
-        {/* Dynamic Context Header Banner */}
         <View style={styles.contextBanner}>
           <Text style={styles.contextBannerText} numberOfLines={1}>
             Discussing: <Text style={{ fontWeight: "700" }}>{title}</Text>
@@ -103,7 +121,6 @@ export default function ChatRoomScreen() {
           }}
         />
 
-        {/* Input Bar Layout Control */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}

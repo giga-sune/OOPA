@@ -6,6 +6,7 @@ export type RootStackParamList = {
   Signup: undefined;
   ForgotPassword: { email?: string } | undefined;
   MainApp: NavigatorScreenParams<TabParamList> | undefined;
+  Notifications: undefined;
   MyListings: undefined;
   SavedItemsScreen: undefined;
   Details: { propertyId: string };
@@ -29,6 +30,7 @@ export type RootStackParamList = {
     title: string; 
     recipientUid: string; 
     recipientName: string; 
+    propertyImageUrl?: string | null;
   };
 };
 
