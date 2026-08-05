@@ -18,6 +18,7 @@ import { db, functions } from "../firebase/firebaseApp";
 
 const CHATS_COLLECTION = "chats";
 const MESSAGES_SUBCOLLECTION = "messages";
+const NOTIFICATIONS_COLLECTION = "notifications";
 
 export interface ChatChannel {
   id: string; // The rentalId
@@ -144,7 +145,7 @@ export function subscribeToUserChats(
   };
 }
 
-// stream messsage within a specific chat channel
+// stream message within a specific chat channel
 export function subscribeToMessages(
   rentalId: string,
   onUpdate: (messages: ChatMessage[]) => void,
@@ -173,27 +174,40 @@ export function subscribeToMessages(
   );
 }
 
-// Send a new message
+// Send a new message and trigger an in-app notification for the recipient
 export async function sendMessage(
   rentalId: string,
   senderUid: string,
   recipientUid: string,
-  text: string
+  text: string,
+  propertyImageUrl?: string | null
 ): Promise<void> {
-  if (!text.trim()) return;
+  const trimmedText = text.trim();
+  if (!trimmedText) return;
 
-  // Add the message to the subcollection
+  // 1. Add the message to the subcollection
   await addDoc(collection(db, CHATS_COLLECTION, rentalId, MESSAGES_SUBCOLLECTION), {
     senderUid,
-    text: text.trim(),
+    text: trimmedText,
     createdAt: serverTimestamp(),
   });
 
-  // Update the parent channel header snippet
+  // 2. Update the parent channel header snippet
   await updateDoc(doc(db, CHATS_COLLECTION, rentalId), {
-    lastMessage: text.trim(),
+    lastMessage: trimmedText,
     lastMessageTimestamp: serverTimestamp(),
     unreadBy: arrayUnion(recipientUid), // Flags notification indicator for the receiver
+  });
+
+  // 3. Trigger an in-app notification document for the NotificationsScreen listener
+  await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+    recipientUid: recipientUid,
+    type: "new_message",
+    categoryLabel: "New Message",
+    bodyText: trimmedText.length > 50 ? `${trimmedText.substring(0, 50)}...` : trimmedText,
+    propertyImageUrl: propertyImageUrl || null,
+    createdAt: serverTimestamp(),
+    read: false,
   });
 }
 

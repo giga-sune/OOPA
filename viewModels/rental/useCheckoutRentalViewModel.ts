@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import * as Notifications from "expo-notifications";
 
 import { useAuth } from "../../context/AuthContext";
+import { db } from "../../services/firebase/firebaseApp";
 import { getPropertyById } from "../../services/firestore/propertyService";
 import {
   calculateRentalTotalPrice,
@@ -266,6 +269,7 @@ export default function useCheckoutRentalViewModel(
       availabilityVerified = true;
       setAvailabilityStatus("available");
       setAvailabilityMessage("Dates are available.");
+
       const rentalId = await createRentalRequest({
         propertyId,
         renterUid: user.uid,
@@ -273,6 +277,34 @@ export default function useCheckoutRentalViewModel(
         endDate,
         message: message.trim() || null,
       });
+
+      // Trigger notification for the lender
+      try {
+        if (property) {
+          await addDoc(collection(db, "notifications"), {
+            recipientUid: property.ownerUid,
+            type: "new_request",
+            categoryLabel: "New Rental Request",
+            bodyText: `${user.displayName || "A borrower"} has requested to rent "${property.title}".`,
+            propertyImageUrl: property.images?.[0] || null,
+            createdAt: serverTimestamp(),
+            read: false,
+          });
+
+          // Local notification fallback for testing
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "New Rental Request",
+              body: `${user.displayName || "A borrower"} has requested to rent "${property.title}".`,
+              data: { propertyId, rentalId },
+            },
+            trigger: null,
+          });
+        }
+      } catch (notifError) {
+        console.error("Failed to create lender notification:", notifError);
+      }
+
       return { status: "success", rentalId };
     } catch (error) {
       const nextMessage = getErrorMessage(

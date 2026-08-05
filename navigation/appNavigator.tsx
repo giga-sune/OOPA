@@ -20,6 +20,7 @@ import SavedItemsScreen from "../screens/savedItemsScreen";
 import GetHelpScreen from "../screens/getHelpScreen";
 import InviteFriendScreen from "../screens/inviteFriendScreen";
 import AccountSettingsScreen from "../screens/accountSettingsScreen";
+import NotificationsScreen from "../screens/notificationScreen";
 
 import { useAuth } from "../context/AuthContext";
 import type { RootStackParamList } from "../types/navigation/navigationTypes";
@@ -40,6 +41,7 @@ export default function AppNavigator() {
       ) : (
         <Stack.Group>
           <Stack.Screen name="MainApp" component={TabNavigator} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
           <Stack.Screen name="MyListings" component={MyListingsScreen} />
           <Stack.Screen name="SavedItemsScreen" component={SavedItemsScreen} />
           <Stack.Screen name="Details" component={DetailsScreen} />

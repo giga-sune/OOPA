@@ -94,7 +94,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState<boolean>(false);
   const [savedPropertyIds, setSavedPropertyIds] = useState<Set<string>>(new Set());
-  
+
   const navigation = useNavigation<any>();
   const currentUser = auth.currentUser;
 
@@ -128,7 +128,7 @@ export default function HomeScreen() {
       }
     );
 
-    let unsubscribeSaved = () => {};
+    let unsubscribeSaved = () => { };
     if (currentUser) {
       const savedRef = collection(db, "users", currentUser.uid, "savedItems");
       unsubscribeSaved = onSnapshot(
@@ -232,6 +232,15 @@ export default function HomeScreen() {
             />
           </View>
 
+          {/* Notification Button */}
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={() => navigation.navigate("Notifications")}
+            activeOpacity={0.8}
+          >
+            <Feather name="bell" size={18} color={Colors.text} />
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[
               styles.filterToggleButton,
@@ -245,11 +254,11 @@ export default function HomeScreen() {
               size={18}
               color={activeFilterCount > 0 ? "#FFFFFF" : Colors.text}
             />
-            {activeFilterCount > 0 && (
+            {activeFilterCount > 0 ? (
               <View style={styles.filterBadge}>
                 <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
               </View>
-            )}
+            ) : null}
           </TouchableOpacity>
         </View>
 
@@ -265,12 +274,12 @@ export default function HomeScreen() {
         onRequestClose={() => setIsFilterModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalDismissTap} 
-            activeOpacity={1} 
-            onPress={() => setIsFilterModalVisible(false)} 
+          <TouchableOpacity
+            style={styles.modalDismissTap}
+            activeOpacity={1}
+            onPress={() => setIsFilterModalVisible(false)}
           />
-          
+
           <View style={styles.modalContent}>
             <View style={styles.modalHandle} />
 
@@ -481,7 +490,7 @@ const styles = StyleSheet.create({
     color: Colors.subText,
     fontSize: 12,
   },
-  
+
   /* Sheet UI */
   modalOverlay: {
     flex: 1,
@@ -579,7 +588,7 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: Spacing.lg || 16, 
+    marginHorizontal: Spacing.lg || 16,
   },
   doneButtonText: {
     color: "#FFFFFF",
@@ -622,5 +631,15 @@ const styles = StyleSheet.create({
   rowWrapper: {
     justifyContent: "space-between",
     marginBottom: Spacing.md,
+  },
+  headerIconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.pill || 24,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white || "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
