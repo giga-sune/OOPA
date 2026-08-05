@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   myBubbleAlign: { justifyContent: "flex-end" },
   theirBubbleAlign: { justifyContent: "flex-start" },
   bubble: { maxWidth: "75%", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
-  myBubble: { backgroundColor: "#007AFF", borderBottomRightRadius: 4 },
+  myBubble: { backgroundColor: "#FF7D29", borderBottomRightRadius: 4 },
   theirBubble: { backgroundColor: "#E5E5EA", borderBottomLeftRadius: 4 },
   messageText: { fontSize: 16 },
   myMessageText: { color: "#FFF" },
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === "ios" ? 24 : 12
   },
   input: { flex: 1, minHeight: 40, maxHeight: 100, backgroundColor: "#F2F2F7", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, fontSize: 16, marginRight: 10, color: "#000" },
-  sendButton: { backgroundColor: "#007AFF", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, justifyContent: "center" },
-  disabledSendButton: { backgroundColor: "#B3D7FF" },
+  sendButton: { backgroundColor: "#FF7D29", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, justifyContent: "center" },
+  disabledSendButton: { backgroundColor: "#FFC299" },
   sendButtonText: { color: "#FFF", fontWeight: "600", fontSize: 15 },
 });

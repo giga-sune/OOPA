@@ -1,5 +1,14 @@
 import React from "react";
-import { View, TextInput, Text, StyleSheet, type StyleProp, type ViewStyle, type KeyboardTypeOptions } from "react-native";
+import { 
+  View, 
+  TextInput, 
+  Text, 
+  StyleSheet, 
+  type StyleProp, 
+  type ViewStyle, 
+  type KeyboardTypeOptions,
+  type TextInputProps,
+} from "react-native";
 import { Colors, Typography, Radius, Spacing } from "../styles/globalDesignSystem";
 
 export interface InputFieldProps {
@@ -13,6 +22,8 @@ export interface InputFieldProps {
   numberOfLines?: number;
   containerStyle?: StyleProp<ViewStyle>;
   keyboardType?: KeyboardTypeOptions;
+  autoCapitalize?: TextInputProps["autoCapitalize"];
+  autoCorrect?: boolean;
 }
 
 export default function InputField({
@@ -26,6 +37,8 @@ export default function InputField({
   numberOfLines,
   containerStyle,
   keyboardType = "default",
+  autoCapitalize,
+  autoCorrect,
 }: InputFieldProps) {
   return (
     <View style={[styles.container, active && styles.activeContainer, containerStyle]}>
@@ -41,6 +54,8 @@ export default function InputField({
         numberOfLines={numberOfLines}
         textAlignVertical={multiline ? "top" : "center"}
         keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
         style={[styles.input, multiline && styles.multilineInput]}
       />
     </View>
