@@ -16,22 +16,19 @@ import {
   collection, 
   query, 
   where, 
-  orderBy, 
   onSnapshot, 
   writeBatch, 
-  getDocs,
   doc,
-  deleteDoc
 } from 'firebase/firestore';
 
 import { db } from '../services/firebase/firebaseApp';
-import { Colors, Typography, Radius, Spacing, Shadows } from '../styles/globalDesignSystem';
+import { Colors, Radius, Spacing, Shadows } from '../styles/globalDesignSystem';
 
 // Type definition matching your Firestore Notification documents
 export interface NotificationItem {
   id: string;
   recipientUid: string;
-  type: 'request_approved' | 'request_rejected' | 'new_request';
+  type: 'request_approved' | 'request_rejected' | 'new_request' | 'new_message' | 'general';
   categoryLabel: string;                   
   bodyText: string;                        
   propertyImageUrl: string | null;
@@ -55,10 +52,10 @@ export default function NotificationsScreen() {
     }
 
     const notificationsRef = collection(db, "notifications");
+    // Strictly target notifications meant for the CURRENT USER
     const q = query(
       notificationsRef,
-      where("recipientUid", "==", currentUser.uid),
-      orderBy("createdAt", "desc")
+      where("recipientUid", "==", currentUser.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -68,13 +65,17 @@ export default function NotificationsScreen() {
           id: docSnap.id,
           recipientUid: data.recipientUid,
           type: data.type,
-          categoryLabel: data.categoryLabel || (data.type === 'request_approved' ? 'Rental Approved' : 'New Request'),
+          categoryLabel: data.categoryLabel || (data.type === 'new_message' ? 'New Message' : 'Notification'),
           bodyText: data.bodyText || '',
           propertyImageUrl: data.propertyImageUrl || null,
-          createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
           read: data.read ?? false,
         };
       });
+
+      // Sort manually on the client side to avoid missing index errors in Firestore
+      items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
       setNotifications(items);
       setLoading(false);
     }, (error) => {
@@ -101,7 +102,7 @@ export default function NotificationsScreen() {
     }
   };
 
-  // Helper: Generates relative dates like "2 hours ago", "5 days ago"
+  // Helper: Generates relative dates like "2m ago", "5d ago"
   const getRelativeTime = (date: Date) => {
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
@@ -130,7 +131,14 @@ export default function NotificationsScreen() {
         </View>
       );
     }
-    // New Incoming Booking Request
+    if (type === 'new_message') {
+      return (
+        <View style={[styles.iconCircle, { backgroundColor: '#E0F2FE' }]}>
+          <Ionicons name="chatbubble-ellipses" size={18} color="#0284C7" />
+        </View>
+      );
+    }
+    // New Incoming Booking Request or default
     return (
       <View style={[styles.iconCircle, { backgroundColor: '#FFEDD5' }]}>
         <Ionicons name="mail" size={18} color="#D97706" />
@@ -230,7 +238,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
-headerTitle: {
+  headerTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: Colors.grayPrimary || '#0F172A',
@@ -241,7 +249,6 @@ headerTitle: {
     color: '#94A3B8',
   },
   listContent: { paddingHorizontal: Spacing.lg || 16, paddingTop: 12, paddingBottom: 100 },
-  
   notificationCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
