@@ -59,10 +59,15 @@ export default function AppNavigator() {
           <Stack.Screen
             name="ChatRoom"
             component={ChatRoomScreen}
-            options={{
+            options={({ route }) => ({
               headerShown: true,
-              headerTitleStyle: { fontWeight: "600" },
-            }}
+              headerBackTitle: "Inbox",
+              headerTintColor: "#FF7D29",
+              headerTitleStyle: {
+                fontWeight: "600",
+                color: "#000000",
+              },
+            })}
           />
         </Stack.Group>
       )}

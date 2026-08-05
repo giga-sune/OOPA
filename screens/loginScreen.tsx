@@ -39,6 +39,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           value={email}
           onChangeText={setEmail}
           active={email.length > 0}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
         />
 
         <Text style={styles.label}>Password</Text>
