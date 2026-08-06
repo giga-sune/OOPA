@@ -34,7 +34,7 @@ export default function OrderListItem({
     switch (status.toLowerCase()) {
       case "approved": return { bg: "#DCFCE7", text: "#15803D" };
       case "rejected": return { bg: "#FEE2E2", text: "#B91C1C" };
-      default: return { bg: "#FEF3C7", text: "#B45309" }; // Pending
+      default: return { bg: "#FEF3C7", text: "#B45309" };
     }
   };
 
@@ -70,7 +70,6 @@ export default function OrderListItem({
         </View>
       </View>
 
-      {/* Dynamic Action Controls */}
       {isIncomingRequest ? (
         <>
           {normalizedStatus === "pending" ? (

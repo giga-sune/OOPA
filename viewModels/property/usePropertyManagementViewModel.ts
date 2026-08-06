@@ -1,4 +1,3 @@
-// viewModels/property/usePropertyManagementViewModel.ts
 import { useState } from "react";
 import { getAllProperties, deleteProperty } from "../../services/firestore/propertyService";
 import type { Property } from "../../types/property/propertyTypes";
@@ -16,7 +15,6 @@ export default function usePropertyManagementViewModel(): PropertyManagementView
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  // Fetch all property items for display lists
   const loadProperties = async () => {
     setLoading(true);
     setError("");
@@ -30,13 +28,12 @@ export default function usePropertyManagementViewModel(): PropertyManagementView
     }
   };
 
-  // Direct removal action bound to item deletion buttons
   const onDeleteListing = async (propertyId: string): Promise<boolean> => {
     setLoading(true);
     setError("");
     try {
       await deleteProperty(propertyId);
-      // Instantly filter out deleted data from the active display list without a re-fetch
+      // Remove the item locally without another fetch.
       setProperties((prev) => prev.filter((p) => p.id !== propertyId));
       return true;
     } catch (err) {

@@ -545,3 +545,32 @@ Originating from:
 [info] ✔  Deploy complete! 
 [info] 
 [info] Project Console: https://console.firebase.google.com/project/oopa-e977a/overview
+[debug] [2026-08-04T19:27:15.474Z] ----------------------------------------------------------------------
+[debug] [2026-08-04T19:27:15.480Z] Command:       /usr/local/bin/node /Users/sunegeleta/.npm/_npx/ba4f1959e38407b5/node_modules/.bin/firebase emulators:exec --only firestore node --test tests/firestore/access.rules.test.mjs
+[debug] [2026-08-04T19:27:15.480Z] CLI Version:   15.25.1
+[debug] [2026-08-04T19:27:15.481Z] Platform:      darwin
+[debug] [2026-08-04T19:27:15.481Z] Node Version:  v24.13.0
+[debug] [2026-08-04T19:27:15.482Z] Detected Agent: codex_cli
+[debug] [2026-08-04T19:27:15.482Z] Time:          Tue Aug 04 2026 15:27:15 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-08-04T19:27:15.483Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-04T19:27:15.501Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-08-04T19:27:17.184Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-04T19:27:17.184Z] > authorizing via signed-in user (sunegeleta@gmail.com)
+[debug] [2026-08-04T19:27:17.230Z] The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+
+[debug] [2026-08-04T19:27:17.239Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[debug] [2026-08-04T19:27:17.243Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[debug] [2026-08-04T19:27:17.342Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-08-04T19:27:17.342Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[error] 
+[error] Error: Process `java -version` has exited with code 1. Please make sure Java is installed and on your system PATH.
+-----Original stdout-----
+-----Original stderr-----
+The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+

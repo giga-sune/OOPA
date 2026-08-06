@@ -13,7 +13,7 @@ export async function getReadableAddress(lat: number, lon: number): Promise<stri
 
     const { streetNumber, street, city, region, country } = geocodeResult;
 
-    // Filter out missing items to prevent double commas
+    // Omit empty address segments.
     const components = [
       streetNumber && street ? `${streetNumber} ${street}` : street || streetNumber,
       city,

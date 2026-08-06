@@ -36,7 +36,6 @@ export default function DetailsScreen() {
 
   const [ownerProfile, setOwnerProfile] = useState<{ displayName: string; photoURL: string | null } | null>(null);
 
-  // Review System States
   const [reviewsPreview, setReviewsPreview] = useState<Review[]>([]);
   const [totalReviews, setTotalReviews] = useState<number>(0);
   const [averageRating, setAverageRating] = useState<number>(0);
@@ -51,7 +50,6 @@ export default function DetailsScreen() {
         if (data) {
           setProperty(data);
 
-          // Fetch local reviews metadata
           const reviewsData = await getPropertyReviewSummary(propertyId);
           setReviewsPreview(reviewsData.reviewsPreview);
           setTotalReviews(reviewsData.totalReviews);
@@ -90,7 +88,7 @@ export default function DetailsScreen() {
     const favRef = doc(db, "users", currentUser.uid, "savedItems", propertyId);
     const nextState = !isFavorited;
     
-    setIsFavorited(nextState); // Optimistic UI update
+    setIsFavorited(nextState); // Update immediately while the write is pending.
     try {
       if (nextState) {
         await setDoc(favRef, { propertyId, createdAt: serverTimestamp() });
@@ -99,7 +97,7 @@ export default function DetailsScreen() {
       }
     } catch (err) {
       console.error("Failed to update favorite state:", err);
-      setIsFavorited(!nextState); // Revert on failure
+      setIsFavorited(!nextState); // Restore the previous state if the write fails.
     }
   };
 
@@ -154,7 +152,6 @@ export default function DetailsScreen() {
   return (
     <View style={styles.mainContainer}>
 
-      {/* Floating Action Header Bar */}
       <SafeAreaView style={styles.floatingHeader}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconCircleButton}>
@@ -178,7 +175,6 @@ export default function DetailsScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* Horizontal Swiper Area */}
         <View style={styles.swiperWrapper}>
           {property.images && property.images.length > 0 ? (
             <FlatList
@@ -199,7 +195,6 @@ export default function DetailsScreen() {
             </View>
           )}
 
-          {/* Pagination Indicators UI Overlay */}
           {property.images && property.images.length > 1 && (
             <View style={styles.paginationDotsRow}>
               {property.images.map((_, idx) => (
@@ -215,7 +210,6 @@ export default function DetailsScreen() {
           )}
         </View>
 
-        {/* Content Details Block */}
         <View style={styles.detailsContentBlock}>
           <Text style={styles.mainTitle}>{property.title}</Text>
 
@@ -236,7 +230,6 @@ export default function DetailsScreen() {
             <Text style={styles.attributeItemValue}>{property.brand}</Text>
           </View>
 
-          {/* Reviews Summary Section */}
           <View style={styles.reviewsSection}>
             <View style={styles.reviewsHeaderRow}>
               <Text style={styles.blockSectionHeadingWithoutMargin}>Reviews</Text>
@@ -320,7 +313,6 @@ export default function DetailsScreen() {
             </>
           )}
 
-          {/* Owner Profile Row Widget */}
           <View style={styles.ownerProfileWidget}>
             <View style={styles.ownerProfileDetailsSide}>
               {ownerProfile?.photoURL ? (
@@ -344,7 +336,6 @@ export default function DetailsScreen() {
         </View>
       </ScrollView>
 
-      {/* Footer Rental CTA Action Bar */}
       <View style={styles.bottomStickyBar}>
         <View>
           <Text style={styles.bottomBarPriceText}>${property.price}</Text>
@@ -464,7 +455,6 @@ const styles = StyleSheet.create({
   mainRentCTAButton: { backgroundColor: Colors.primary || '#FF7A21', paddingHorizontal: 36, paddingVertical: 14, borderRadius: Radius.pill || 26 },
   mainRentCTAButtonText: { color: Colors.white || '#FFF', fontSize: 16, fontWeight: '700' },
 
-  // Reviews CSS Style Injections
   starsRow: { flexDirection: 'row' },
   reviewsSection: {
     marginTop: 16,

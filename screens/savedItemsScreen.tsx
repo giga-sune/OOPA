@@ -98,7 +98,7 @@ export default function SavedItemsScreen() {
     const favRef = doc(db, "users", currentUserId, "savedItems", propertyId);
     const isCurrentlySaved = savedPropertyIds.has(propertyId);
 
-    // Optimistic UI update
+    // Remove immediately while the write is pending.
     setSavedPropertyIds((prev) => {
       const next = new Set(prev);
       if (isCurrentlySaved) {
@@ -130,7 +130,6 @@ export default function SavedItemsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Container matching MyListingsScreen */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 

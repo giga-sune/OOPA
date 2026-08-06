@@ -21,7 +21,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 const NOTIFICATIONS_COLLECTION = "notifications";
 
 export interface ChatChannel {
-  id: string; // The rentalId
+  id: string; // Rental ID
   propertyId: string;
   propertyTitle: string;
   propertyImageUrl: string | null;
@@ -99,7 +99,6 @@ function mergeChatSnapshots(
     });
 }
 
-// 1. STREAM ACTIVE CHATS FOR INBOX (Real-time update stream)
 export function subscribeToUserChats(
   userUid: string,
   onUpdate: (chats: ChatChannel[]) => void,
@@ -145,7 +144,6 @@ export function subscribeToUserChats(
   };
 }
 
-// stream message within a specific chat channel
 export function subscribeToMessages(
   rentalId: string,
   onUpdate: (messages: ChatMessage[]) => void,
@@ -174,7 +172,6 @@ export function subscribeToMessages(
   );
 }
 
-// Send a new message and trigger an in-app notification for the recipient
 export async function sendMessage(
   rentalId: string,
   senderUid: string,
@@ -185,21 +182,18 @@ export async function sendMessage(
   const trimmedText = text.trim();
   if (!trimmedText) return;
 
-  // 1. Add the message to the subcollection
   await addDoc(collection(db, CHATS_COLLECTION, rentalId, MESSAGES_SUBCOLLECTION), {
     senderUid,
     text: trimmedText,
     createdAt: serverTimestamp(),
   });
 
-  // 2. Update the parent channel header snippet
   await updateDoc(doc(db, CHATS_COLLECTION, rentalId), {
     lastMessage: trimmedText,
     lastMessageTimestamp: serverTimestamp(),
-    unreadBy: arrayUnion(recipientUid), // Flags notification indicator for the receiver
+    unreadBy: arrayUnion(recipientUid),
   });
 
-  // 3. Trigger an in-app notification document for the NotificationsScreen listener
   await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
     recipientUid: recipientUid,
     type: "new_message",
@@ -211,7 +205,6 @@ export async function sendMessage(
   });
 }
 
-// Mark chat as read when opened
 export async function markChatAsRead(rentalId: string, userUid: string): Promise<void> {
   await updateDoc(doc(db, CHATS_COLLECTION, rentalId), {
     unreadBy: arrayRemove(userUid),

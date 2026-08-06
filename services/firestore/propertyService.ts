@@ -194,7 +194,6 @@ function readImages(value: unknown, fallbackImageUri: unknown): string[] {
   return [];
 }
 
-// Safely parses nested location structure data objects out from database entries
 function readLocation(locationData: unknown): LocationData | null {
   if (locationData && typeof locationData === "object") {
     const loc = locationData as Record<string, unknown>;
@@ -381,14 +380,12 @@ export async function getUserProperties(ownerUid: string): Promise<Property[]> {
   try {
     const propertiesCollectionRef = collection(db, PROPERTIES_COLLECTION);
     
-    // Create a firestore query matching the ownerUid field
     const q = query(propertiesCollectionRef, where("ownerUid", "==", ownerUid));
     const querySnapshot = await getDocs(q);
     
     const userProperties: Property[] = [];
     
     querySnapshot.forEach((docSnap) => {
-      // Reuses your existing mapping function to clean and parse data uniformly
       userProperties.push(readProperty(docSnap.data(), docSnap.id));
     });
     

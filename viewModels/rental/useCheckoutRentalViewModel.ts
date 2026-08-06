@@ -278,7 +278,6 @@ export default function useCheckoutRentalViewModel(
         message: message.trim() || null,
       });
 
-      // Trigger notification for the lender
       try {
         if (property) {
           await addDoc(collection(db, "notifications"), {
@@ -291,7 +290,7 @@ export default function useCheckoutRentalViewModel(
             read: false,
           });
 
-          // Local notification fallback for testing
+          // Keep a local fallback for development builds.
           await Notifications.scheduleNotificationAsync({
             content: {
               title: "New Rental Request",

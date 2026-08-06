@@ -1,8 +1,4 @@
-/**
- * Babel is required for Expo + React Native.
- * We use react-native-reanimated for navigation (tabs + gestures),
- * so this plugin enables smooth native animations and prevents crashes.
- */
+// Reanimated's Babel plugin is required for native worklet transforms.
 
 module.exports = function (api) {
     api.cache(true);

@@ -51,7 +51,7 @@ export default function App() {
     "SFProDisplay-Bold": require("./assets/fonts/SF-Pro-Display-Bold.otf"),
   });
 
-  // Track auth changes to register device token for lockscreen alerts
+  // Refresh the device token when the authenticated user changes.
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {

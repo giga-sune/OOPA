@@ -8,7 +8,7 @@ export type AuthContextValue = AuthSessionViewModel;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  //tracks if a user is logged in, handling token updates, and validating sessions
+  // Keeps authentication state in sync with Firebase token changes.
   const auth = useAuthSessionViewModel();
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;

@@ -58,7 +58,6 @@ export default function SearchScreen() {
           </View>
         </View>
 
-        {/* --- BACKEND DYNAMIC SEARCH RESULTS --- */}
         <View style={styles.resultsContainer}>
 
         </View>

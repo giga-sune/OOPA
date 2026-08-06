@@ -31,7 +31,7 @@ export default function usePaymentViewModel(rentalId: string) {
     try {
       await cancelPaymentAttempt(rentalId);
     } catch {
-      // The Firestore listener keeps the UI locked if cancellation did not finish.
+      // Keep checkout locked until Firestore confirms cancellation.
     }
   };
 

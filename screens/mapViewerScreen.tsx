@@ -11,7 +11,6 @@ export default function MapViewerScreen() {
   const navigation = useNavigation<any>();
   const mapRef = useRef<MapView | null>(null);
 
-  // Unpack location configurations securely out from routing details
   const { latitude, longitude, address } = route.params;
 
   return (
@@ -33,14 +32,12 @@ export default function MapViewerScreen() {
         />
       </MapView>
 
-      {/* Dismiss Button Overlay */}
       <SafeAreaView style={styles.floatingHeader}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={22} color={Colors.grayPrimary || "#0F172A"} />
         </TouchableOpacity>
       </SafeAreaView>
 
-      {/* Address Details Bottom Card Sheet */}
       <View style={styles.infoFooter}>
         <View style={styles.indicatorBar} />
         <Text style={styles.titleText}>Meetup Location</Text>

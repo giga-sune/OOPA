@@ -17,7 +17,6 @@ import { getAuth } from "firebase/auth";
 import { subscribeToUserChats, markChatAsRead, type ChatChannel } from "../services/chat/chatService";
 import type { RootStackParamList, TabParamList } from "../types/navigation/navigationTypes";
 
-// Composes the internal Tab navigation behavior together with the Root Stack structure
 type InboxScreenNavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, "Inbox">,
   NativeStackNavigationProp<RootStackParamList>
@@ -40,7 +39,6 @@ export default function InboxScreen() {
 
     setError(null);
 
-    // Stream user chats in real-time
     const unsubscribe = subscribeToUserChats(
       currentUserUid,
       (updatedChats) => {
@@ -60,15 +58,12 @@ export default function InboxScreen() {
 const handleChatPress = async (chat: ChatChannel) => {
   if (!currentUserUid) return;
 
-  // Mark as read locally/remotely
   await markChatAsRead(chat.id, currentUserUid);
 
-  // Determine other participant details
   const isOwner = chat.ownerUid === currentUserUid;
   const recipientUid = isOwner ? chat.renterUid : chat.ownerUid;
   const recipientName = isOwner ? chat.renterDisplayName : chat.ownerDisplayName;
 
-  // Pass propertyImageUrl along with the other params!
   navigation.navigate("ChatRoom", {
     rentalId: chat.id,
     title: chat.propertyTitle,

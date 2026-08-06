@@ -16,26 +16,24 @@ const icons: Record<keyof TabParamList, IconName> = {
 };
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
-  // Animated value controlling the vertical translation (Y-axis offset)
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Determine the correct platform events for natural timing
-    // iOS has specific "will" events that fire right as the animation starts
+    // iOS "will" events keep the tab bar aligned with the keyboard animation.
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
     const keyboardShowListener = Keyboard.addListener(showEvent, (e) => {
       Animated.timing(slideAnim, {
-        toValue: 100, // Slides completely down below the viewport bounds
-        duration: e ? e.duration : 250, // Matches the keyboard's sliding duration
+        toValue: 100,
+        duration: e ? e.duration : 250, // Match the keyboard animation when available.
         useNativeDriver: true,
       }).start();
     });
 
     const keyboardHideListener = Keyboard.addListener(hideEvent, (e) => {
       Animated.timing(slideAnim, {
-        toValue: 0, // Slides back up to its natural resting place
+        toValue: 0,
         duration: e ? e.duration : 250,
         useNativeDriver: true,
       }).start();

@@ -35,7 +35,6 @@ export default function InviteFriendScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Container matching GetHelpScreen & SavedItemsScreen */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -55,7 +54,6 @@ export default function InviteFriendScreen() {
           Share OOPA with your friends and help them find or list rental items easily.
         </Text>
 
-        {/* Dummy QR Code Container */}
         <View style={styles.qrCard}>
           <View style={styles.qrPlaceholderBox}>
             <Ionicons name="qr-code-outline" size={110} color={Colors.primary} />
@@ -63,7 +61,6 @@ export default function InviteFriendScreen() {
           </View>
         </View>
 
-        {/* Link Sharing Container */}
         <View style={styles.linkSection}>
           <Text style={styles.sectionLabel}>Or share your referral link</Text>
           <View style={styles.linkContainer}>
@@ -78,7 +75,6 @@ export default function InviteFriendScreen() {
           </View>
         </View>
 
-        {/* Share Button */}
         <TouchableOpacity 
           style={styles.shareButton} 
           activeOpacity={0.8}

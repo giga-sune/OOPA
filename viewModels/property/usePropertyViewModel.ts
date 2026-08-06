@@ -2,7 +2,7 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import * as ImagePicker from "expo-image-picker";
 
 import { useAuth } from "../../context/AuthContext";
-import useProfileViewModel from "../user/useProfileViewModel"; // 👈 Import your profile hook here
+import useProfileViewModel from "../user/useProfileViewModel";
 import { generateListingDescription } from "../../services/ai/listingDescriptionService";
 import { createProperty, getListingAllowance } from "../../services/firestore/propertyService";
 import { uploadImageToStorage } from "../../services/storage/storageService";
@@ -94,7 +94,6 @@ function extractImageExtension(asset: ImagePicker.ImagePickerAsset): string {
 export default function usePropertyViewModel(): PropertyViewModelResult {
   const { user } = useAuth();
   
-  // 👇 Connect directly to your application profile values
   const { profileData, avatarImageUri } = useProfileViewModel();
 
   const [title, setTitle] = useState("");

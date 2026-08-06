@@ -155,7 +155,7 @@ export default function HomeScreen() {
     const favRef = doc(db, "users", currentUser.uid, "savedItems", propertyId);
     const isCurrentlySaved = savedPropertyIds.has(propertyId);
 
-    // Optimistic UI state update
+    // Update immediately, then roll back if persistence fails.
     setSavedPropertyIds((prev) => {
       const next = new Set(prev);
       if (isCurrentlySaved) {
@@ -174,7 +174,6 @@ export default function HomeScreen() {
       }
     } catch (err) {
       console.error("Failed to sync favorite state with Firestore:", err);
-      // Revert if write fails
       setSavedPropertyIds((prev) => {
         const next = new Set(prev);
         if (isCurrentlySaved) {
@@ -214,7 +213,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Top Search Bar & Toggle Row */}
       <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
           <View style={styles.searchBar}>
@@ -232,7 +230,6 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Notification Button */}
           <TouchableOpacity
             style={styles.headerIconButton}
             onPress={() => navigation.navigate("Notifications")}
@@ -293,7 +290,6 @@ export default function HomeScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScrollBody}>
-              {/* Category 1: Condition */}
               <Text style={styles.filterSectionHeading}>Condition</Text>
               <View style={styles.chipGroup}>
                 {CONDITION_OPTIONS.map((option) => (
@@ -310,7 +306,6 @@ export default function HomeScreen() {
                 ))}
               </View>
 
-              {/* Category 2: Price Range */}
               <Text style={styles.filterSectionHeading}>Price Range</Text>
               <View style={styles.chipGroup}>
                 {PRICE_OPTIONS.map((option) => (
@@ -327,7 +322,6 @@ export default function HomeScreen() {
                 ))}
               </View>
 
-              {/* Category 3: Pricing Structure Type */}
               <Text style={styles.filterSectionHeading}>Price Type</Text>
               <View style={styles.chipGroup}>
                 {PRICE_TYPE_OPTIONS.map((option) => (
@@ -358,7 +352,6 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Main Grid View Contents */}
       {showInitialLoadingSpinner && !isSearching ? (
         activeMode === "default" ? (
           <View style={[styles.stateContainer, styles.center]}>
@@ -491,7 +484,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  /* Sheet UI */
   modalOverlay: {
     flex: 1,
     backgroundColor: "transparent",

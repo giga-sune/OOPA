@@ -7,12 +7,10 @@ import { Colors, Typography, Radius, Spacing } from '../../styles/globalDesignSy
 export default function CheckoutProductSummary() {
     const route = useRoute<any>();
     
-    // Safely extract parameters passed from DetailsScreen
     const { title, price, ratePeriod, image, ownerDisplayName } = route.params || {};
 
     return (
         <View style={styles.summaryCard}>
-            {/* Product Image Thumbnail */}
             {image ? (
                 <Image source={{ uri: image }} style={styles.productImage} />
             ) : (
@@ -21,7 +19,6 @@ export default function CheckoutProductSummary() {
                 </View>
             )}
 
-            {/* Product Details Specs */}
             <View style={styles.textContainer}>
                 <Text style={styles.lenderTag}>Lender: {ownerDisplayName}</Text>
                 <Text style={styles.productTitle} numberOfLines={2}>

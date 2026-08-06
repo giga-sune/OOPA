@@ -24,7 +24,6 @@ import {
 import { db } from '../services/firebase/firebaseApp';
 import { Colors, Radius, Spacing, Shadows } from '../styles/globalDesignSystem';
 
-// Type definition matching your Firestore Notification documents
 export interface NotificationItem {
   id: string;
   recipientUid: string;
@@ -44,7 +43,6 @@ export default function NotificationsScreen() {
   const auth = getAuth();
   const currentUser = auth.currentUser;
 
-  // Real-time listener for user-specific notifications
   useEffect(() => {
     if (!currentUser) {
       setLoading(false);
@@ -52,7 +50,6 @@ export default function NotificationsScreen() {
     }
 
     const notificationsRef = collection(db, "notifications");
-    // Strictly target notifications meant for the CURRENT USER
     const q = query(
       notificationsRef,
       where("recipientUid", "==", currentUser.uid)
@@ -73,7 +70,7 @@ export default function NotificationsScreen() {
         };
       });
 
-      // Sort manually on the client side to avoid missing index errors in Firestore
+      // Sort locally to avoid requiring a composite Firestore index.
       items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       setNotifications(items);
@@ -86,7 +83,6 @@ export default function NotificationsScreen() {
     return () => unsubscribe();
   }, [currentUser]);
 
-  // Mass action: Delete/Clear all notifications for current user
   const handleClearAll = async () => {
     if (!currentUser || notifications.length === 0) return;
 
@@ -102,7 +98,6 @@ export default function NotificationsScreen() {
     }
   };
 
-  // Helper: Generates relative dates like "2m ago", "5d ago"
   const getRelativeTime = (date: Date) => {
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
@@ -115,7 +110,6 @@ export default function NotificationsScreen() {
     return `${diffInDays}d ago`;
   };
 
-  // Helper: Renders the appropriate dynamic icon based on type
   const renderNotificationIcon = (type: NotificationItem['type']) => {
     if (type === 'request_approved') {
       return (
@@ -138,7 +132,6 @@ export default function NotificationsScreen() {
         </View>
       );
     }
-    // New Incoming Booking Request or default
     return (
       <View style={[styles.iconCircle, { backgroundColor: '#FFEDD5' }]}>
         <Ionicons name="mail" size={18} color="#D97706" />
@@ -149,7 +142,6 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       
-      {/* Header bar */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={Colors.grayPrimary || "#0F172A"} />
@@ -177,10 +169,8 @@ export default function NotificationsScreen() {
             renderItem={({ item }) => (
               <View style={styles.notificationCard}>
                 
-                {/* Left Dynamic Action Icon */}
                 {renderNotificationIcon(item.type)}
 
-                {/* Middle text content column */}
                 <View style={styles.textDetailsColumn}>
                   <View style={styles.cardHeaderRow}>
                     <Text style={styles.categoryLabel}>{item.categoryLabel}</Text>
@@ -191,7 +181,6 @@ export default function NotificationsScreen() {
                   </Text>
                 </View>
 
-                {/* Right Product Image Thumbnail */}
                 {item.propertyImageUrl ? (
                   <Image source={{ uri: item.propertyImageUrl }} style={styles.productThumbnail} />
                 ) : (
@@ -204,7 +193,6 @@ export default function NotificationsScreen() {
             )}
           />
 
-          {/* Persistent Bottom "Clear All" trigger overlay */}
           <View style={styles.bottomFooterBar}>
             <TouchableOpacity 
               style={styles.clearAllButton} 

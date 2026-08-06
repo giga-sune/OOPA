@@ -23,7 +23,6 @@ export default function GetHelpScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Container matching MyListingsScreen & SavedItemsScreen */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 

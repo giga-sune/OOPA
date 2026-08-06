@@ -215,7 +215,7 @@ async function updateRentalStatus(rentalId: string, status: RentalStatus): Promi
   });
 }
 
-// CREATE RENTAL REQUEST (trusted Functions create notifications after this write)
+// Trusted Functions send notifications after this write.
 export async function createRentalRequest(
   input: CreateRentalRequestInput
 ): Promise<string> {
@@ -242,7 +242,6 @@ export async function createRentalRequest(
   const propertyTitle = property.title;
   const propertyImageUrl = property.images[0] ?? null;
 
-  // Create the rental document in Firestore
   const docRef = await addDoc(collection(db, RENTALS_COLLECTION), {
     propertyId: property.id,
     renterUid: input.renterUid.trim(),
@@ -344,7 +343,7 @@ export function subscribeToRentalsByOwner(
   );
 }
 
-// APPROVE RENTAL REQUEST (trusted Functions create notification and chat)
+// Trusted Functions create the notification and chat.
 export async function approveRentalRequest(
   rentalId: string
 ): Promise<RentalApprovalResult> {
@@ -361,7 +360,7 @@ export async function approveRentalRequest(
   }
 }
 
-// REJECT RENTAL REQUEST (trusted Functions create the notification)
+// Trusted Functions create the rejection notification.
 export async function rejectRentalRequest(rentalId: string): Promise<void> {
   await updateRentalStatus(rentalId, "rejected");
 }

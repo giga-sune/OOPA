@@ -32,7 +32,6 @@ export interface Review {
   createdAt: Date;
 }
 
-// Convert Firestore timestamps cleanly
 function toReviewDate(value: any): Date {
   if (value && typeof value === 'object' && 'toDate' in value) {
     return value.toDate();
@@ -41,7 +40,7 @@ function toReviewDate(value: any): Date {
 }
 
 /**
- * Fetches all reviews for a specific property (most recent first)
+ * Fetches a property's reviews, newest first.
  */
 export async function getReviewsForProperty(propertyId: string): Promise<Review[]> {
   if (!propertyId.trim()) return [];
@@ -69,7 +68,7 @@ export async function getReviewsForProperty(propertyId: string): Promise<Review[
 }
 
 /**
- * Fetches a preview (latest 2 or 3) of reviews and calculates averages
+ * Builds a recent-review preview and rating summary.
  */
 export async function getPropertyReviewSummary(propertyId: string) {
   const allReviews = await getReviewsForProperty(propertyId);
@@ -86,13 +85,12 @@ export async function getPropertyReviewSummary(propertyId: string) {
   const averageRating = parseFloat((sum / allReviews.length).toFixed(1));
 
   return {
-    reviewsPreview: allReviews.slice(0, 3), // Latest 3 reviews
+    reviewsPreview: allReviews.slice(0, 3),
     totalReviews: allReviews.length,
     averageRating,
   };
 }
 
-// --- Your Existing Write Functions & Helpers ---
 
 function isValidRating(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= 5;
@@ -208,7 +206,7 @@ export async function createReview(input: CreateReviewInput): Promise<string> {
       throw new Error("This rental has an invalid end date.");
     }
 
-    // TEMPORARY BYPASS: Comment out the date check so future rentals can be reviewed
+    // Date validation is temporarily disabled to allow reviews before a rental ends.
     // if (rentalEndTime > Date.now()) {
     //   throw new Error("You can review this item after the rental has ended.");
     // }

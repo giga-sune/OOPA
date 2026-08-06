@@ -20,7 +20,7 @@ import {
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "../firebase/firebaseApp";
 
-// Configure how notifications appear when the app is open on the active device
+// Show notifications while the app is in the foreground.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -31,7 +31,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Register the device and save the push token to Firestore
 export async function registerForPushNotificationsAsync(userUid: string) {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
@@ -69,7 +68,6 @@ export async function registerForPushNotificationsAsync(userUid: string) {
   }
 }
 
-// Helper to deliver remote push notifications directly to the RECIPIENT'S device
 async function sendRemotePushNotification(
   recipientUid: string,
   title: string,
@@ -103,7 +101,6 @@ async function sendRemotePushNotification(
   }
 }
 
-// Centralized helper to trigger both in-app database notifications & remote alerts
 interface SendNotificationParams {
   recipientUid: string;
   type: "new_request" | "new_message" | "general";
@@ -122,7 +119,6 @@ export async function sendAppNotification({
   dataPayload = {},
 }: SendNotificationParams) {
   try {
-    // 1. Save notification to Firestore for the RECIPIENT's in-app notification screen
     await addDoc(collection(db, "notifications"), {
       recipientUid,
       type,
@@ -133,7 +129,6 @@ export async function sendAppNotification({
       read: false,
     });
 
-    // 2. Deliver remote push notification to the RECIPIENT's device (NOT local sender device)
     await sendRemotePushNotification(
       recipientUid,
       categoryLabel,
@@ -145,15 +140,11 @@ export async function sendAppNotification({
   }
 }
 
-// ==========================================
-// CHAT & MESSAGING SERVICES
-// ==========================================
-
 const CHATS_COLLECTION = "chats";
 const MESSAGES_SUBCOLLECTION = "messages";
 
 export interface ChatChannel {
-  id: string; // The rentalId
+  id: string; // Rental ID
   propertyId: string;
   propertyTitle: string;
   propertyImageUrl: string | null;
@@ -231,7 +222,6 @@ function mergeChatSnapshots(
     });
 }
 
-// 1. STREAM ACTIVE CHATS FOR INBOX (Real-time update stream)
 export function subscribeToUserChats(
   userUid: string,
   onUpdate: (chats: ChatChannel[]) => void,
@@ -277,7 +267,6 @@ export function subscribeToUserChats(
   };
 }
 
-// Stream messages within a specific chat channel
 export function subscribeToMessages(
   rentalId: string,
   onUpdate: (messages: ChatMessage[]) => void,
@@ -306,7 +295,6 @@ export function subscribeToMessages(
   );
 }
 
-// Send a new message and trigger an in-app & push notification for the RECIPIENT
 export async function sendMessage(
   rentalId: string,
   senderUid: string,
@@ -317,21 +305,18 @@ export async function sendMessage(
   const trimmedText = text.trim();
   if (!trimmedText) return;
 
-  // 1. Add the message to the subcollection
   await addDoc(collection(db, CHATS_COLLECTION, rentalId, MESSAGES_SUBCOLLECTION), {
     senderUid,
     text: trimmedText,
     createdAt: serverTimestamp(),
   });
 
-  // 2. Update the parent channel header snippet
   await updateDoc(doc(db, CHATS_COLLECTION, rentalId), {
     lastMessage: trimmedText,
     lastMessageTimestamp: serverTimestamp(),
     unreadBy: arrayUnion(recipientUid),
   });
 
-  // 3. Trigger notification specifically targeting recipientUid
   await sendAppNotification({
     recipientUid,
     type: "new_message",
@@ -341,7 +326,6 @@ export async function sendMessage(
   });
 }
 
-// Mark chat as read when opened
 export async function markChatAsRead(rentalId: string, userUid: string): Promise<void> {
   await updateDoc(doc(db, CHATS_COLLECTION, rentalId), {
     unreadBy: arrayRemove(userUid),

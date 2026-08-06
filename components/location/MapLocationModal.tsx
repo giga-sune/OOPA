@@ -117,7 +117,6 @@ export function MapLocationModal({ visible, onClose, onLocationSelect }: MapLoca
           <View style={styles.sheetHeader}>
           </View>
 
-          {/* Address Input search */}
           <View style={styles.searchContainer}>
             <View style={styles.searchBarWrapper}>
               <Feather name="search" size={18} color="#94A3B8" style={styles.searchIcon} />

@@ -59,7 +59,6 @@ export default function ReportItemScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#0F172A" />
@@ -68,7 +67,6 @@ export default function ReportItemScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        {/* Item Summary Card */}
         <View style={styles.itemCard}>
           <Image
             source={{ uri: rental.propertyImageUrl || "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400" }}
@@ -86,7 +84,6 @@ export default function ReportItemScreen() {
           </View>
         </View>
 
-        {/* Report Textbox Form */}
         <Text style={styles.sectionTitle}>Write your Report</Text>
         <TextInput
           style={styles.textArea}
@@ -98,7 +95,6 @@ export default function ReportItemScreen() {
           onChangeText={setReportText}
         />
 
-        {/* Submit Button */}
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>Submit</Text>
         </TouchableOpacity>

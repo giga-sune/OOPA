@@ -56,7 +56,7 @@ export default function MyListingsScreen() {
         const fetchedItems: RentalItem[] = snapshot.docs.map((doc) => {
           const data = doc.data();
           
-          // Fallback handlers matching your arrays layout setup
+          // Fall back to the first item when no selection exists.
           const images = Array.isArray(data.images)
             ? data.images.filter((item): item is string => typeof item === "string" && item.length > 0)
             : [];
@@ -77,7 +77,7 @@ export default function MyListingsScreen() {
           };
         });
         
-        // Front-end side timeline sorting fallback structure
+        // Firestore timestamps may arrive in either supported shape.
         const sortedItems = fetchedItems.sort((a, b) => {
           const timeA = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
           const timeB = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
@@ -135,7 +135,6 @@ export default function MyListingsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Container Area Layout Layout */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
